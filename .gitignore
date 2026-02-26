@@ -1,6 +1,8 @@
-bin/
-build/
-out/
+/bin/
+/build/
+/out/
+/dumps/
+
 tmp/
 temp/
 cmake-*
