@@ -1,0 +1,40 @@
+name: CI Build (Windows)
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Determine version, build, and optional test
+        id: meta
+        uses: ./.github/actions/build-and-test
+        with:
+          release-tag-input: ''
+          run-tests: 'false'
+
+      - name: Azure login and sign files
+        uses: ./.github/actions/azure-sign
+        with:
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
+          certificate-profile-name:
+            ${{ secrets.AZURE_SIGNING_CERT_PROFILE_NAME }}
+
+      - name: Collect artifacts and create ZIP bundles
+        shell: pwsh
+        run: ./.github/scripts/collect-artifacts-and-zip.ps1

@@ -1,0 +1,43 @@
+name: Azure Login and Sign Artifacts
+description:
+  Logs into Azure and signs built artifacts using Azure Trusted Signing
+
+inputs:
+  azure-client-id:
+    description: Azure service principal client ID
+    required: true
+  azure-tenant-id:
+    description: Azure tenant ID
+    required: true
+  azure-subscription-id:
+    description: Azure subscription ID
+    required: true
+  signing-account-name:
+    description: Azure Trusted Signing account name
+    required: true
+  certificate-profile-name:
+    description: Azure Trusted Signing certificate profile name
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Azure login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ inputs.azure-client-id }}
+        tenant-id: ${{ inputs.azure-tenant-id }}
+        subscription-id: ${{ inputs.azure-subscription-id }}
+
+    - name: Sign files with Artifact Signing
+      uses: azure/artifact-signing-action@v1
+      with:
+        endpoint: https://wus3.codesigning.azure.net/
+        signing-account-name: ${{ inputs.signing-account-name }}
+        certificate-profile-name: ${{ inputs.certificate-profile-name }}
+        files-folder: ${{ github.workspace }}\out
+        files-folder-filter: 'DisplayProber*.exe,DisplayProber*.dll'
+        files-folder-recurse: true
+        file-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        timestamp-digest: SHA256

@@ -1,0 +1,47 @@
+{
+  "version": 4,
+  "configurePresets": [
+    {
+      "name": "vs2022-base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+      }
+    },
+    {
+      "name": "Win32",
+      "inherits": "vs2022-base",
+      "architecture": "Win32",
+      "binaryDir": "${sourceDir}/../../out/Win32"
+    },
+    {
+      "name": "x64",
+      "inherits": "vs2022-base",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/../../out/x64"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Win32-Debug",
+      "configurePreset": "Win32",
+      "configuration": "Debug"
+    },
+    {
+      "name": "Win32-Release",
+      "configurePreset": "Win32",
+      "configuration": "Release"
+    },
+    {
+      "name": "x64-Debug",
+      "configurePreset": "x64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "x64-Release",
+      "configurePreset": "x64",
+      "configuration": "Release"
+    }
+  ]
+}

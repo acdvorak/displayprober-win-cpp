@@ -1,0 +1,39 @@
+name: Determine Version, Build, and Optional Test
+description: Determines version tag, builds artifacts, and optionally runs tests
+
+inputs:
+  release-tag-input:
+    description:
+      Release tag value (for release events); leave empty to derive from
+      src/cpp/CMakeLists.txt
+    required: false
+    default: ''
+  run-tests:
+    description: Run ctest after build
+    required: false
+    default: 'false'
+
+outputs:
+  version_tag:
+    description: Computed version tag
+    value: ${{ steps.meta.outputs.version_tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Determine version tag
+      id: meta
+      shell: pwsh
+      env:
+        RELEASE_TAG_INPUT: ${{ inputs.release-tag-input }}
+      run: ./.github/scripts/determine-version-tag.ps1
+
+    - name: Configure and build x86/x64 for Debug and Release
+      shell: pwsh
+      run: ./.github/scripts/configure-and-build.ps1
+
+    - name: Test
+      if: ${{ inputs.run-tests == 'true' }}
+      shell: pwsh
+      working-directory: ${{ github.workspace }}/out
+      run: ctest -C Release

@@ -1,0 +1,36 @@
+# Default: normalize text files, keep LF in the repo
+* text=auto eol=lf
+
+# Source and config files explicitly LF
+*.c     text eol=lf
+*.cc    text eol=lf
+*.cpp   text eol=lf
+*.cxx   text eol=lf
+*.h     text eol=lf
+*.hpp   text eol=lf
+*.hxx   text eol=lf
+*.rc.in text eol=lf
+*.inl   text eol=lf
+*.cmake text eol=lf
+*.json  text eol=lf
+*.jsonc text eol=lf
+*.md    text eol=lf
+*.ts    text eol=lf
+*.txt   text eol=lf
+
+# Scripts
+*.ps1   text eol=lf
+*.sh    text eol=lf
+
+# Windows batch files CRLF for compatibility
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Treat common binaries as binary (no EOL normalization)
+*.png binary
+*.jpg binary
+*.zip binary
+*.pdf binary
+*.exe binary
+*.dll binary
+*.pdb binary

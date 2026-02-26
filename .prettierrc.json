@@ -1,0 +1,35 @@
+{
+  "$schema": "https://www.schemastore.org/prettierrc.json",
+
+  "arrowParens": "always",
+  "embeddedLanguageFormatting": "auto",
+  "endOfLine": "lf",
+  "jsxSingleQuote": false,
+  "printWidth": 80,
+  "proseWrap": "always",
+  "quoteProps": "as-needed",
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "useTabs": false,
+
+  "overrides": [
+    {
+      "files": [
+        "*.jsonc",
+        "launch.json",
+        "mcp.json",
+        "settings.json",
+        "tasks.json",
+        "tsconfig.json",
+        "tsconfig.*.json"
+      ],
+      "options": {
+        "parser": "jsonc",
+        "singleQuote": false,
+        "quoteProps": "preserve"
+      }
+    }
+  ]
+}

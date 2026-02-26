@@ -1,0 +1,12 @@
+bin/
+build/
+out/
+tmp/
+temp/
+cmake-*
+
+*.exe
+*.dll
+*.pdb
+
+node_modules

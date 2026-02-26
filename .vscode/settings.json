@@ -1,0 +1,5 @@
+{
+  "cmake.sourceDirectory": "${workspaceFolder}/src/cpp",
+  "cmake.useCMakePresets": "always",
+  "cmake.useVsDeveloperEnvironment": "auto",
+}
