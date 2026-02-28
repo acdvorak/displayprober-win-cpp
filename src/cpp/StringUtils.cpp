@@ -6,6 +6,8 @@
 #include <cctype>
 #include <cstdint>
 #include <cwctype>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -194,4 +196,48 @@ std::string Base64Encode(const std::vector<std::uint8_t>& bytes) {
   }
 
   return encoded;
+}
+
+std::string BytesToHex(std::span<const std::uint8_t> bytes) {
+  if (bytes.empty()) {
+    return {};
+  }
+
+  static constexpr char kHexDigits[] = "0123456789abcdef";
+
+  std::string hex;
+  hex.resize(bytes.size() * 2);
+
+  for (std::size_t i = 0; i < bytes.size(); ++i) {
+    const std::uint8_t b = bytes[i];
+    hex[(i * 2)] = kHexDigits[(b >> 4u) & 0x0fu];
+    hex[(i * 2) + 1] = kHexDigits[b & 0x0fu];
+  }
+
+  return hex;
+}
+
+static std::string Hex8(uint32_t v) {
+  std::ostringstream oss;
+  oss << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << v;
+  return oss.str();
+}
+
+// TODO(acdvorak): Can this be removed?
+std::string MakeAdapterTargetKey(const LUID& luid, uint32_t id) {
+  // Preserve the raw bit patterns. HighPart is signed, so cast through
+  // uint32_t.
+  const uint32_t hi = static_cast<uint32_t>(luid.HighPart);
+  const uint32_t lo = static_cast<uint32_t>(luid.LowPart);
+
+  // Canonical text form.
+  std::string s;
+  s.reserve(4 + 8 + 8 + 4 + 8);
+  s += "[adapter_luid=";
+  s += Hex8(hi);
+  s += Hex8(lo);
+  s += "]:[target_id=";
+  s += Hex8(id);
+  s += "]";
+  return s;
 }

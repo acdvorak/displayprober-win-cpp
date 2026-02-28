@@ -1,21 +1,49 @@
 # Windows PowerShell v2.0 or newer
 #Requires -Version 2.0
 
-$os_obj = Get-WmiObject Win32_OperatingSystem
-$os_name = $os_obj.Caption.Trim() -replace '^Microsoft ', ''
-$sp = if ($os_obj.ServicePackMajorVersion -gt 0) {
-  ' SP{0}' -f $os_obj.ServicePackMajorVersion
-}
-else {
-  ''
+# Parent directory of this script (version.ps1).
+$VerScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+. (Join-Path -Path $VerScriptRoot -ChildPath 'scripts\power_utils.ps1')
+
+function Format-DotNetVersionList {
+  param(
+    [Parameter(Position = 0)]
+    [DotNetRuntimeVer[]]$VersionList
+  )
+
+  if ($VersionList) {
+    $rows = $VersionList |
+      Format-Table -AutoSize |
+      Out-String -Stream |
+      Where-Object { $_ -match '\S' } |
+      ForEach-Object { '    ' + $_ }
+    ($rows -join "`n")
+  }
+  else {
+    '    None found'
+  }
 }
 
-$os_full = '{0}{1} (build {2})' -f $os_name, $sp, $os_obj.BuildNumber
-$ps_full = 'PowerShell v{0}.{1}' -f $PSVersionTable.PSVersion.Major, $PSVersionTable.PSVersion.Minor
+$OsNameAndVer = Get-OsNameAndVersion
+$PsNameAndVer = Get-PsNameAndVersion
+
+$Classic = Format-DotNetVersionList (Get-ClassicDotNetRuntimeList)
+$Modern = Format-DotNetVersionList (Get-ModernDotNetRuntimeList)
 
 @"
 
-$os_full
-$ps_full
+Classic .NET frameworks:
+
+$Classic
+
+Modern .NET frameworks:
+
+$Modern
+
+System versions:
+
+    - $OsNameAndVer
+    - $PsNameAndVer
 
 "@

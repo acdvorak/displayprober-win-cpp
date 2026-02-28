@@ -1,4 +1,4 @@
-# DisplayProber for Windows (DP4W) 🛰️
+# DisplayProber for Windows (DP4Win) 🛰️
 
 CLI that outputs a list of all connected displays (monitors/TVs) as
 [JSON](./src/ts/schemas/displayprober-win-cpp.schema.json).
@@ -47,7 +47,7 @@ DisplayProber.exe
     {
       "friendly_name": "QCQ95S",
       "short_lived_identifier": "\\\\.\\DISPLAY1",
-      "device_path": "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+      "monitor_device_path": "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
       "is_primary": true,
       "physical_connector_type": "hdmi",
       "rotation_deg": 0,
@@ -115,7 +115,7 @@ DisplayProber.exe
     {
       "friendly_name": "DELL ST2320L",
       "short_lived_identifier": "\\\\.\\DISPLAY2",
-      "device_path": "\\\\?\\DISPLAY#DELF023#5&21e6c3...",
+      "monitor_device_path": "\\\\?\\DISPLAY#DELF023#5&21e6c3...",
       "is_primary": false,
       "physical_connector_type": "dvi",
       "rotation_deg": 0,
@@ -165,40 +165,169 @@ DisplayProber.exe
   - Wide color supported and enabled/disabled
   - Active color mode (SDR/WCG/HDR)
 
-# Related tools
+# Implementation details
 
-Native binaries:
+## So you want to enumerate displays on Windows...
 
-- [NirSoft DumpEDID](https://www.nirsoft.net/utils/dump_edid.html)
-  - Reads and parses EDID data
-- [NirSoft MonitorInfoView](https://www.nirsoft.net/utils/monitor_info_view.html)
-  - Reads and parses EDID data
-- [NirSoft MultiMonitorTool](https://www.nirsoft.net/utils/multi_monitor_tool.html)
-  - Prints most of the basic facts that Windows knows about your monitors:
-    resolution, refresh rate, DPI scaling, rotation, position
-- [NirSoft ControlMyMonitor](https://www.nirsoft.net/utils/control_my_monitor.html)
-  - Prints a few basic details about your monitors, and lets you query/control
-    their brightness, contrast, etc. via DDC/CI
-- [`edid-decode`](https://git.linuxtv.org/v4l-utils.git/tree/utils/edid-decode)
-  - Reference-quality EDID and DisplayID parser
-  - Nominally cross-platform, but harder to compile on Windows/macOS
-  - [Windows port of `edid-decode`](https://github.com/a1ive/edid-decode)
+...and you want stable, persistent identifiers to uniquely track each monitor/TV
+instance across reboots.
 
-```ps1
-DumpEDID.exe -a > path/to/output.txt
+Welcome, my friend, to a world of pain.
 
-MonitorInfoView.exe /HideInactiveMonitors 1 /sxml path/to/output.xml
+![One does not simply "get a list of displays" on Windows](./boromir.jpg)
 
-MultiMonitorTool.exe /HideInactiveMonitors 1 /sxml path/to/output.xml
+For your journey into the abyss, you will need:
 
-ControlMyMonitor.exe /smonitors path/to/output.txt
+1. An elf, a dwarf, and a hobbit
+2. A stout constitution
+3. A licensed professional therapist
 
-edid-decode.exe /MONITOR0
-edid-decode.exe path/to/edid.bin
-edid-decode.exe /MONITOR0 path/to/edid.bin
+To truly capture everything there is to know about all connected displays, you
+must use a combination of four different Windows API families and
+correlate/aggregate the results.
+
+## 1. User32 multi-monitor APIs (`HMONITOR`)
+
+What they are:
+
+> Classic Win32 display monitor enumeration APIs (`HMONITOR`).
+
+What they do:
+
+> Enumerate "display monitors" in the Windows desktop/virtual-screen coordinate
+> space, including pseudo-monitors (e.g. mirroring drivers).
+
+Primary functions:
+
+- `EnumDisplayMonitors()`
+  - Returns a list of `HMONITOR` handles
+- `GetMonitorInfoW()`
+  - Fills `MONITORINFO` / `MONITORINFOEX` structures (bounds + work area +
+    optional device name)
+
+Pseudo-code (simplified for clarity):
+
+```cpp
+EnumDisplayMonitors(..., callback = (HMONITOR h) => {
+  GetMonitorInfoW(h, MONITORINFOEX* info);
+  // info->rcMonitor, info->rcWork, info->szDevice
+})
 ```
 
-Windows PowerShell v5.1+ commands:
+## 2. Display Configuration APIs (`QueryDisplayConfig`)
+
+What they are:
+
+> A topology-level view of the current display configuration: "paths" + "modes".
+
+What they give you:
+
+- `QueryDisplayConfig()`: topology graph (sources/targets, active paths, mode.
+  sets).
+- `DisplayConfigGetDeviceInfo()`: per-target details like EDID-derived
+  identifiers (not raw EDID bytes), friendly names, and device paths.
+
+Primary functions:
+
+- `QueryDisplayConfig()`
+  - Returns `DISPLAYCONFIG_PATH_INFO` + `DISPLAYCONFIG_MODE_INFO`
+- `DisplayConfigGetDeviceInfo()`
+  - Packet-based details (e.g. target name, preferred mode, advanced color info)
+  - Note: can fail when you do not have access to the current console session
+    (common in services / some remote contexts)
+
+Pseudo-code (simplified for clarity):
+
+```cpp
+QueryDisplayConfig(..., out paths[], out modes[]);
+
+for (auto path in paths[]) {
+  // identify adapterId + targetId from the path
+  DisplayConfigGetDeviceInfo(
+    GET_TARGET_NAME, adapterId, targetId, out targetName
+  );
+  DisplayConfigGetDeviceInfo(
+    GET_ADVANCED_COLOR_INFO, adapterId, targetId, out colorInfo
+  );
+}
+```
+
+## 3. DXGI output enumeration APIs (`IDXGIOutput`)
+
+What they are:
+
+> Adapter/output model (DirectX Graphics Infrastructure).
+
+What they give you:
+
+> Advanced color and luminance characteristics (via `DXGI_OUTPUT_DESC1`).
+
+Primary functions:
+
+- `CreateDXGIFactory()` (or `CreateDXGIFactory1()`)
+- `IDXGIFactory::EnumAdapters()` (or `EnumAdapters1()`)
+- `IDXGIAdapter::EnumOutputs()`
+- `IDXGIOutput6::GetDesc1()`
+
+Pseudo-code (simplified for clarity):
+
+```cpp
+factory = CreateDXGIFactory(...);
+
+for (auto adapter in factory.EnumAdapters()) {
+  for (auto output in adapter.EnumOutputs()) {
+    output6 = (IDXGIOutput6)output
+    output6.GetDesc1(out DXGI_OUTPUT_DESC1 desc)
+  }
+}
+```
+
+## 4. SetupAPI and PnP device properties
+
+What they are:
+
+> PnP device tree enumeration + device properties.
+
+What they give you:
+
+- Raw EDID bytes (commonly via the monitor devnode's registry key; often a value
+  named `EDID`)
+- Device instance IDs and Hardware IDs (devnode-dependent: GPU vs monitor
+  differ)
+- Location paths (often the most useful for physical/topology correlation; PCI
+  topology strings are common for GPUs)
+- Container ID (GUID) (groups devnodes into a physical device container)
+
+Primary functions:
+
+- `SetupDiGetClassDevsW()`
+- `SetupDiEnumDeviceInfo()` (or `SetupDiEnumDeviceInterfaces()`)
+- `SetupDiGetDeviceInstanceIdW()`
+- `SetupDiGetDeviceRegistryPropertyW()` (legacy) or
+  `SetupDiGetDevicePropertyW()` (recommended for modern device properties)
+- `SetupDiOpenDevRegKey()` + `RegQueryValueExW()` (commonly used to read `EDID`)
+
+Pseudo-code (simplified for clarity):
+
+```cpp
+h = SetupDiGetClassDevsW(MONITOR_CLASS_GUID, ...);
+
+for (auto dev in SetupDiEnumDeviceInfo(h)) {
+  instId      = SetupDiGetDeviceInstanceIdW(h, dev);
+  locPaths    = SetupDiGetDevicePropertyW(h, dev, DEVPKEY_Device_LocationPaths);
+  containerId = SetupDiGetDevicePropertyW(h, dev, DEVPKEY_Device_ContainerId);
+  regKey      = SetupDiOpenDevRegKey(h, dev, ...);
+  edid        = RegQueryValueExW(regKey, "EDID");
+}
+```
+
+## Stable identifiers
+
+TODO
+
+# PowerShell equivalents
+
+In Windows PowerShell v5.1 and above, you can run the following commands:
 
 ```ps1
 # Windows Forms screen enumeration.
@@ -237,6 +366,39 @@ Get-CimInstance -Namespace root\wmi WmiMonitorDescriptorMethods |
 # Works even over SSH.
 Get-CimInstance -Namespace root\wmi WmiMonitorID |
   ConvertTo-Json
+```
+
+# Related tools
+
+Native binaries:
+
+- [NirSoft DumpEDID](https://www.nirsoft.net/utils/dump_edid.html)
+  - Reads and parses EDID data
+- [NirSoft MonitorInfoView](https://www.nirsoft.net/utils/monitor_info_view.html)
+  - Reads and parses EDID data
+- [NirSoft MultiMonitorTool](https://www.nirsoft.net/utils/multi_monitor_tool.html)
+  - Prints most of the basic facts that Windows knows about your monitors:
+    resolution, refresh rate, DPI scaling, rotation, position
+- [NirSoft ControlMyMonitor](https://www.nirsoft.net/utils/control_my_monitor.html)
+  - Prints a few basic details about your monitors, and lets you query/control
+    their brightness, contrast, etc. via DDC/CI
+- [`edid-decode`](https://git.linuxtv.org/v4l-utils.git/tree/utils/edid-decode)
+  - Reference-quality EDID and DisplayID parser
+  - Nominally cross-platform, but harder to compile on Windows/macOS
+  - [Windows port of `edid-decode`](https://github.com/a1ive/edid-decode)
+
+```ps1
+DumpEDID.exe -a > path/to/output.txt
+
+MonitorInfoView.exe /HideInactiveMonitors 1 /sxml path/to/output.xml
+
+MultiMonitorTool.exe /HideInactiveMonitors 1 /sxml path/to/output.xml
+
+ControlMyMonitor.exe /smonitors path/to/output.txt
+
+edid-decode.exe /MONITOR0
+edid-decode.exe path/to/edid.bin
+edid-decode.exe /MONITOR0 path/to/edid.bin
 ```
 
 # Related projects

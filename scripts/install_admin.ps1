@@ -5,7 +5,7 @@
 $InformationPreference = 'Continue'
 
 function Confirm-VSToolchain {
-  $vsDevCmdPath = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
+  $vsDevCmdPath = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat'
   if (-not (Test-Path $vsDevCmdPath)) {
     throw "VsDevCmd.bat was not found at '$vsDevCmdPath'."
   }
@@ -13,12 +13,12 @@ function Confirm-VSToolchain {
   $validationCommand = "`"$vsDevCmdPath`" -arch=x64 && where cl && where link && where rc"
   cmd /c $validationCommand
   if ($LASTEXITCODE -ne 0) {
-    throw "VC tools installed, but Windows SDK resource compiler (rc.exe) is unavailable. Ensure Windows 10 SDK is installed in VS Build Tools Installer."
+    throw 'VC tools installed, but Windows SDK resource compiler (rc.exe) is unavailable. Ensure Windows 10 SDK is installed in VS Build Tools Installer.'
   }
 
-  Write-Host ""
-  Write-Host "Visual Studio Build Tools verification succeeded (cl/link/rc found)."
-  Write-Host ""
+  Write-Host ''
+  Write-Host 'Visual Studio Build Tools verification succeeded (cl/link/rc found).'
+  Write-Host ''
 }
 
 ################################################################################
@@ -31,13 +31,13 @@ $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administ
 
 if (-not $isAdmin) {
   $scriptPath = $MyInvocation.MyCommand.Path
-  $elevated = Start-Process -FilePath "powershell.exe" -Verb RunAs -Wait -PassThru -ArgumentList @(
-    "-NoProfile",
-    "-ExecutionPolicy", "Bypass",
-    "-File", "`"$scriptPath`""
+  $elevated = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList @(
+    '-NoProfile',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', "`"$scriptPath`""
   )
 
-  Write-Host ""
+  Write-Host ''
 
   Confirm-VSToolchain
 
@@ -49,22 +49,22 @@ if (-not $isAdmin) {
 ################################################################################
 
 try {
-  $buildToolsExe = Join-Path $PSScriptRoot "../src/cpp/vs_BuildTools.exe"
-  $vsConfigPath = Join-Path $PSScriptRoot "../src/cpp/.vsconfig"
+  $buildToolsExe = Join-Path $PSScriptRoot '../src/cpp/vs_BuildTools.exe'
+  $vsConfigPath = Join-Path $PSScriptRoot '../src/cpp/.vsconfig'
 
   if (-not (Test-Path $buildToolsExe)) {
-    Write-Host "Downloading VS 2022 Build Tools installer..."
-    Invoke-WebRequest "https://aka.ms/vs/17/release/vs_BuildTools.exe" -OutFile $buildToolsExe -UseBasicParsing -ErrorAction Stop
+    Write-Host 'Downloading VS 2022 Build Tools installer...'
+    Invoke-WebRequest 'https://aka.ms/vs/17/release/vs_BuildTools.exe' -OutFile $buildToolsExe -UseBasicParsing -ErrorAction Stop
   }
 
   $arguments = @(
-    "--config", $vsConfigPath,
-    "--passive",  # Show progress UI; no user input needed
-    "--wait",     # Block the shell until the installation completes
-    "--norestart" # Don't prompt the user to restart
+    '--config', $vsConfigPath,
+    '--passive',  # Show progress UI; no user input needed
+    '--wait',     # Block the shell until the installation completes
+    '--norestart' # Don't prompt the user to restart
   )
 
-  Write-Host "Installing minimal VS 2022 Build Tools:"
+  Write-Host 'Installing minimal VS 2022 Build Tools:'
 
   if (-not (Test-Path $vsConfigPath)) {
     throw ".vsconfig was not found at '$vsConfigPath'."
@@ -72,7 +72,8 @@ try {
 
   try {
     $vsConfig = Get-Content -Path $vsConfigPath -Raw -ErrorAction Stop | ConvertFrom-Json
-  } catch {
+  }
+  catch {
     throw "Failed to parse .vsconfig at '$vsConfigPath': $($_.Exception.Message)"
   }
 
@@ -81,9 +82,9 @@ try {
     Write-Host "  - $component"
   }
 
-  Write-Host ""
-  Write-Host "This may take several minutes..."
-  Write-Host ""
+  Write-Host ''
+  Write-Host 'This may take several minutes...'
+  Write-Host ''
 
   $process = Start-Process -FilePath $buildToolsExe -ArgumentList $arguments -Wait -PassThru
   if ($process.ExitCode -ne 0) {
@@ -95,9 +96,10 @@ try {
   ################################################################################
 
   Confirm-VSToolchain
-} catch {
+}
+catch {
   Write-Error $_
-  Write-Host ""
-  [void](Read-Host "An error occurred while running elevated. Press ENTER to exit")
+  Write-Host ''
+  [void](Read-Host 'An error occurred while running elevated. Press ENTER to exit')
   exit 1
 }

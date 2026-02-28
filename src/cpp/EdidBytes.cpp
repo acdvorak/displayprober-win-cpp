@@ -90,6 +90,15 @@ std::optional<Bytes> ReadEdidBytes(HDEVINFO dev_info_set,
 
 }  // namespace
 
+// TODO(acdvorak):
+// From a display adapter devnode, try to get:
+// - Device instance ID (persistent-ish): e.g. "PCI\VEN_10DE&DEV_........"
+// - Hardware IDs (vendor/device/subsys/rev)
+// - Location paths (often best): strings that encode PCI topology, like
+//   "PCIROOT(... )#PCI(... )#...""
+// - Container ID (GUID) (groups related functions/devnodes)
+// - Friendly name / driver info (debugging)
+
 namespace edid {
 
 std::optional<Bytes> GetEdidBytesFromMonitorDevicePath(

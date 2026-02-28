@@ -127,14 +127,6 @@ namespace json {
 
     struct WinEdidInfo {
         /**
-         * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
-         *
-         * E.g.:
-         * "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-         * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-         */
-        std::string device_path;
-        /**
          * Raw EDID bytes, Base64-encoded.
          */
         std::optional<std::string> edid_bytes_base64;
@@ -144,6 +136,14 @@ namespace json {
         std::optional<std::string> manufacturer_vid;
         std::optional<double> max_horizontal_image_size_mm;
         std::optional<double> max_vertical_image_size_mm;
+        /**
+         * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
+         *
+         * E.g.:
+         * "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+         * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+         */
+        std::string monitor_device_path;
         /**
          * Normalized join key, with trailing `_0` removed from wmi_instance_name.
          *
@@ -207,6 +207,12 @@ namespace json {
     };
 
     struct WinDisplay {
+        /**
+         * Persistent across reboots in the common case (same GPU/driver instance).
+         *
+         * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
+         */
+        std::optional<std::string> adapter_device_path;
         std::optional<WinAdvancedColorInfo> advanced_color_info;
         /**
          * The full size and position of the display, *including* the taskbar and any other areas
@@ -215,15 +221,6 @@ namespace json {
          * Might not be available in some edge cases like virtual desktops.
          */
         WinScreenRectangle bounds;
-        /**
-         * E.g.:
-         * - "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-         * -
-         * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-         *
-         * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`
-         */
-        std::optional<std::string> device_path;
         /**
          * The most common standard values are: `100 | 125 | 150 | 175 | 200`.
          *
@@ -253,6 +250,22 @@ namespace json {
         std::optional<bool> is_attached_to_desktop;
         bool is_primary;
         /**
+         * ✅ SECONDARY STABLE ID
+         *
+         * Typically stable across reboots and uniquely identifies the monitor instance on that
+         * connection path.
+         *
+         * It is also very useful for correlating to EDID retrieval.
+         *
+         * E.g.:
+         * - "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+         * -
+         * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+         *
+         * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`
+         */
+        std::optional<std::string> monitor_device_path;
+        /**
          * Normalized join key, with trailing `_0` removed from  {@link  wmi_instance_name } .
          *
          * E.g.:
@@ -264,6 +277,18 @@ namespace json {
          * Physical connector type, if applicable (HDMI, DVI, DisplayPort, etc.).
          */
         std::optional<WinDisplayConnectorType> physical_connector_type;
+        /**
+         * ✅ PRIMARY STABLE ID
+         *
+         * The closest thing to a "persistent adapter identity" you can get without dropping into
+         * SetupAPI/PCI location plumbing.
+         *
+         * `adapter_device_path` stays the same across reboots in the common case (same GPU/driver
+         * instance).
+         *
+         * `DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the "output/target on that adapter".
+         */
+        std::optional<std::string> primary_port_key;
         std::optional<int64_t> refresh_rate_denominator;
         /**
          * {@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .
@@ -282,6 +307,10 @@ namespace json {
          */
         std::string short_lived_identifier;
         WinStandardColorInfo standard_color_info;
+        /**
+         * Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
+         */
+        std::optional<int64_t> target_path_id;
         /**
          * E.g.:
          * - "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
@@ -413,11 +442,11 @@ namespace json {
     }
 
     inline void from_json(const json & j, WinEdidInfo& x) {
-        x.device_path = j.at("device_path").get<std::string>();
         x.edid_bytes_base64 = get_stack_optional<std::string>(j, "edid_bytes_base64");
         x.manufacturer_vid = get_stack_optional<std::string>(j, "manufacturer_vid");
         x.max_horizontal_image_size_mm = get_stack_optional<double>(j, "max_horizontal_image_size_mm");
         x.max_vertical_image_size_mm = get_stack_optional<double>(j, "max_vertical_image_size_mm");
+        x.monitor_device_path = j.at("monitor_device_path").get<std::string>();
         x.normalized_join_key = j.at("normalized_join_key").get<std::string>();
         x.product_code_id = get_stack_optional<int64_t>(j, "product_code_id");
         x.serial_number_id = get_stack_optional<int64_t>(j, "serial_number_id");
@@ -430,7 +459,6 @@ namespace json {
 
     inline void to_json(json & j, const WinEdidInfo & x) {
         j = json::object();
-        j["device_path"] = x.device_path;
         if (x.edid_bytes_base64) {
             j["edid_bytes_base64"] = x.edid_bytes_base64;
         }
@@ -443,6 +471,7 @@ namespace json {
         if (x.max_vertical_image_size_mm) {
             j["max_vertical_image_size_mm"] = x.max_vertical_image_size_mm;
         }
+        j["monitor_device_path"] = x.monitor_device_path;
         j["normalized_join_key"] = x.normalized_join_key;
         if (x.product_code_id) {
             j["product_code_id"] = x.product_code_id;
@@ -503,16 +532,18 @@ namespace json {
     }
 
     inline void from_json(const json & j, WinDisplay& x) {
+        x.adapter_device_path = get_stack_optional<std::string>(j, "adapter_device_path");
         x.advanced_color_info = get_stack_optional<WinAdvancedColorInfo>(j, "advanced_color_info");
         x.bounds = j.at("bounds").get<WinScreenRectangle>();
-        x.device_path = get_stack_optional<std::string>(j, "device_path");
         x.dpi_scaling_percent = get_stack_optional<int64_t>(j, "dpi_scaling_percent");
         x.edid_info = get_stack_optional<WinEdidInfo>(j, "edid_info");
         x.friendly_name = get_stack_optional<std::string>(j, "friendly_name");
         x.is_attached_to_desktop = get_stack_optional<bool>(j, "is_attached_to_desktop");
         x.is_primary = j.at("is_primary").get<bool>();
+        x.monitor_device_path = get_stack_optional<std::string>(j, "monitor_device_path");
         x.normalized_join_key = get_stack_optional<std::string>(j, "normalized_join_key");
         x.physical_connector_type = get_stack_optional<WinDisplayConnectorType>(j, "physical_connector_type");
+        x.primary_port_key = get_stack_optional<std::string>(j, "primary_port_key");
         x.refresh_rate_denominator = get_stack_optional<int64_t>(j, "refresh_rate_denominator");
         x.refresh_rate_hz = get_stack_optional<double>(j, "refresh_rate_hz");
         x.refresh_rate_numerator = get_stack_optional<int64_t>(j, "refresh_rate_numerator");
@@ -520,19 +551,20 @@ namespace json {
         x.scan_line_ordering = get_stack_optional<WinScanLineOrder>(j, "scan_line_ordering");
         x.short_lived_identifier = j.at("short_lived_identifier").get<std::string>();
         x.standard_color_info = j.at("standard_color_info").get<WinStandardColorInfo>();
+        x.target_path_id = get_stack_optional<int64_t>(j, "target_path_id");
         x.wmi_instance_name = get_stack_optional<std::string>(j, "wmi_instance_name");
         x.working_area = j.at("working_area").get<WinScreenRectangle>();
     }
 
     inline void to_json(json & j, const WinDisplay & x) {
         j = json::object();
+        if (x.adapter_device_path) {
+            j["adapter_device_path"] = x.adapter_device_path;
+        }
         if (x.advanced_color_info) {
             j["advanced_color_info"] = x.advanced_color_info;
         }
         j["bounds"] = x.bounds;
-        if (x.device_path) {
-            j["device_path"] = x.device_path;
-        }
         if (x.dpi_scaling_percent) {
             j["dpi_scaling_percent"] = x.dpi_scaling_percent;
         }
@@ -546,11 +578,17 @@ namespace json {
             j["is_attached_to_desktop"] = x.is_attached_to_desktop;
         }
         j["is_primary"] = x.is_primary;
+        if (x.monitor_device_path) {
+            j["monitor_device_path"] = x.monitor_device_path;
+        }
         if (x.normalized_join_key) {
             j["normalized_join_key"] = x.normalized_join_key;
         }
         if (x.physical_connector_type) {
             j["physical_connector_type"] = x.physical_connector_type;
+        }
+        if (x.primary_port_key) {
+            j["primary_port_key"] = x.primary_port_key;
         }
         if (x.refresh_rate_denominator) {
             j["refresh_rate_denominator"] = x.refresh_rate_denominator;
@@ -569,6 +607,9 @@ namespace json {
         }
         j["short_lived_identifier"] = x.short_lived_identifier;
         j["standard_color_info"] = x.standard_color_info;
+        if (x.target_path_id) {
+            j["target_path_id"] = x.target_path_id;
+        }
         if (x.wmi_instance_name) {
             j["wmi_instance_name"] = x.wmi_instance_name;
         }

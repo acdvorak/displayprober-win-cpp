@@ -124,6 +124,21 @@ struct GdiDisplayConfig {
   // - `"SAMSUNG"` (some devices don't give us an actual model number)
   std::string friendly_name;
 
+  // Persistent across reboots in the common case (same GPU/driver instance).
+  //
+  // Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
+  std::string adapter_device_path;
+
+  // Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
+  std::uint32_t target_path_id = 0;
+
+  // ✅ SECONDARY STABLE ID
+  //
+  // Typically stable across reboots and uniquely identifies the monitor
+  // instance on that connection path.
+  //
+  // It is also very useful for correlating to EDID retrieval.
+  //
   // Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME::monitorDevicePath`.
   //
   // Examples:

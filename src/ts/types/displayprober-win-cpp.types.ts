@@ -52,13 +52,48 @@ export interface WinDisplay {
   short_lived_identifier: WinMonitorDeviceName;
 
   /**
+   * Persistent across reboots in the common case (same GPU/driver instance).
+   *
+   * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
+   */
+  adapter_device_path?: string | null;
+
+  /**
+   * Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
+   *
+   * @uint32
+   */
+  target_path_id?: number | null;
+
+  /**
+   * ✅ PRIMARY STABLE ID
+   *
+   * The closest thing to a "persistent adapter identity" you can get without
+   * dropping into SetupAPI/PCI location plumbing.
+   *
+   * `adapter_device_path` stays the same across reboots in the common case
+   * (same GPU/driver instance).
+   *
+   * `DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the
+   * "output/target on that adapter".
+   */
+  primary_port_key?: string | null;
+
+  /**
+   * ✅ SECONDARY STABLE ID
+   *
+   * Typically stable across reboots and uniquely identifies the monitor
+   * instance on that connection path.
+   *
+   * It is also very useful for correlating to EDID retrieval.
+   *
    * E.g.:
    * - "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
    * - "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
    *
    * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`
    */
-  device_path?: string | null;
+  monitor_device_path?: string | null;
 
   /**
    * E.g.:
@@ -236,7 +271,7 @@ export interface WinEdidInfo {
    * "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
    * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
    */
-  device_path: string;
+  monitor_device_path: string;
 
   /**
    * E.g.:
