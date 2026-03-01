@@ -204,7 +204,7 @@ std::string BuildPrimaryPortKey(const gdi::GdiDisplayConfig& config) {
 
   auto tp_id = "0x" + IntsToHex(static_cast<uint32_t>(config.target_path_id));
 
-  return std::format("acd_ppk:gpu_id={};tp_id=0x{}", gpu_identity, tp_id);
+  return std::format("acd_ppk:gpu_id={};tp_id={}", gpu_identity, tp_id);
 }
 
 std::string BuildMonitorPathKey(const DevicePath& monitor_device_path) {
