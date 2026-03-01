@@ -216,28 +216,3 @@ std::string BytesToHex(std::span<const std::uint8_t> bytes) {
 
   return hex;
 }
-
-static std::string Hex8(uint32_t v) {
-  std::ostringstream oss;
-  oss << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << v;
-  return oss.str();
-}
-
-// TODO(acdvorak): Can this be removed?
-std::string MakeAdapterTargetKey(const LUID& luid, uint32_t id) {
-  // Preserve the raw bit patterns. HighPart is signed, so cast through
-  // uint32_t.
-  const uint32_t hi = static_cast<uint32_t>(luid.HighPart);
-  const uint32_t lo = static_cast<uint32_t>(luid.LowPart);
-
-  // Canonical text form.
-  std::string s;
-  s.reserve(4 + 8 + 8 + 4 + 8);
-  s += "[adapter_luid=";
-  s += Hex8(hi);
-  s += Hex8(lo);
-  s += "]:[target_id=";
-  s += Hex8(id);
-  s += "]";
-  return s;
-}
