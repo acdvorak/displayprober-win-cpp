@@ -23,14 +23,13 @@ function Ensure-ParentDirectory {
     [string]$Path
   )
 
-  $resolvedPath = Resolve-ScriptPath -Path $Path
-  $parentPath = Split-Path -Parent $resolvedPath
+  $parentDir = Split-Path -Parent $Path
 
-  if ($parentPath -and -not (Test-Path -LiteralPath $parentPath)) {
-    New-Item -ItemType Directory -Path $parentPath -Force | Out-Null
+  if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
+    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
   }
 
-  return $resolvedPath
+  return $Path
 }
 
 # Convert stdin from the Windows default encoding (UTF-16 LE) to UTF-8.
