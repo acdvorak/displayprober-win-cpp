@@ -248,7 +248,9 @@ json::WinDisplay MergeDisplayDataToJson(
   if (display_config) {
     const auto& config = *display_config;
 
-    json_obj.adapter_device_path = config.adapter_device_path;
+    if (!config.adapter_device_path.empty()) {
+      json_obj.adapter_device_path = config.adapter_device_path;
+    }
     json_obj.target_path_id = config.target_path_id;
 
     // ✅ PRIMARY STABLE ID
