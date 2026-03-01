@@ -95,7 +95,7 @@ std::optional<Bytes> ReadEdidBytes(HDEVINFO dev_info_set,
 // - Device instance ID (persistent-ish): e.g. "PCI\VEN_10DE&DEV_........"
 // - Hardware IDs (vendor/device/subsys/rev)
 // - Location paths (often best): strings that encode PCI topology, like
-//   "PCIROOT(... )#PCI(... )#...""
+//   "PCIROOT(... )#PCI(... )#..."
 // - Container ID (GUID) (groups related functions/devnodes)
 // - Friendly name / driver info (debugging)
 
