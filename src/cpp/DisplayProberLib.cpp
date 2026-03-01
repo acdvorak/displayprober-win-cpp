@@ -251,21 +251,33 @@ json::WinDisplay MergeDisplayDataToJson(
     if (!config.adapter_device_path.empty()) {
       json_obj.adapter_device_path = config.adapter_device_path;
     }
-    json_obj.target_path_id = config.target_path_id;
+    if (config.target_path_id != 0) {
+      json_obj.target_path_id = config.target_path_id;
+    }
 
-    // ✅ PRIMARY STABLE ID
-    // `adapterDevicePath` stays the same across reboots in the common case
-    // (same GPU/driver instance). `path.targetInfo.id` is the "output/target
-    // on that adapter".
-    json_obj.primary_port_key = std::format(
-        "adapter_device_path={}::target_path_id={}", config.adapter_device_path,
-        IntsToHex(config.target_path_id));
+    if (!config.adapter_device_path.empty()) {
+      // ✅ PRIMARY STABLE ID
+      // `adapterDevicePath` stays the same across reboots in the common case
+      // (same GPU/driver instance). `path.targetInfo.id` is the "output/target
+      // on that adapter".
+      //
+      // `adapter_device_path` can be empty when
+      // `DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME)`
+      // fails (for example, no active console session). In that case, leave
+      // `primary_port_key` unset to avoid emitting a degenerate identifier.
+      json_obj.primary_port_key = std::format(
+          "adapter_device_path={}::target_path_id={}",
+          config.adapter_device_path, IntsToHex(config.target_path_id));
+    }
 
     // ✅ SECONDARY STABLE ID
     DevicePath monitor_device_path = config.monitor_device_path;
 
-    json_obj.monitor_device_path = monitor_device_path;
-    json_obj.edid_info = wmi::GetWinEdidInfoFromDevicePath(monitor_device_path);
+    if (!monitor_device_path.empty()) {
+      json_obj.monitor_device_path = monitor_device_path;
+      json_obj.edid_info =
+          wmi::GetWinEdidInfoFromDevicePath(monitor_device_path);
+    }
 
     json_obj.scan_line_ordering =
         json_utils::ScanLineOrderingToJson(config.scanLineOrdering);
