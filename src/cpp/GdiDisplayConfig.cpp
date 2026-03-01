@@ -1,9 +1,14 @@
 #include "GdiDisplayConfig.h"
 
 // This header needs to be imported first.
+#include <SetupAPI.h>
 #include <Windows.h>
+#include <ntddvdeo.h>
 
+#include <cstdint>
 #include <map>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "GdiPolyfills.h"
@@ -11,6 +16,117 @@
 #include "SysUtils.h"
 
 namespace gdi {
+
+namespace {
+
+class ScopedDevInfoSet {
+ public:
+  explicit ScopedDevInfoSet(HDEVINFO handle) : handle_(handle) {}
+
+  ~ScopedDevInfoSet() {
+    if (handle_ != INVALID_HANDLE_VALUE) {
+      SetupDiDestroyDeviceInfoList(handle_);
+    }
+  }
+
+  HDEVINFO get() const { return handle_; }
+
+ private:
+  HDEVINFO handle_ = INVALID_HANDLE_VALUE;
+};
+
+std::optional<std::string> TryGetAdapterInstanceIdFromAdapterPath(
+    const std::optional<std::string>& adapter_device_path) {
+  if (adapter_device_path.value_or("").empty()) {
+    return std::nullopt;
+  }
+
+  const HDEVINFO raw_dev_info_set =
+      SetupDiGetClassDevsW(&GUID_DEVINTERFACE_DISPLAY_ADAPTER, nullptr, nullptr,
+                           DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+  if (raw_dev_info_set == INVALID_HANDLE_VALUE) {
+    return std::nullopt;
+  }
+
+  ScopedDevInfoSet dev_info_set(raw_dev_info_set);
+
+  const std::wstring wanted_path = Utf8ToWide(*adapter_device_path);
+
+  for (DWORD interface_index = 0;; ++interface_index) {
+    SP_DEVICE_INTERFACE_DATA interface_data = {};
+    interface_data.cbSize = sizeof(interface_data);
+
+    if (!SetupDiEnumDeviceInterfaces(dev_info_set.get(), nullptr,
+                                     &GUID_DEVINTERFACE_DISPLAY_ADAPTER,
+                                     interface_index, &interface_data)) {
+      if (GetLastError() == ERROR_NO_MORE_ITEMS) {
+        break;
+      }
+      return std::nullopt;
+    }
+
+    DWORD required_size = 0;
+    if (SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
+                                         nullptr, 0, &required_size,
+                                         nullptr) != FALSE) {
+      return std::nullopt;
+    }
+
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER ||
+        required_size < sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W)) {
+      return std::nullopt;
+    }
+
+    std::vector<std::uint8_t> detail_buffer(required_size);
+    auto* detail_data = reinterpret_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W>(
+        detail_buffer.data());
+    detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+
+    SP_DEVINFO_DATA dev_info_data = {};
+    dev_info_data.cbSize = sizeof(dev_info_data);
+
+    if (!SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
+                                          detail_data, required_size, nullptr,
+                                          &dev_info_data)) {
+      return std::nullopt;
+    }
+
+    const std::wstring candidate_path(detail_data->DevicePath);
+    if (!EqualsIgnoreCase(candidate_path, wanted_path)) {
+      continue;
+    }
+
+    DWORD instance_id_length = 0;
+    if (!SetupDiGetDeviceInstanceIdW(dev_info_set.get(), &dev_info_data,
+                                     nullptr, 0, &instance_id_length)) {
+      if (GetLastError() != ERROR_INSUFFICIENT_BUFFER ||
+          instance_id_length == 0) {
+        return std::nullopt;
+      }
+    }
+
+    std::wstring instance_id(instance_id_length, L'\0');
+    if (!SetupDiGetDeviceInstanceIdW(dev_info_set.get(), &dev_info_data,
+                                     instance_id.data(), instance_id_length,
+                                     nullptr)) {
+      return std::nullopt;
+    }
+
+    if (!instance_id.empty() && instance_id.back() == L'\0') {
+      instance_id.pop_back();
+    }
+
+    const std::string instance_id_utf8 = WideToUtf8(instance_id);
+    if (!instance_id_utf8.empty()) {
+      return instance_id_utf8;
+    }
+    return std::nullopt;
+  }
+
+  return std::nullopt;
+}
+
+}  // namespace
 
 static bool IsValidModeIndex(
     UINT32 modeInfoIdx, const std::vector<DISPLAYCONFIG_MODE_INFO>& modes) {
@@ -101,7 +217,7 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
     GdiDisplayConfig& dc = displayConfigs[deviceNameUtf8];
 
     dc.short_lived_identifier = deviceNameUtf8;
-
+    dc.target_path_id = path.targetInfo.id;
     dc.outputTechnology = path.targetInfo.outputTechnology;
 
     if (IsValidModeIndex(path.sourceInfo.modeInfoIdx, modes)) {
@@ -116,7 +232,6 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
       const auto& mode = modes[path.targetInfo.modeInfoIdx];
 
       dc.modeTarget = mode;
-      dc.target_path_id = path.targetInfo.id;
 
       if (mode.infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET) {
         dc.refreshRate = mode.targetMode.targetVideoSignalInfo.vSyncFreq;
@@ -187,6 +302,12 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
     res = DisplayConfigGetDeviceInfo(&adapter_name.header);
     if (res == ERROR_SUCCESS) {
       dc.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
+
+      const auto adapter_instance_id =
+          TryGetAdapterInstanceIdFromAdapterPath(dc.adapter_device_path);
+      if (adapter_instance_id.has_value()) {
+        dc.adapter_instance_id = *adapter_instance_id;
+      }
     }
   }
 

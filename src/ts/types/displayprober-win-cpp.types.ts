@@ -52,6 +52,16 @@ export interface WinDisplay {
   short_lived_identifier: WinMonitorDeviceName;
 
   /**
+   * Adapter Plug and Play instance id.
+   *
+   * More persistent than `adapter_device_path` across reboots and driver
+   * churn.
+   *
+   * @example "PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"
+   */
+  adapter_instance_id?: string | null;
+
+  /**
    * Persistent across reboots in the common case (same GPU/driver instance).
    *
    * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
@@ -96,6 +106,41 @@ export interface WinDisplay {
   monitor_device_path?: string | null;
 
   /**
+   * Deterministic key derived from {@link monitor_device_path}.
+   */
+  monitor_path_key?: string | null;
+
+  /**
+   * Deterministic monitor identity key based on EDID.
+   *
+   * Only emitted when manufacturer, product code, and serial are available.
+   */
+  edid_key?: string | null;
+
+  /**
+   * Candidate stable keys ordered from strongest to weakest.
+   *
+   * 1. `primary_port_key`
+   * 2. `monitor_path_key`
+   * 3. `edid_key`
+   */
+  stable_id_candidates?: string[] | null;
+
+  /**
+   * Effective stable id after applying candidate ordering.
+   */
+  stable_id?: string | null;
+
+  /**
+   * Indicates which candidate produced {@link stable_id}.
+   */
+  stable_id_source?:
+    | 'primary_port_key'
+    | 'monitor_path_key'
+    | 'edid_key'
+    | null;
+
+  /**
    * E.g.:
    * - "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
    * - "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"
@@ -125,7 +170,7 @@ export interface WinDisplay {
    *
    * - A monitor is connected but disabled in Display Settings:
    *   - Example: you have 2 monitors connected, but Windows is set to
-   *     "Show only on 1" (or you’ve "Disconnect this display" for the other).
+   *     "Show only on 1" (or you've "Disconnect this display" for the other).
    *     That other output can still exist, but it is not attached, so false.
    *
    * TODO(acdvorak): Further clarify the difference between
@@ -180,7 +225,7 @@ export interface WinDisplay {
   /** @uint32 */
   refresh_rate_denominator?: number | null;
 
-  /** @uint32 */
+  /** @uint8 */
   rotation_deg?: WinDisplayRotationDegrees | null;
 
   /**
@@ -223,7 +268,7 @@ export interface WinStandardColorInfo {
   color_encoding?: WinColorEncoding | null;
   dxgi_color_space?: WinDxgiColorSpace | null;
 
-  /** @uint32 */
+  /** @uint8 */
   bits_per_channel?: WinBitsPerColorChannel | null;
 
   /**
@@ -310,7 +355,7 @@ export interface WinEdidInfo {
    */
   manufacturer_vid?: string | null;
 
-  /** @uint32 */
+  /** @uint16 */
   product_code_id?: number | null;
 
   /** @uint32 */
@@ -323,10 +368,10 @@ export interface WinEdidInfo {
    */
   user_friendly_name?: string | null;
 
-  /** @uint32 */
+  /** @uint8 */
   week_of_manufacture?: number | null;
 
-  /** @uint32 */
+  /** @uint16 */
   year_of_manufacture?: number | null;
 
   /**

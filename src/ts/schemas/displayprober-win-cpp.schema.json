@@ -62,6 +62,18 @@
           "markdownDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.",
           "fullDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.\n\n@example \"\\\\\\\\.\\\\DISPLAY1\" (multi-monitor)\n@example \"\\\\\\\\.\\\\DISPLAY2\" (multi-monitor)\n@example \"\\\\\\\\.\\\\DISPLAY129\" (Remote Desktop)\n@example \"DISPLAY\" (single-monitor)\n@example \"WinDisc\" (SSH console)"
         },
+        "adapter_instance_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Adapter Plug and Play instance id.\n\nMore persistent than `adapter_device_path` across reboots and driver churn.",
+          "markdownDescription": "Adapter Plug and Play instance id.\n\nMore persistent than `adapter_device_path` across reboots and driver\nchurn.",
+          "fullDescription": "Adapter Plug and Play instance id.\n\nMore persistent than `adapter_device_path` across reboots and driver\nchurn.\n\n@example \"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\\\4&2A5F5B12&0&0008\"",
+          "examples": [
+            "PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"
+          ]
+        },
         "adapter_device_path": {
           "type": [
             "string",
@@ -78,7 +90,9 @@
           ],
           "description": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.",
           "markdownDescription": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.",
-          "fullDescription": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.\n\n@uint32"
+          "fullDescription": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "primary_port_key": {
           "type": [
@@ -97,6 +111,64 @@
           "description": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor instance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
           "markdownDescription": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
           "fullDescription": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`"
+        },
+        "monitor_path_key": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Deterministic key derived from  {@link  monitor_device_path } .",
+          "markdownDescription": "Deterministic key derived from  {@link  monitor_device_path } .",
+          "fullDescription": "Deterministic key derived from {@link monitor_device_path}."
+        },
+        "edid_key": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Deterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.",
+          "markdownDescription": "Deterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.",
+          "fullDescription": "Deterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available."
+        },
+        "stable_id_candidates": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key` 2. `monitor_path_key` 3. `edid_key`",
+          "markdownDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`",
+          "fullDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`"
+        },
+        "stable_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Effective stable id after applying candidate ordering.",
+          "markdownDescription": "Effective stable id after applying candidate ordering.",
+          "fullDescription": "Effective stable id after applying candidate ordering."
+        },
+        "stable_id_source": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "primary_port_key",
+            "monitor_path_key",
+            "edid_key",
+            null
+          ],
+          "description": "Indicates which candidate produced  {@link  stable_id } .",
+          "markdownDescription": "Indicates which candidate produced  {@link  stable_id } .",
+          "fullDescription": "Indicates which candidate produced {@link stable_id}."
         },
         "wmi_instance_name": {
           "type": [
@@ -124,9 +196,9 @@
             "boolean",
             "null"
           ],
-          "description": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:   - Many drivers expose one IDXGIOutput per physical connector     (HDMI/DP/DVI), even if nothing is plugged in.   - Those \"ports\" can enumerate, but they are not part of the desktop, so     AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:   - Example: you have 2 monitors connected, but Windows is set to     \"Show only on 1\" (or you’ve \"Disconnect this display\" for the other).     That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between  {@link  has_interactive_desktop  }  and {@is_attached_to_desktop}.",
-          "markdownDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you’ve \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between\n {@link  has_interactive_desktop  }  and {@is_attached_to_desktop}.",
-          "fullDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you’ve \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between\n{@link has_interactive_desktop} and {@is_attached_to_desktop}."
+          "description": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:   - Many drivers expose one IDXGIOutput per physical connector     (HDMI/DP/DVI), even if nothing is plugged in.   - Those \"ports\" can enumerate, but they are not part of the desktop, so     AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:   - Example: you have 2 monitors connected, but Windows is set to     \"Show only on 1\" (or you've \"Disconnect this display\" for the other).     That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between  {@link  has_interactive_desktop  }  and {@is_attached_to_desktop}.",
+          "markdownDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between\n {@link  has_interactive_desktop  }  and {@is_attached_to_desktop}.",
+          "fullDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between\n{@link has_interactive_desktop} and {@is_attached_to_desktop}."
         },
         "dpi_scaling_percent": {
           "type": [
@@ -135,7 +207,9 @@
           ],
           "description": "The most common standard values are: `100 | 125 | 150 | 175 | 200`.\n\nThe user can technically set any arbitrary value via registry hacks.",
           "markdownDescription": "The most common standard values are: `100 | 125 | 150 | 175 | 200`.\n\nThe user can technically set any arbitrary value via registry hacks.",
-          "fullDescription": "The most common standard values are: `100 | 125 | 150 | 175 | 200`.\n\nThe user can technically set any arbitrary value via registry hacks.\n\n@see https://superuser.com/questions/1328938/scale-100-on-windows-10/1328941#1328941\n@see https://learn.microsoft.com/en-us/windows/win32/learnwin32/dpi-and-device-independent-pixels\n\n@uint32"
+          "fullDescription": "The most common standard values are: `100 | 125 | 150 | 175 | 200`.\n\nThe user can technically set any arbitrary value via registry hacks.\n\n@see https://superuser.com/questions/1328938/scale-100-on-windows-10/1328941#1328941\n@see https://learn.microsoft.com/en-us/windows/win32/learnwin32/dpi-and-device-independent-pixels\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "bounds": {
           "$ref": "#/definitions/WinScreenRectangle",
@@ -176,14 +250,18 @@
             "integer",
             "null"
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "refresh_rate_denominator": {
           "type": [
             "integer",
             "null"
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "rotation_deg": {
           "anyOf": [
@@ -194,7 +272,9 @@
               "type": "null"
             }
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint8",
+          "minimum": 0,
+          "maximum": 255
         },
         "physical_connector_type": {
           "anyOf": [
@@ -253,35 +333,51 @@
       "properties": {
         "x": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "y": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "width": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "height": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "left": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "top": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "right": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "bottom": {
           "type": "integer",
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         }
       },
       "required": [
@@ -388,7 +484,9 @@
               "type": "null"
             }
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint8",
+          "minimum": 0,
+          "maximum": 255
         },
         "min_luminance": {
           "type": [
@@ -595,7 +693,9 @@
           ],
           "description": "Raw numeric value that gets mapped to  {@link  WinDisplayConnectorType } .",
           "markdownDescription": "Raw numeric value that gets mapped to  {@link  WinDisplayConnectorType } .",
-          "fullDescription": "Raw numeric value that gets mapped to {@link WinDisplayConnectorType}.\n\n@uint32"
+          "fullDescription": "Raw numeric value that gets mapped to {@link WinDisplayConnectorType}.\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "manufacturer_vid": {
           "type": [
@@ -611,14 +711,18 @@
             "integer",
             "null"
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint16",
+          "minimum": 0,
+          "maximum": 65535
         },
         "serial_number_id": {
           "type": [
             "integer",
             "null"
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
         },
         "user_friendly_name": {
           "type": [
@@ -637,14 +741,18 @@
             "integer",
             "null"
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint8",
+          "minimum": 0,
+          "maximum": 255
         },
         "year_of_manufacture": {
           "type": [
             "integer",
             "null"
           ],
-          "fullDescription": "@uint32"
+          "fullDescription": "@uint16",
+          "minimum": 0,
+          "maximum": 65535
         },
         "edid_bytes_base64": {
           "type": [

@@ -182,6 +182,8 @@ namespace json {
 
     enum class WinScanLineOrder : int { INTERLACED_LOWER_FIELD_FIRST, INTERLACED_UPPER_FIELD_FIRST, PROGRESSIVE, UNSPECIFIED };
 
+    enum class StableIdSource : int { EDID_KEY, MONITOR_PATH_KEY, PRIMARY_PORT_KEY };
+
     enum class WinColorEncoding : int { RGB, UNSPECIFIED, YCBCR420, YCBCR422, YCBCR444 };
 
     enum class WinDxgiColorSpace : int { CUSTOM, RESERVED, RGB_FULL_G10_NONE_P709, RGB_FULL_G2084_NONE_P2020, RGB_FULL_G22_NONE_P2020, RGB_FULL_G22_NONE_P709, RGB_STUDIO_G2084_NONE_P2020, RGB_STUDIO_G22_NONE_P2020, RGB_STUDIO_G22_NONE_P709, RGB_STUDIO_G24_NONE_P2020, RGB_STUDIO_G24_NONE_P709, YCBCR_FULL_G22_LEFT_P2020, YCBCR_FULL_G22_LEFT_P601, YCBCR_FULL_G22_LEFT_P709, YCBCR_FULL_G22_NONE_P709_X601, YCBCR_FULL_GHLG_TOPLEFT_P2020, YCBCR_STUDIO_G2084_LEFT_P2020, YCBCR_STUDIO_G2084_TOPLEFT_P2020, YCBCR_STUDIO_G22_LEFT_P2020, YCBCR_STUDIO_G22_LEFT_P601, YCBCR_STUDIO_G22_LEFT_P709, YCBCR_STUDIO_G22_TOPLEFT_P2020, YCBCR_STUDIO_G24_LEFT_P2020, YCBCR_STUDIO_G24_LEFT_P709, YCBCR_STUDIO_G24_TOPLEFT_P2020, YCBCR_STUDIO_GHLG_TOPLEFT_P2020 };
@@ -213,6 +215,12 @@ namespace json {
          * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
          */
         std::optional<std::string> adapter_device_path;
+        /**
+         * Adapter Plug and Play instance id.
+         *
+         * More persistent than `adapter_device_path` across reboots and driver churn.
+         */
+        std::optional<std::string> adapter_instance_id;
         std::optional<WinAdvancedColorInfo> advanced_color_info;
         /**
          * The full size and position of the display, *including* the taskbar and any other areas
@@ -229,6 +237,12 @@ namespace json {
         std::optional<int64_t> dpi_scaling_percent;
         std::optional<WinEdidInfo> edid_info;
         /**
+         * Deterministic monitor identity key based on EDID.
+         *
+         * Only emitted when manufacturer, product code, and serial are available.
+         */
+        std::optional<std::string> edid_key;
+        /**
          * Manufacturer-provided model name from the DisplayID or EDID.
          */
         std::optional<std::string> friendly_name;
@@ -240,7 +254,7 @@ namespace json {
          * enumerate, but they are not part of the desktop, so     AttachedToDesktop is false.
          *
          * - A monitor is connected but disabled in Display Settings:   - Example: you have 2
-         * monitors connected, but Windows is set to     "Show only on 1" (or you’ve "Disconnect
+         * monitors connected, but Windows is set to     "Show only on 1" (or you've "Disconnect
          * this display" for the other).     That other output can still exist, but it is not
          * attached, so false.
          *
@@ -265,6 +279,10 @@ namespace json {
          * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`
          */
         std::optional<std::string> monitor_device_path;
+        /**
+         * Deterministic key derived from  {@link  monitor_device_path } .
+         */
+        std::optional<std::string> monitor_path_key;
         /**
          * Normalized join key, with trailing `_0` removed from  {@link  wmi_instance_name } .
          *
@@ -306,6 +324,20 @@ namespace json {
          * ⚠️ NOT stable across device disconnects/reconnects.
          */
         std::string short_lived_identifier;
+        /**
+         * Effective stable id after applying candidate ordering.
+         */
+        std::optional<std::string> stable_id;
+        /**
+         * Candidate stable keys ordered from strongest to weakest.
+         *
+         * 1. `primary_port_key` 2. `monitor_path_key` 3. `edid_key`
+         */
+        std::optional<std::vector<std::string>> stable_id_candidates;
+        /**
+         * Indicates which candidate produced  {@link  stable_id } .
+         */
+        std::optional<StableIdSource> stable_id_source;
         WinStandardColorInfo standard_color_info;
         /**
          * Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
@@ -380,6 +412,9 @@ namespace json {
 
     void from_json(const json & j, WinScanLineOrder & x);
     void to_json(json & j, const WinScanLineOrder & x);
+
+    void from_json(const json & j, StableIdSource & x);
+    void to_json(json & j, const StableIdSource & x);
 
     void from_json(const json & j, WinColorEncoding & x);
     void to_json(json & j, const WinColorEncoding & x);
@@ -533,14 +568,17 @@ namespace json {
 
     inline void from_json(const json & j, WinDisplay& x) {
         x.adapter_device_path = get_stack_optional<std::string>(j, "adapter_device_path");
+        x.adapter_instance_id = get_stack_optional<std::string>(j, "adapter_instance_id");
         x.advanced_color_info = get_stack_optional<WinAdvancedColorInfo>(j, "advanced_color_info");
         x.bounds = j.at("bounds").get<WinScreenRectangle>();
         x.dpi_scaling_percent = get_stack_optional<int64_t>(j, "dpi_scaling_percent");
         x.edid_info = get_stack_optional<WinEdidInfo>(j, "edid_info");
+        x.edid_key = get_stack_optional<std::string>(j, "edid_key");
         x.friendly_name = get_stack_optional<std::string>(j, "friendly_name");
         x.is_attached_to_desktop = get_stack_optional<bool>(j, "is_attached_to_desktop");
         x.is_primary = j.at("is_primary").get<bool>();
         x.monitor_device_path = get_stack_optional<std::string>(j, "monitor_device_path");
+        x.monitor_path_key = get_stack_optional<std::string>(j, "monitor_path_key");
         x.normalized_join_key = get_stack_optional<std::string>(j, "normalized_join_key");
         x.physical_connector_type = get_stack_optional<WinDisplayConnectorType>(j, "physical_connector_type");
         x.primary_port_key = get_stack_optional<std::string>(j, "primary_port_key");
@@ -550,6 +588,9 @@ namespace json {
         x.rotation_deg = get_stack_optional<int64_t>(j, "rotation_deg");
         x.scan_line_ordering = get_stack_optional<WinScanLineOrder>(j, "scan_line_ordering");
         x.short_lived_identifier = j.at("short_lived_identifier").get<std::string>();
+        x.stable_id = get_stack_optional<std::string>(j, "stable_id");
+        x.stable_id_candidates = get_stack_optional<std::vector<std::string>>(j, "stable_id_candidates");
+        x.stable_id_source = get_stack_optional<StableIdSource>(j, "stable_id_source");
         x.standard_color_info = j.at("standard_color_info").get<WinStandardColorInfo>();
         x.target_path_id = get_stack_optional<int64_t>(j, "target_path_id");
         x.wmi_instance_name = get_stack_optional<std::string>(j, "wmi_instance_name");
@@ -561,6 +602,9 @@ namespace json {
         if (x.adapter_device_path) {
             j["adapter_device_path"] = x.adapter_device_path;
         }
+        if (x.adapter_instance_id) {
+            j["adapter_instance_id"] = x.adapter_instance_id;
+        }
         if (x.advanced_color_info) {
             j["advanced_color_info"] = x.advanced_color_info;
         }
@@ -571,6 +615,9 @@ namespace json {
         if (x.edid_info) {
             j["edid_info"] = x.edid_info;
         }
+        if (x.edid_key) {
+            j["edid_key"] = x.edid_key;
+        }
         if (x.friendly_name) {
             j["friendly_name"] = x.friendly_name;
         }
@@ -580,6 +627,9 @@ namespace json {
         j["is_primary"] = x.is_primary;
         if (x.monitor_device_path) {
             j["monitor_device_path"] = x.monitor_device_path;
+        }
+        if (x.monitor_path_key) {
+            j["monitor_path_key"] = x.monitor_path_key;
         }
         if (x.normalized_join_key) {
             j["normalized_join_key"] = x.normalized_join_key;
@@ -606,6 +656,15 @@ namespace json {
             j["scan_line_ordering"] = x.scan_line_ordering;
         }
         j["short_lived_identifier"] = x.short_lived_identifier;
+        if (x.stable_id) {
+            j["stable_id"] = x.stable_id;
+        }
+        if (x.stable_id_candidates) {
+            j["stable_id_candidates"] = x.stable_id_candidates;
+        }
+        if (x.stable_id_source) {
+            j["stable_id_source"] = x.stable_id_source;
+        }
         j["standard_color_info"] = x.standard_color_info;
         if (x.target_path_id) {
             j["target_path_id"] = x.target_path_id;
@@ -723,6 +782,22 @@ namespace json {
             case WinScanLineOrder::PROGRESSIVE: j = "progressive"; break;
             case WinScanLineOrder::UNSPECIFIED: j = "unspecified"; break;
             default: throw std::runtime_error("Unexpected value in enumeration \"WinScanLineOrder\": " + std::to_string(static_cast<int>(x)));
+        }
+    }
+
+    inline void from_json(const json & j, StableIdSource & x) {
+        if (j == "edid_key") x = StableIdSource::EDID_KEY;
+        else if (j == "monitor_path_key") x = StableIdSource::MONITOR_PATH_KEY;
+        else if (j == "primary_port_key") x = StableIdSource::PRIMARY_PORT_KEY;
+        else { throw std::runtime_error("Input JSON does not conform to schema!"); }
+    }
+
+    inline void to_json(json & j, const StableIdSource & x) {
+        switch (x) {
+            case StableIdSource::EDID_KEY: j = "edid_key"; break;
+            case StableIdSource::MONITOR_PATH_KEY: j = "monitor_path_key"; break;
+            case StableIdSource::PRIMARY_PORT_KEY: j = "primary_port_key"; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"StableIdSource\": " + std::to_string(static_cast<int>(x)));
         }
     }
 

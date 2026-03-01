@@ -12,6 +12,7 @@
 #include <Windows.h>
 
 #include <map>
+#include <optional>
 #include <string>
 
 #include "CommonTypes.h"
@@ -127,7 +128,13 @@ struct GdiDisplayConfig {
   // Persistent across reboots in the common case (same GPU/driver instance).
   //
   // Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
-  std::string adapter_device_path;
+  std::optional<std::string> adapter_device_path;
+
+  // Adapter Plug and Play instance id.
+  //
+  // Example:
+  // `"PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"`
+  std::string adapter_instance_id;
 
   // Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
   std::uint32_t target_path_id = 0;

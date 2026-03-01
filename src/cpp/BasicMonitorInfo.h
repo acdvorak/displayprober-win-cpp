@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
@@ -35,6 +36,8 @@ struct BasicMonitorInfo {
   // "WinDisc"           (SSH console)
   // ```
   ShortLivedIdentifier short_lived_identifier;
+
+  std::uintptr_t hmonitor_id = 0;
 
   bool is_primary = false;
 

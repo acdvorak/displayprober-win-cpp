@@ -5,6 +5,7 @@
 #include <format>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -192,6 +193,91 @@ std::string GetFriendlyName(
   return "UNKNOWN";
 }
 
+std::string BuildPrimaryPortKey(const gdi::GdiDisplayConfig& config) {
+  const std::string gpu_identity =
+      !config.adapter_instance_id.empty()
+          ? config.adapter_instance_id
+          : config.adapter_device_path.value_or("");
+  if (gpu_identity.empty()) {
+    return {};
+  }
+
+  auto tp_id = "0x" + IntsToHex(static_cast<uint32_t>(config.target_path_id));
+
+  return std::format("acd_ppk:gpu_id={};tp_id=0x{}", gpu_identity, tp_id);
+}
+
+std::string BuildMonitorPathKey(const DevicePath& monitor_device_path) {
+  if (monitor_device_path.empty()) {
+    return {};
+  }
+
+  return std::format("acd_mpk:mdp={}", monitor_device_path);
+}
+
+std::string BuildEdidKey(const std::optional<json::WinEdidInfo>& edid_info) {
+  if (!edid_info) {
+    return {};
+  }
+
+  const auto& info = *edid_info;
+  if (!info.manufacturer_vid || !info.product_code_id ||
+      !info.serial_number_id) {
+    return {};
+  }
+
+  auto vid = ToUpperAscii(*info.manufacturer_vid);
+  auto pid = "0x" + IntsToHex(static_cast<uint16_t>(*info.product_code_id));
+  auto sn = "0x" + IntsToHex(static_cast<uint32_t>(*info.serial_number_id));
+
+  return std::format("acd_edid:vid={};pid={};sn={}", vid, pid, sn);
+}
+
+void PopulateStableKeyFields(json::WinDisplay& json_obj) {
+  std::vector<std::string> candidates;
+
+  auto push_unique = [&candidates](const std::optional<std::string>& key) {
+    if (!key || key->empty()) {
+      return;
+    }
+
+    for (const auto& existing : candidates) {
+      if (existing == *key) {
+        return;
+      }
+    }
+
+    candidates.push_back(*key);
+  };
+
+  push_unique(json_obj.primary_port_key);
+  push_unique(json_obj.monitor_path_key);
+  push_unique(json_obj.edid_key);
+
+  if (candidates.empty()) {
+    return;
+  }
+
+  json_obj.stable_id_candidates = candidates;
+  json_obj.stable_id = candidates.front();
+
+  if (json_obj.primary_port_key &&
+      *json_obj.primary_port_key == candidates[0]) {
+    json_obj.stable_id_source = json::StableIdSource::PRIMARY_PORT_KEY;
+    return;
+  }
+
+  if (json_obj.monitor_path_key &&
+      *json_obj.monitor_path_key == candidates[0]) {
+    json_obj.stable_id_source = json::StableIdSource::MONITOR_PATH_KEY;
+    return;
+  }
+
+  if (json_obj.edid_key && *json_obj.edid_key == candidates[0]) {
+    json_obj.stable_id_source = json::StableIdSource::EDID_KEY;
+  }
+}
+
 bool RectHasZeroWidthOrHeight(std::optional<RECT> rect) {
   if (!rect) {
     // Optional does not have a value, so it cannot be zero width/height.
@@ -248,35 +334,32 @@ json::WinDisplay MergeDisplayDataToJson(
   if (display_config) {
     const auto& config = *display_config;
 
-    if (!config.adapter_device_path.empty()) {
-      json_obj.adapter_device_path = config.adapter_device_path;
-    }
-    if (config.target_path_id != 0) {
-      json_obj.target_path_id = config.target_path_id;
+    if (!config.adapter_instance_id.empty()) {
+      json_obj.adapter_instance_id = config.adapter_instance_id;
     }
 
-    if (!config.adapter_device_path.empty()) {
-      // ✅ PRIMARY STABLE ID
-      // `adapterDevicePath` stays the same across reboots in the common case
-      // (same GPU/driver instance). `path.targetInfo.id` is the "output/target
-      // on that adapter".
-      //
-      // `adapter_device_path` can be empty when
-      // `DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME)`
-      // fails (for example, no active console session). In that case, leave
-      // `primary_port_key` unset to avoid emitting a degenerate identifier.
-      json_obj.primary_port_key = std::format(
-          "adapter_device_path={}::target_path_id={}",
-          config.adapter_device_path, IntsToHex(config.target_path_id));
+    if (config.adapter_device_path.has_value()) {
+      json_obj.adapter_device_path = *config.adapter_device_path;
+    }
+    json_obj.target_path_id = config.target_path_id;
+
+    if (const std::string primary_port_key = BuildPrimaryPortKey(config);
+        !primary_port_key.empty()) {
+      json_obj.primary_port_key = primary_port_key;
     }
 
-    // ✅ SECONDARY STABLE ID
+    // ✅ SECONDARY STABLE ID INPUT
     DevicePath monitor_device_path = config.monitor_device_path;
 
     if (!monitor_device_path.empty()) {
       json_obj.monitor_device_path = monitor_device_path;
+      json_obj.monitor_path_key = BuildMonitorPathKey(monitor_device_path);
       json_obj.edid_info =
           wmi::GetWinEdidInfoFromDevicePath(monitor_device_path);
+      if (const std::string edid_key = BuildEdidKey(json_obj.edid_info);
+          !edid_key.empty()) {
+        json_obj.edid_key = edid_key;
+      }
     }
 
     json_obj.scan_line_ordering =
@@ -376,7 +459,7 @@ json::WinDisplay MergeDisplayDataToJson(
     //
     // - A monitor is connected but disabled in Display Settings:
     //   - Example: you have 2 monitors connected, but Windows is set to
-    //     "Show only on 1" (or you’ve "Disconnect this display" for the other).
+    //     "Show only on 1" (or you've "Disconnect this display" for the other).
     //     That other output can still exist, but it is not attached, so false.
     if (!device.is_attached_to_desktop) {
       std::cerr << "WARNING: DXGI device \"" << device.device_name
@@ -402,6 +485,8 @@ json::WinDisplay MergeDisplayDataToJson(
         json_utils::DxgiColorSpaceToJson(device.color_space);
   }
 
+  PopulateStableKeyFields(json_obj);
+
   return json_obj;
 }
 
@@ -422,6 +507,14 @@ std::string GetDisplayProberJson() {
   const std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice>
       dxgi_output_devices = dxgi::GetDxgiOutputDevices();
 
+  std::map<std::uintptr_t, dxgi::DxgiOutputDevice>
+      dxgi_output_devices_by_hmonitor;
+  for (const auto& [_, device] : dxgi_output_devices) {
+    if (device.hmonitor_id != 0) {
+      dxgi_output_devices_by_hmonitor[device.hmonitor_id] = device;
+    }
+  }
+
   if (gdi_display_configs.size() > basic_monitor_infos.size()) {
     std::cerr << std::endl;
     std::cerr << "WARNING: gdi_display_configs.size="
@@ -436,14 +529,16 @@ std::string GetDisplayProberJson() {
     std::cerr << std::endl;
     std::cerr << "gdi_display_configs:" << std::endl;
     for (const auto& [key, _] : gdi_display_configs) {
+      auto name = _.friendly_name;
+      auto adpt_path = _.adapter_device_path.value_or("nullopt");
+      auto tp_id = _.target_path_id;
+      auto mon_path = _.monitor_device_path;
+
       std::cerr << "    - " << key << std::endl;
-      std::cerr << "        - friendly_name: " << _.friendly_name << std::endl;
-      std::cerr << "        - adapter_device_path: " << _.adapter_device_path
-                << std::endl;
-      std::cerr << "        - target_path_id: " << _.target_path_id
-                << std::endl;
-      std::cerr << "        - monitor_device_path: " << _.monitor_device_path
-                << std::endl;
+      std::cerr << "        - friendly_name:       " << name << std::endl;
+      std::cerr << "        - adapter_device_path: " << adpt_path << std::endl;
+      std::cerr << "        - target_path_id:      " << tp_id << std::endl;
+      std::cerr << "        - monitor_device_path: " << mon_path << std::endl;
     }
     std::cerr << std::endl;
   }
@@ -469,8 +564,17 @@ std::string GetDisplayProberJson() {
     const auto gdi_display_config =
         TryGetOptionalValue(gdi_display_configs, short_lived_identifier);
 
-    const auto dxgi_output_device =
-        TryGetOptionalValue(dxgi_output_devices, short_lived_identifier);
+    std::optional<dxgi::DxgiOutputDevice> dxgi_output_device;
+
+    if (basicMonitorInfo.hmonitor_id != 0) {
+      dxgi_output_device = TryGetOptionalValue(dxgi_output_devices_by_hmonitor,
+                                               basicMonitorInfo.hmonitor_id);
+    }
+
+    if (!dxgi_output_device) {
+      dxgi_output_device =
+          TryGetOptionalValue(dxgi_output_devices, short_lived_identifier);
+    }
 
     json_payload.displays.push_back(MergeDisplayDataToJson(
         i++, basic_monitor_infos.size(), short_lived_identifier,

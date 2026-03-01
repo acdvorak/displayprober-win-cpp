@@ -198,12 +198,12 @@ std::string Base64Encode(const std::vector<std::uint8_t>& bytes) {
   return encoded;
 }
 
-std::string BytesToHex(std::span<const std::uint8_t> bytes) {
+std::string BytesToHexUpper(std::span<const std::uint8_t> bytes) {
   if (bytes.empty()) {
     return {};
   }
 
-  static constexpr char kHexDigits[] = "0123456789abcdef";
+  static constexpr char kHexDigits[] = "0123456789ABCDEF";
 
   std::string hex;
   hex.resize(bytes.size() * 2);
