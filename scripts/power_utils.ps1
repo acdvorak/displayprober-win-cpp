@@ -218,7 +218,7 @@ function Get-OsNameAndVersion {
   # Modern, human-friendly "feature update version" for Windows 10+,
   # starting in the year 2020.
   #
-  # Supercedes the old, obsolete Windows 10 `ReleaseId` field.
+  # Supersedes the old, obsolete Windows 10 `ReleaseId` field.
   #
   # Example values: 20H2, 21H2, 22H2, 23H2, 24H2
   $feature = if ($nt_cv.DisplayVersion) { $nt_cv.DisplayVersion } else { '' }
