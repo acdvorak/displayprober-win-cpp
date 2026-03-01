@@ -16,28 +16,28 @@ namespace json_utils {
 
 void PopulateRectangleIfZero(json::WinScreenRectangle& bounds, RECT& rect) {
   if (bounds.x == 0) {
-    bounds.x = static_cast<int64_t>(rect.left);
+    bounds.x = static_cast<int32_t>(rect.left);
   }
   if (bounds.y == 0) {
-    bounds.y = static_cast<int64_t>(rect.top);
+    bounds.y = static_cast<int32_t>(rect.top);
   }
   if (bounds.width == 0) {
-    bounds.width = static_cast<int64_t>(rect.right - rect.left);
+    bounds.width = static_cast<uint32_t>(rect.right - rect.left);
   }
   if (bounds.height == 0) {
-    bounds.height = static_cast<int64_t>(rect.bottom - rect.top);
+    bounds.height = static_cast<uint32_t>(rect.bottom - rect.top);
   }
   if (bounds.left == 0) {
-    bounds.left = static_cast<int64_t>(rect.left);
+    bounds.left = static_cast<int32_t>(rect.left);
   }
   if (bounds.top == 0) {
-    bounds.top = static_cast<int64_t>(rect.top);
+    bounds.top = static_cast<int32_t>(rect.top);
   }
   if (bounds.right == 0) {
-    bounds.right = static_cast<int64_t>(rect.right);
+    bounds.right = static_cast<int32_t>(rect.right);
   }
   if (bounds.bottom == 0) {
-    bounds.bottom = static_cast<int64_t>(rect.bottom);
+    bounds.bottom = static_cast<int32_t>(rect.bottom);
   }
 }
 

@@ -243,21 +243,21 @@ export interface WinDisplay {
  * Rectangle payload used by Bounds and WorkingArea.
  */
 export interface WinScreenRectangle {
-  /** @uint32 */
+  /** @int32 */
   x: number;
-  /** @uint32 */
+  /** @int32 */
   y: number;
   /** @uint32 */
   width: number;
   /** @uint32 */
   height: number;
-  /** @uint32 */
+  /** @int32 */
   left: number;
-  /** @uint32 */
+  /** @int32 */
   top: number;
-  /** @uint32 */
+  /** @int32 */
   right: number;
-  /** @uint32 */
+  /** @int32 */
   bottom: number;
 }
 

@@ -333,15 +333,15 @@
       "properties": {
         "x": {
           "type": "integer",
-          "fullDescription": "@uint32",
-          "minimum": 0,
-          "maximum": 4294967295
+          "fullDescription": "@int32",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         },
         "y": {
           "type": "integer",
-          "fullDescription": "@uint32",
-          "minimum": 0,
-          "maximum": 4294967295
+          "fullDescription": "@int32",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         },
         "width": {
           "type": "integer",
@@ -357,27 +357,27 @@
         },
         "left": {
           "type": "integer",
-          "fullDescription": "@uint32",
-          "minimum": 0,
-          "maximum": 4294967295
+          "fullDescription": "@int32",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         },
         "top": {
           "type": "integer",
-          "fullDescription": "@uint32",
-          "minimum": 0,
-          "maximum": 4294967295
+          "fullDescription": "@int32",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         },
         "right": {
           "type": "integer",
-          "fullDescription": "@uint32",
-          "minimum": 0,
-          "maximum": 4294967295
+          "fullDescription": "@int32",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         },
         "bottom": {
           "type": "integer",
-          "fullDescription": "@uint32",
-          "minimum": 0,
-          "maximum": 4294967295
+          "fullDescription": "@int32",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         }
       },
       "required": [

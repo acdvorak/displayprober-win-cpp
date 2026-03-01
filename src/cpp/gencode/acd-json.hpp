@@ -154,14 +154,14 @@ namespace json {
      * This *excludes* taskbars and other docked windows.
      */
     struct WinScreenRectangle {
-        uint32_t bottom;
+        int32_t bottom;
         uint32_t height;
-        uint32_t left;
-        uint32_t right;
-        uint32_t top;
+        int32_t left;
+        int32_t right;
+        int32_t top;
         uint32_t width;
-        uint32_t x;
-        uint32_t y;
+        int32_t x;
+        int32_t y;
     };
 
     struct WinEdidInfo {
@@ -502,14 +502,14 @@ namespace json {
     }
 
     inline void from_json(const json & j, WinScreenRectangle& x) {
-        x.bottom = j.at("bottom").get<uint32_t>();
+        x.bottom = j.at("bottom").get<int32_t>();
         x.height = j.at("height").get<uint32_t>();
-        x.left = j.at("left").get<uint32_t>();
-        x.right = j.at("right").get<uint32_t>();
-        x.top = j.at("top").get<uint32_t>();
+        x.left = j.at("left").get<int32_t>();
+        x.right = j.at("right").get<int32_t>();
+        x.top = j.at("top").get<int32_t>();
         x.width = j.at("width").get<uint32_t>();
-        x.x = j.at("x").get<uint32_t>();
-        x.y = j.at("y").get<uint32_t>();
+        x.x = j.at("x").get<int32_t>();
+        x.y = j.at("y").get<int32_t>();
     }
 
     inline void to_json(json & j, const WinScreenRectangle & x) {
