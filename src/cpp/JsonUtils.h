@@ -30,7 +30,7 @@ std::optional<json::WinActiveColorMode> ActiveColorModeToJson(
 std::optional<json::WinDxgiColorSpace> DxgiColorSpaceToJson(
     std::optional<DXGI_COLOR_SPACE_TYPE> color_space);
 
-std::optional<std::int64_t> DxgiRotationToJson(
+std::optional<json::WinDisplayRotationDegrees> DxgiRotationToJson(
     std::optional<DXGI_MODE_ROTATION> rotation_type);
 
 }  // namespace json_utils

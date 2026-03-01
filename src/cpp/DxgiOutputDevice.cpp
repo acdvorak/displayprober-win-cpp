@@ -53,6 +53,7 @@ void AppendDxgiOutputDevices(
     dxgi::DxgiOutputDevice& device = devices[deviceNameUtf8];
 
     device.device_name = deviceNameUtf8;
+    device.hmonitor_id = reinterpret_cast<std::uintptr_t>(desc.Monitor);
 
     // This value MIGHT be `false` under the following conditions:
     //
@@ -64,7 +65,7 @@ void AppendDxgiOutputDevices(
     //
     // - A monitor is connected but disabled in Display Settings:
     //   - Example: you have 2 monitors connected, but Windows is set to
-    //     "Show only on 1" (or you’ve "Disconnect this display" for the other).
+    //     "Show only on 1" (or you've "Disconnect this display" for the other).
     //     That other output can still exist, but it is not attached, so false.
     device.is_attached_to_desktop = desc.AttachedToDesktop;
 

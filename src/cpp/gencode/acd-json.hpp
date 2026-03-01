@@ -86,6 +86,45 @@ namespace json {
     }
     #endif
 
+    enum class WinDisplayRotationDegrees : uint16_t {
+        VALUE_0 = 0,
+        VALUE_90 = 90,
+        VALUE_180 = 180,
+        VALUE_270 = 270
+    };
+
+    enum class WinBitsPerColorChannel : uint8_t {
+        VALUE_0 = 0,
+        VALUE_6 = 6,
+        VALUE_8 = 8,
+        VALUE_10 = 10,
+        VALUE_12 = 12,
+        VALUE_14 = 14,
+        VALUE_16 = 16
+    };
+
+    enum class WmiVideoOutputTechnology : int64_t {
+        UNINITIALIZED = -2,
+        OTHER = -1,
+        VGA = 0,
+        SVIDEO = 1,
+        COMPOSITE_VIDEO = 2,
+        COMPONENT_VIDEO = 3,
+        DVI = 4,
+        HDMI = 5,
+        LVDS = 6,
+        D_JPN = 8,
+        SDI = 9,
+        DISPLAYPORT_EXTERNAL = 10,
+        DISPLAYPORT_EMBEDDED = 11,
+        UDI_EXTERNAL = 12,
+        UDI_EMBEDDED = 13,
+        SDTVDONGLE = 14,
+        MIRACAST = 15,
+        INDIRECT_WIRED = 16,
+        INTERNAL = 2147483648
+    };
+
     enum class WinActiveColorMode : int { HDR, SDR, UNSPECIFIED, WCG };
 
     struct WinAdvancedColorInfo {
@@ -115,14 +154,14 @@ namespace json {
      * This *excludes* taskbars and other docked windows.
      */
     struct WinScreenRectangle {
-        int64_t bottom;
-        int64_t height;
-        int64_t left;
-        int64_t right;
-        int64_t top;
-        int64_t width;
-        int64_t x;
-        int64_t y;
+        int32_t bottom;
+        uint32_t height;
+        int32_t left;
+        int32_t right;
+        int32_t top;
+        uint32_t width;
+        int32_t x;
+        int32_t y;
     };
 
     struct WinEdidInfo {
@@ -151,20 +190,20 @@ namespace json {
          * "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"
          */
         std::string normalized_join_key;
-        std::optional<int64_t> product_code_id;
-        std::optional<int64_t> serial_number_id;
+        std::optional<uint16_t> product_code_id;
+        std::optional<uint32_t> serial_number_id;
         std::optional<std::string> user_friendly_name;
         /**
          * Raw numeric value that gets mapped to  {@link  WinDisplayConnectorType } .
          */
-        std::optional<int64_t> video_output_technology_type;
-        std::optional<int64_t> week_of_manufacture;
+        std::optional<WmiVideoOutputTechnology> video_output_technology_type;
+        std::optional<uint8_t> week_of_manufacture;
         /**
          * E.g.: "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
          * "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"
          */
         std::optional<std::string> wmi_instance_name;
-        std::optional<int64_t> year_of_manufacture;
+        std::optional<uint16_t> year_of_manufacture;
     };
 
     /**
@@ -182,12 +221,14 @@ namespace json {
 
     enum class WinScanLineOrder : int { INTERLACED_LOWER_FIELD_FIRST, INTERLACED_UPPER_FIELD_FIRST, PROGRESSIVE, UNSPECIFIED };
 
+    enum class StableIdSource : int { EDID_KEY, MONITOR_PATH_KEY, PRIMARY_PORT_KEY };
+
     enum class WinColorEncoding : int { RGB, UNSPECIFIED, YCBCR420, YCBCR422, YCBCR444 };
 
     enum class WinDxgiColorSpace : int { CUSTOM, RESERVED, RGB_FULL_G10_NONE_P709, RGB_FULL_G2084_NONE_P2020, RGB_FULL_G22_NONE_P2020, RGB_FULL_G22_NONE_P709, RGB_STUDIO_G2084_NONE_P2020, RGB_STUDIO_G22_NONE_P2020, RGB_STUDIO_G22_NONE_P709, RGB_STUDIO_G24_NONE_P2020, RGB_STUDIO_G24_NONE_P709, YCBCR_FULL_G22_LEFT_P2020, YCBCR_FULL_G22_LEFT_P601, YCBCR_FULL_G22_LEFT_P709, YCBCR_FULL_G22_NONE_P709_X601, YCBCR_FULL_GHLG_TOPLEFT_P2020, YCBCR_STUDIO_G2084_LEFT_P2020, YCBCR_STUDIO_G2084_TOPLEFT_P2020, YCBCR_STUDIO_G22_LEFT_P2020, YCBCR_STUDIO_G22_LEFT_P601, YCBCR_STUDIO_G22_LEFT_P709, YCBCR_STUDIO_G22_TOPLEFT_P2020, YCBCR_STUDIO_G24_LEFT_P2020, YCBCR_STUDIO_G24_LEFT_P709, YCBCR_STUDIO_G24_TOPLEFT_P2020, YCBCR_STUDIO_GHLG_TOPLEFT_P2020 };
 
     struct WinStandardColorInfo {
-        std::optional<int64_t> bits_per_channel;
+        std::optional<WinBitsPerColorChannel> bits_per_channel;
         std::optional<WinColorEncoding> color_encoding;
         std::optional<WinDxgiColorSpace> dxgi_color_space;
         bool is_hdr_enabled;
@@ -213,6 +254,12 @@ namespace json {
          * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
          */
         std::optional<std::string> adapter_device_path;
+        /**
+         * Adapter Plug and Play instance id.
+         *
+         * More persistent than `adapter_device_path` across reboots and driver churn.
+         */
+        std::optional<std::string> adapter_instance_id;
         std::optional<WinAdvancedColorInfo> advanced_color_info;
         /**
          * The full size and position of the display, *including* the taskbar and any other areas
@@ -226,8 +273,14 @@ namespace json {
          *
          * The user can technically set any arbitrary value via registry hacks.
          */
-        std::optional<int64_t> dpi_scaling_percent;
+        std::optional<uint32_t> dpi_scaling_percent;
         std::optional<WinEdidInfo> edid_info;
+        /**
+         * Deterministic monitor identity key based on EDID.
+         *
+         * Only emitted when manufacturer, product code, and serial are available.
+         */
+        std::optional<std::string> edid_key;
         /**
          * Manufacturer-provided model name from the DisplayID or EDID.
          */
@@ -240,7 +293,7 @@ namespace json {
          * enumerate, but they are not part of the desktop, so     AttachedToDesktop is false.
          *
          * - A monitor is connected but disabled in Display Settings:   - Example: you have 2
-         * monitors connected, but Windows is set to     "Show only on 1" (or you’ve "Disconnect
+         * monitors connected, but Windows is set to     "Show only on 1" (or you've "Disconnect
          * this display" for the other).     That other output can still exist, but it is not
          * attached, so false.
          *
@@ -266,6 +319,10 @@ namespace json {
          */
         std::optional<std::string> monitor_device_path;
         /**
+         * Deterministic key derived from  {@link  monitor_device_path } .
+         */
+        std::optional<std::string> monitor_path_key;
+        /**
          * Normalized join key, with trailing `_0` removed from  {@link  wmi_instance_name } .
          *
          * E.g.:
@@ -289,13 +346,13 @@ namespace json {
          * `DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the "output/target on that adapter".
          */
         std::optional<std::string> primary_port_key;
-        std::optional<int64_t> refresh_rate_denominator;
+        std::optional<uint32_t> refresh_rate_denominator;
         /**
          * {@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .
          */
         std::optional<double> refresh_rate_hz;
-        std::optional<int64_t> refresh_rate_numerator;
-        std::optional<int64_t> rotation_deg;
+        std::optional<uint32_t> refresh_rate_numerator;
+        std::optional<WinDisplayRotationDegrees> rotation_deg;
         /**
          * Progressive or interlaced.
          */
@@ -306,11 +363,25 @@ namespace json {
          * ⚠️ NOT stable across device disconnects/reconnects.
          */
         std::string short_lived_identifier;
+        /**
+         * Effective stable id after applying candidate ordering.
+         */
+        std::optional<std::string> stable_id;
+        /**
+         * Candidate stable keys ordered from strongest to weakest.
+         *
+         * 1. `primary_port_key` 2. `monitor_path_key` 3. `edid_key`
+         */
+        std::optional<std::vector<std::string>> stable_id_candidates;
+        /**
+         * Indicates which candidate produced  {@link  stable_id } .
+         */
+        std::optional<StableIdSource> stable_id_source;
         WinStandardColorInfo standard_color_info;
         /**
          * Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
          */
-        std::optional<int64_t> target_path_id;
+        std::optional<uint32_t> target_path_id;
         /**
          * E.g.:
          * - "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
@@ -381,11 +452,23 @@ namespace json {
     void from_json(const json & j, WinScanLineOrder & x);
     void to_json(json & j, const WinScanLineOrder & x);
 
+    void from_json(const json & j, StableIdSource & x);
+    void to_json(json & j, const StableIdSource & x);
+
     void from_json(const json & j, WinColorEncoding & x);
     void to_json(json & j, const WinColorEncoding & x);
 
     void from_json(const json & j, WinDxgiColorSpace & x);
     void to_json(json & j, const WinDxgiColorSpace & x);
+
+    void from_json(const json & j, WinDisplayRotationDegrees & x);
+    void to_json(json & j, const WinDisplayRotationDegrees & x);
+
+    void from_json(const json & j, WinBitsPerColorChannel & x);
+    void to_json(json & j, const WinBitsPerColorChannel & x);
+
+    void from_json(const json & j, WmiVideoOutputTechnology & x);
+    void to_json(json & j, const WmiVideoOutputTechnology & x);
 
     inline void from_json(const json & j, WinAdvancedColorInfo& x) {
         x.active_color_mode = get_stack_optional<WinActiveColorMode>(j, "active_color_mode");
@@ -419,14 +502,14 @@ namespace json {
     }
 
     inline void from_json(const json & j, WinScreenRectangle& x) {
-        x.bottom = j.at("bottom").get<int64_t>();
-        x.height = j.at("height").get<int64_t>();
-        x.left = j.at("left").get<int64_t>();
-        x.right = j.at("right").get<int64_t>();
-        x.top = j.at("top").get<int64_t>();
-        x.width = j.at("width").get<int64_t>();
-        x.x = j.at("x").get<int64_t>();
-        x.y = j.at("y").get<int64_t>();
+        x.bottom = j.at("bottom").get<int32_t>();
+        x.height = j.at("height").get<uint32_t>();
+        x.left = j.at("left").get<int32_t>();
+        x.right = j.at("right").get<int32_t>();
+        x.top = j.at("top").get<int32_t>();
+        x.width = j.at("width").get<uint32_t>();
+        x.x = j.at("x").get<int32_t>();
+        x.y = j.at("y").get<int32_t>();
     }
 
     inline void to_json(json & j, const WinScreenRectangle & x) {
@@ -448,13 +531,13 @@ namespace json {
         x.max_vertical_image_size_mm = get_stack_optional<double>(j, "max_vertical_image_size_mm");
         x.monitor_device_path = j.at("monitor_device_path").get<std::string>();
         x.normalized_join_key = j.at("normalized_join_key").get<std::string>();
-        x.product_code_id = get_stack_optional<int64_t>(j, "product_code_id");
-        x.serial_number_id = get_stack_optional<int64_t>(j, "serial_number_id");
+        x.product_code_id = get_stack_optional<uint16_t>(j, "product_code_id");
+        x.serial_number_id = get_stack_optional<uint32_t>(j, "serial_number_id");
         x.user_friendly_name = get_stack_optional<std::string>(j, "user_friendly_name");
-        x.video_output_technology_type = get_stack_optional<int64_t>(j, "video_output_technology_type");
-        x.week_of_manufacture = get_stack_optional<int64_t>(j, "week_of_manufacture");
+        x.video_output_technology_type = get_stack_optional<WmiVideoOutputTechnology>(j, "video_output_technology_type");
+        x.week_of_manufacture = get_stack_optional<uint8_t>(j, "week_of_manufacture");
         x.wmi_instance_name = get_stack_optional<std::string>(j, "wmi_instance_name");
-        x.year_of_manufacture = get_stack_optional<int64_t>(j, "year_of_manufacture");
+        x.year_of_manufacture = get_stack_optional<uint16_t>(j, "year_of_manufacture");
     }
 
     inline void to_json(json & j, const WinEdidInfo & x) {
@@ -497,7 +580,7 @@ namespace json {
     }
 
     inline void from_json(const json & j, WinStandardColorInfo& x) {
-        x.bits_per_channel = get_stack_optional<int64_t>(j, "bits_per_channel");
+        x.bits_per_channel = get_stack_optional<WinBitsPerColorChannel>(j, "bits_per_channel");
         x.color_encoding = get_stack_optional<WinColorEncoding>(j, "color_encoding");
         x.dxgi_color_space = get_stack_optional<WinDxgiColorSpace>(j, "dxgi_color_space");
         x.is_hdr_enabled = j.at("is_hdr_enabled").get<bool>();
@@ -533,25 +616,31 @@ namespace json {
 
     inline void from_json(const json & j, WinDisplay& x) {
         x.adapter_device_path = get_stack_optional<std::string>(j, "adapter_device_path");
+        x.adapter_instance_id = get_stack_optional<std::string>(j, "adapter_instance_id");
         x.advanced_color_info = get_stack_optional<WinAdvancedColorInfo>(j, "advanced_color_info");
         x.bounds = j.at("bounds").get<WinScreenRectangle>();
-        x.dpi_scaling_percent = get_stack_optional<int64_t>(j, "dpi_scaling_percent");
+        x.dpi_scaling_percent = get_stack_optional<uint32_t>(j, "dpi_scaling_percent");
         x.edid_info = get_stack_optional<WinEdidInfo>(j, "edid_info");
+        x.edid_key = get_stack_optional<std::string>(j, "edid_key");
         x.friendly_name = get_stack_optional<std::string>(j, "friendly_name");
         x.is_attached_to_desktop = get_stack_optional<bool>(j, "is_attached_to_desktop");
         x.is_primary = j.at("is_primary").get<bool>();
         x.monitor_device_path = get_stack_optional<std::string>(j, "monitor_device_path");
+        x.monitor_path_key = get_stack_optional<std::string>(j, "monitor_path_key");
         x.normalized_join_key = get_stack_optional<std::string>(j, "normalized_join_key");
         x.physical_connector_type = get_stack_optional<WinDisplayConnectorType>(j, "physical_connector_type");
         x.primary_port_key = get_stack_optional<std::string>(j, "primary_port_key");
-        x.refresh_rate_denominator = get_stack_optional<int64_t>(j, "refresh_rate_denominator");
+        x.refresh_rate_denominator = get_stack_optional<uint32_t>(j, "refresh_rate_denominator");
         x.refresh_rate_hz = get_stack_optional<double>(j, "refresh_rate_hz");
-        x.refresh_rate_numerator = get_stack_optional<int64_t>(j, "refresh_rate_numerator");
-        x.rotation_deg = get_stack_optional<int64_t>(j, "rotation_deg");
+        x.refresh_rate_numerator = get_stack_optional<uint32_t>(j, "refresh_rate_numerator");
+        x.rotation_deg = get_stack_optional<WinDisplayRotationDegrees>(j, "rotation_deg");
         x.scan_line_ordering = get_stack_optional<WinScanLineOrder>(j, "scan_line_ordering");
         x.short_lived_identifier = j.at("short_lived_identifier").get<std::string>();
+        x.stable_id = get_stack_optional<std::string>(j, "stable_id");
+        x.stable_id_candidates = get_stack_optional<std::vector<std::string>>(j, "stable_id_candidates");
+        x.stable_id_source = get_stack_optional<StableIdSource>(j, "stable_id_source");
         x.standard_color_info = j.at("standard_color_info").get<WinStandardColorInfo>();
-        x.target_path_id = get_stack_optional<int64_t>(j, "target_path_id");
+        x.target_path_id = get_stack_optional<uint32_t>(j, "target_path_id");
         x.wmi_instance_name = get_stack_optional<std::string>(j, "wmi_instance_name");
         x.working_area = j.at("working_area").get<WinScreenRectangle>();
     }
@@ -560,6 +649,9 @@ namespace json {
         j = json::object();
         if (x.adapter_device_path) {
             j["adapter_device_path"] = x.adapter_device_path;
+        }
+        if (x.adapter_instance_id) {
+            j["adapter_instance_id"] = x.adapter_instance_id;
         }
         if (x.advanced_color_info) {
             j["advanced_color_info"] = x.advanced_color_info;
@@ -571,6 +663,9 @@ namespace json {
         if (x.edid_info) {
             j["edid_info"] = x.edid_info;
         }
+        if (x.edid_key) {
+            j["edid_key"] = x.edid_key;
+        }
         if (x.friendly_name) {
             j["friendly_name"] = x.friendly_name;
         }
@@ -580,6 +675,9 @@ namespace json {
         j["is_primary"] = x.is_primary;
         if (x.monitor_device_path) {
             j["monitor_device_path"] = x.monitor_device_path;
+        }
+        if (x.monitor_path_key) {
+            j["monitor_path_key"] = x.monitor_path_key;
         }
         if (x.normalized_join_key) {
             j["normalized_join_key"] = x.normalized_join_key;
@@ -606,6 +704,15 @@ namespace json {
             j["scan_line_ordering"] = x.scan_line_ordering;
         }
         j["short_lived_identifier"] = x.short_lived_identifier;
+        if (x.stable_id) {
+            j["stable_id"] = x.stable_id;
+        }
+        if (x.stable_id_candidates) {
+            j["stable_id_candidates"] = x.stable_id_candidates;
+        }
+        if (x.stable_id_source) {
+            j["stable_id_source"] = x.stable_id_source;
+        }
         j["standard_color_info"] = x.standard_color_info;
         if (x.target_path_id) {
             j["target_path_id"] = x.target_path_id;
@@ -631,6 +738,104 @@ namespace json {
         j["is_virtual_machine"] = x.is_virtual_machine;
     }
 
+    inline void from_json(const json & j, WinDisplayRotationDegrees & x) {
+        const auto value = j.get<int64_t>();
+        switch (value) {
+            case 0: x = WinDisplayRotationDegrees::VALUE_0; break;
+            case 90: x = WinDisplayRotationDegrees::VALUE_90; break;
+            case 180: x = WinDisplayRotationDegrees::VALUE_180; break;
+            case 270: x = WinDisplayRotationDegrees::VALUE_270; break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void to_json(json & j, const WinDisplayRotationDegrees & x) {
+        switch (x) {
+            case WinDisplayRotationDegrees::VALUE_0: j = 0; break;
+            case WinDisplayRotationDegrees::VALUE_90: j = 90; break;
+            case WinDisplayRotationDegrees::VALUE_180: j = 180; break;
+            case WinDisplayRotationDegrees::VALUE_270: j = 270; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"WinDisplayRotationDegrees\": " + std::to_string(static_cast<int64_t>(x)));
+        }
+    }
+
+    inline void from_json(const json & j, WinBitsPerColorChannel & x) {
+        const auto value = j.get<int64_t>();
+        switch (value) {
+            case 0: x = WinBitsPerColorChannel::VALUE_0; break;
+            case 6: x = WinBitsPerColorChannel::VALUE_6; break;
+            case 8: x = WinBitsPerColorChannel::VALUE_8; break;
+            case 10: x = WinBitsPerColorChannel::VALUE_10; break;
+            case 12: x = WinBitsPerColorChannel::VALUE_12; break;
+            case 14: x = WinBitsPerColorChannel::VALUE_14; break;
+            case 16: x = WinBitsPerColorChannel::VALUE_16; break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void to_json(json & j, const WinBitsPerColorChannel & x) {
+        switch (x) {
+            case WinBitsPerColorChannel::VALUE_0: j = 0; break;
+            case WinBitsPerColorChannel::VALUE_6: j = 6; break;
+            case WinBitsPerColorChannel::VALUE_8: j = 8; break;
+            case WinBitsPerColorChannel::VALUE_10: j = 10; break;
+            case WinBitsPerColorChannel::VALUE_12: j = 12; break;
+            case WinBitsPerColorChannel::VALUE_14: j = 14; break;
+            case WinBitsPerColorChannel::VALUE_16: j = 16; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"WinBitsPerColorChannel\": " + std::to_string(static_cast<int64_t>(x)));
+        }
+    }
+
+    inline void from_json(const json & j, WmiVideoOutputTechnology & x) {
+        const auto value = j.get<int64_t>();
+        switch (value) {
+            case -2: x = WmiVideoOutputTechnology::UNINITIALIZED; break;
+            case -1: x = WmiVideoOutputTechnology::OTHER; break;
+            case 0: x = WmiVideoOutputTechnology::VGA; break;
+            case 1: x = WmiVideoOutputTechnology::SVIDEO; break;
+            case 2: x = WmiVideoOutputTechnology::COMPOSITE_VIDEO; break;
+            case 3: x = WmiVideoOutputTechnology::COMPONENT_VIDEO; break;
+            case 4: x = WmiVideoOutputTechnology::DVI; break;
+            case 5: x = WmiVideoOutputTechnology::HDMI; break;
+            case 6: x = WmiVideoOutputTechnology::LVDS; break;
+            case 8: x = WmiVideoOutputTechnology::D_JPN; break;
+            case 9: x = WmiVideoOutputTechnology::SDI; break;
+            case 10: x = WmiVideoOutputTechnology::DISPLAYPORT_EXTERNAL; break;
+            case 11: x = WmiVideoOutputTechnology::DISPLAYPORT_EMBEDDED; break;
+            case 12: x = WmiVideoOutputTechnology::UDI_EXTERNAL; break;
+            case 13: x = WmiVideoOutputTechnology::UDI_EMBEDDED; break;
+            case 14: x = WmiVideoOutputTechnology::SDTVDONGLE; break;
+            case 15: x = WmiVideoOutputTechnology::MIRACAST; break;
+            case 16: x = WmiVideoOutputTechnology::INDIRECT_WIRED; break;
+            case 2147483648: x = WmiVideoOutputTechnology::INTERNAL; break;
+            default: throw std::runtime_error("Input JSON does not conform to schema!");
+        }
+    }
+
+    inline void to_json(json & j, const WmiVideoOutputTechnology & x) {
+        switch (x) {
+            case WmiVideoOutputTechnology::UNINITIALIZED: j = -2; break;
+            case WmiVideoOutputTechnology::OTHER: j = -1; break;
+            case WmiVideoOutputTechnology::VGA: j = 0; break;
+            case WmiVideoOutputTechnology::SVIDEO: j = 1; break;
+            case WmiVideoOutputTechnology::COMPOSITE_VIDEO: j = 2; break;
+            case WmiVideoOutputTechnology::COMPONENT_VIDEO: j = 3; break;
+            case WmiVideoOutputTechnology::DVI: j = 4; break;
+            case WmiVideoOutputTechnology::HDMI: j = 5; break;
+            case WmiVideoOutputTechnology::LVDS: j = 6; break;
+            case WmiVideoOutputTechnology::D_JPN: j = 8; break;
+            case WmiVideoOutputTechnology::SDI: j = 9; break;
+            case WmiVideoOutputTechnology::DISPLAYPORT_EXTERNAL: j = 10; break;
+            case WmiVideoOutputTechnology::DISPLAYPORT_EMBEDDED: j = 11; break;
+            case WmiVideoOutputTechnology::UDI_EXTERNAL: j = 12; break;
+            case WmiVideoOutputTechnology::UDI_EMBEDDED: j = 13; break;
+            case WmiVideoOutputTechnology::SDTVDONGLE: j = 14; break;
+            case WmiVideoOutputTechnology::MIRACAST: j = 15; break;
+            case WmiVideoOutputTechnology::INDIRECT_WIRED: j = 16; break;
+            case WmiVideoOutputTechnology::INTERNAL: j = 2147483648; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"WmiVideoOutputTechnology\": " + std::to_string(static_cast<int64_t>(x)));
+        }
+    }
     inline void from_json(const json & j, WinActiveColorMode & x) {
         if (j == "hdr") x = WinActiveColorMode::HDR;
         else if (j == "sdr") x = WinActiveColorMode::SDR;
@@ -723,6 +928,22 @@ namespace json {
             case WinScanLineOrder::PROGRESSIVE: j = "progressive"; break;
             case WinScanLineOrder::UNSPECIFIED: j = "unspecified"; break;
             default: throw std::runtime_error("Unexpected value in enumeration \"WinScanLineOrder\": " + std::to_string(static_cast<int>(x)));
+        }
+    }
+
+    inline void from_json(const json & j, StableIdSource & x) {
+        if (j == "edid_key") x = StableIdSource::EDID_KEY;
+        else if (j == "monitor_path_key") x = StableIdSource::MONITOR_PATH_KEY;
+        else if (j == "primary_port_key") x = StableIdSource::PRIMARY_PORT_KEY;
+        else { throw std::runtime_error("Input JSON does not conform to schema!"); }
+    }
+
+    inline void to_json(json & j, const StableIdSource & x) {
+        switch (x) {
+            case StableIdSource::EDID_KEY: j = "edid_key"; break;
+            case StableIdSource::MONITOR_PATH_KEY: j = "monitor_path_key"; break;
+            case StableIdSource::PRIMARY_PORT_KEY: j = "primary_port_key"; break;
+            default: throw std::runtime_error("Unexpected value in enumeration \"StableIdSource\": " + std::to_string(static_cast<int>(x)));
         }
     }
 

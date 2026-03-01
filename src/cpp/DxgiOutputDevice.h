@@ -2,6 +2,7 @@
 
 #include <dxgi.h>
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
@@ -34,6 +35,8 @@ struct DxgiOutputDevice {
   // ```
   ShortLivedIdentifier device_name;
 
+  std::uintptr_t hmonitor_id = 0;
+
   // This value MIGHT be `false` under the following conditions:
   //
   // - Unused connectors on the GPU:
@@ -44,7 +47,7 @@ struct DxgiOutputDevice {
   //
   // - A monitor is connected but disabled in Display Settings:
   //   - Example: you have 2 monitors connected, but Windows is set to
-  //     "Show only on 1" (or you’ve "Disconnect this display" for the other).
+  //     "Show only on 1" (or you've "Disconnect this display" for the other).
   //     That other output can still exist, but it is not attached, so false.
   bool is_attached_to_desktop = false;
 

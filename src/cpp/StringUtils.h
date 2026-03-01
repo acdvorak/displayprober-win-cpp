@@ -22,7 +22,7 @@ std::string ToUpperAscii(std::string_view value);
 
 std::string Base64Encode(const std::vector<std::uint8_t>& bytes);
 
-std::string BytesToHex(std::span<const std::uint8_t> bytes);
+std::string BytesToHexUpper(std::span<const std::uint8_t> bytes);
 
 template <typename T>
 inline constexpr bool kHexByteConcatenable =
@@ -49,7 +49,7 @@ std::string IntsToHex(const Ts&... values) {
   bytes.reserve((sizeof(Ts) + ... + 0));
   (AppendRawBytes(bytes, values), ...);
 
-  return BytesToHex(bytes);
+  return BytesToHexUpper(bytes);
 }
 
 template <typename T>
@@ -65,7 +65,7 @@ std::string IntsToHex(std::span<const T> values) {
     AppendRawBytes(bytes, value);
   }
 
-  return BytesToHex(bytes);
+  return BytesToHexUpper(bytes);
 }
 
 bool EqualsIgnoreCase(const std::string_view& lhs, const std::string_view& rhs);

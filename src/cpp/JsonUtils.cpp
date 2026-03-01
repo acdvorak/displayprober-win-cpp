@@ -16,28 +16,28 @@ namespace json_utils {
 
 void PopulateRectangleIfZero(json::WinScreenRectangle& bounds, RECT& rect) {
   if (bounds.x == 0) {
-    bounds.x = static_cast<int64_t>(rect.left);
+    bounds.x = static_cast<int32_t>(rect.left);
   }
   if (bounds.y == 0) {
-    bounds.y = static_cast<int64_t>(rect.top);
+    bounds.y = static_cast<int32_t>(rect.top);
   }
   if (bounds.width == 0) {
-    bounds.width = static_cast<int64_t>(rect.right - rect.left);
+    bounds.width = static_cast<uint32_t>(rect.right - rect.left);
   }
   if (bounds.height == 0) {
-    bounds.height = static_cast<int64_t>(rect.bottom - rect.top);
+    bounds.height = static_cast<uint32_t>(rect.bottom - rect.top);
   }
   if (bounds.left == 0) {
-    bounds.left = static_cast<int64_t>(rect.left);
+    bounds.left = static_cast<int32_t>(rect.left);
   }
   if (bounds.top == 0) {
-    bounds.top = static_cast<int64_t>(rect.top);
+    bounds.top = static_cast<int32_t>(rect.top);
   }
   if (bounds.right == 0) {
-    bounds.right = static_cast<int64_t>(rect.right);
+    bounds.right = static_cast<int32_t>(rect.right);
   }
   if (bounds.bottom == 0) {
-    bounds.bottom = static_cast<int64_t>(rect.bottom);
+    bounds.bottom = static_cast<int32_t>(rect.bottom);
   }
 }
 
@@ -234,20 +234,20 @@ std::optional<json::WinDxgiColorSpace> DxgiColorSpaceToJson(
   }
 }
 
-std::optional<std::int64_t> DxgiRotationToJson(
+std::optional<json::WinDisplayRotationDegrees> DxgiRotationToJson(
     std::optional<DXGI_MODE_ROTATION> rotation_type) {
   if (!rotation_type.has_value()) {
     return std::nullopt;
   }
   switch (*rotation_type) {
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_IDENTITY:
-      return 0;
+      return json::WinDisplayRotationDegrees::VALUE_0;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_ROTATE90:
-      return 90;
+      return json::WinDisplayRotationDegrees::VALUE_90;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_ROTATE180:
-      return 180;
+      return json::WinDisplayRotationDegrees::VALUE_180;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_ROTATE270:
-      return 270;
+      return json::WinDisplayRotationDegrees::VALUE_270;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_UNSPECIFIED:
     default:
       return std::nullopt;

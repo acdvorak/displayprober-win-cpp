@@ -2,6 +2,7 @@
 
 #include <windows.h>
 
+// Keep this separate from Windows.h, which needs to be included first.
 #include <ShellScalingApi.h>
 
 #include <iostream>
@@ -45,13 +46,15 @@ BOOL CALLBACK EnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM) {
   ShortLivedIdentifier monitorNameUtf8 = WideToUtf8(monitorInfoEx.szDevice);
 
   basic::BasicMonitorInfo& monitor = basic_monitor_infos[monitorNameUtf8];
+  monitor.short_lived_identifier = monitorNameUtf8;
+  monitor.hmonitor_id = reinterpret_cast<std::uintptr_t>(hMonitor);
 
   monitor.is_primary = ((monitorInfoEx.dwFlags & MONITORINFOF_PRIMARY) != 0);
 
   if (const auto get_dpi_for_monitor = ResolveGetDpiForMonitor()) {
     UINT dpiX, dpiY;
-    if (S_OK == get_dpi_for_monitor(hMonitor, MDT_EFFECTIVE_DPI, &dpiX,
-                                    &dpiY)) {
+    if (S_OK ==
+        get_dpi_for_monitor(hMonitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY)) {
       monitor.dpi_scale_percent = std::lround(dpiY * 100. / 96.);
     }
   }

@@ -499,7 +499,9 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
         if (const auto value = GetUint32Property(inst, "VideoOutputTechnology");
             value.has_value() && *value >= D3DKMDT_VOT_UNINITIALIZED &&
             *value <= D3DKMDT_VOT_INTERNAL) {
-          info.video_output_technology_type = static_cast<int64_t>(*value);
+          info.video_output_technology_type =
+              static_cast<json::WmiVideoOutputTechnology>(
+                  static_cast<int64_t>(*value));
           has_populated_data = true;
         }
       });
