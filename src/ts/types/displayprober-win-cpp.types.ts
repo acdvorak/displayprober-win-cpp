@@ -342,8 +342,6 @@ export interface WinEdidInfo {
 
   /**
    * Raw numeric value that gets mapped to {@link WinDisplayConnectorType}.
-   *
-   * @uint32
    */
   video_output_technology_type?: WmiVideoOutputTechnology | null;
 
@@ -517,7 +515,7 @@ export enum WmiVideoOutputTechnology {
   /**
    * HD15 (VGA) connector.
    */
-  hd15 = 0,
+  vga = 0,
 
   /**
    * S-video connector.

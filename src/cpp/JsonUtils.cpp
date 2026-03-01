@@ -234,20 +234,20 @@ std::optional<json::WinDxgiColorSpace> DxgiColorSpaceToJson(
   }
 }
 
-std::optional<std::int64_t> DxgiRotationToJson(
+std::optional<json::WinDisplayRotationDegrees> DxgiRotationToJson(
     std::optional<DXGI_MODE_ROTATION> rotation_type) {
   if (!rotation_type.has_value()) {
     return std::nullopt;
   }
   switch (*rotation_type) {
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_IDENTITY:
-      return 0;
+      return json::WinDisplayRotationDegrees::VALUE_0;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_ROTATE90:
-      return 90;
+      return json::WinDisplayRotationDegrees::VALUE_90;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_ROTATE180:
-      return 180;
+      return json::WinDisplayRotationDegrees::VALUE_180;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_ROTATE270:
-      return 270;
+      return json::WinDisplayRotationDegrees::VALUE_270;
     case DXGI_MODE_ROTATION::DXGI_MODE_ROTATION_UNSPECIFIED:
     default:
       return std::nullopt;

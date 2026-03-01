@@ -325,7 +325,7 @@ json::WinDisplay MergeDisplayDataToJson(
   json_obj.working_area = basic_info.working_area;
 
   if (const auto pct = basic_info.dpi_scale_percent.value_or(0); pct > 0) {
-    json_obj.dpi_scaling_percent = static_cast<int64_t>(pct);
+    json_obj.dpi_scaling_percent = static_cast<uint32_t>(pct);
   }
 
   // Initialize all primitive fields to their default values.
@@ -388,7 +388,7 @@ json::WinDisplay MergeDisplayDataToJson(
 
     if (config.hasAdvancedColorInfo) {
       json_obj.standard_color_info.bits_per_channel =
-          static_cast<int64_t>(config.bitsPerChannel);
+          static_cast<json::WinBitsPerColorChannel>(config.bitsPerChannel);
       json_obj.standard_color_info.color_encoding =
           json_utils::ColorEncodingToJson(config.colorEncoding);
 

@@ -693,9 +693,7 @@
           ],
           "description": "Raw numeric value that gets mapped to  {@link  WinDisplayConnectorType } .",
           "markdownDescription": "Raw numeric value that gets mapped to  {@link  WinDisplayConnectorType } .",
-          "fullDescription": "Raw numeric value that gets mapped to {@link WinDisplayConnectorType}.\n\n@uint32",
-          "minimum": 0,
-          "maximum": 4294967295
+          "fullDescription": "Raw numeric value that gets mapped to {@link WinDisplayConnectorType}."
         },
         "manufacturer_vid": {
           "type": [

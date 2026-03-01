@@ -43,13 +43,13 @@ function normalizeIntegerTypes(node: unknown): void {
       | { minimum: number | bigint; maximum: number | bigint }
       | undefined = undefined;
     if (fullDescription.includes('@uint64')) {
-      bounds = { minimum: 0x00, maximum: 0xffffffffffffffffn };
+      bounds = { minimum: 0, maximum: Number.MAX_SAFE_INTEGER };
     } else if (fullDescription.includes('@uint32')) {
-      bounds = { minimum: 0x00, maximum: 0xffffffff };
+      bounds = { minimum: 0, maximum: 0xffffffff };
     } else if (fullDescription.includes('@uint16')) {
-      bounds = { minimum: 0x00, maximum: 0xffff };
+      bounds = { minimum: 0, maximum: 0xffff };
     } else if (fullDescription.includes('@uint8')) {
-      bounds = { minimum: 0x00, maximum: 0xff };
+      bounds = { minimum: 0, maximum: 0xff };
     } else if (fullDescription.includes('@int64')) {
       bounds = { minimum: -4_294_967_295, maximum: 4_294_967_294 };
     } else if (fullDescription.includes('@int32')) {
