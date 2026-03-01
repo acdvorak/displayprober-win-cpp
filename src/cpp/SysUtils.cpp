@@ -216,7 +216,7 @@ bool IsVirtualMachineUncached() {
   std::memcpy(hyperVisorVendor.data() + 4, &cpuInfo[2], 4);
   std::memcpy(hyperVisorVendor.data() + 8, &cpuInfo[3], 4);
 
-  if (ContainsAnyToken(hyperVisorVendor, hyper_visor_tokens)) {
+  if (ContainsAnySubstring(hyperVisorVendor, hyper_visor_tokens)) {
     return true;
   }
 
@@ -228,7 +228,7 @@ bool IsVirtualMachineUncached() {
     concatenatedSmBiosStrings.append(entry);
   }
 
-  return ContainsAnyToken(concatenatedSmBiosStrings, sm_bios_tokens);
+  return ContainsAnySubstring(concatenatedSmBiosStrings, sm_bios_tokens);
 }
 
 bool HasInteractiveDesktopUncached() {

@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug CTest (CMake Tools)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${cmake.testProgram}",
+      "args": ["${cmake.testArgs}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+    },
+  ],
+}

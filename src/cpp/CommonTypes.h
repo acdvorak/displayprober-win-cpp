@@ -45,3 +45,14 @@ using NormalizedJoinKey = std::string;
 //
 // `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
 using DevicePath = std::string;
+
+// clang-format off
+constexpr std::uint8_t  u8 (unsigned long long v) { return static_cast<std::uint8_t>(v); }
+constexpr std::int8_t   i8 (long long v)          { return static_cast<std::int8_t>(v); }
+constexpr std::uint16_t u16(unsigned long long v) { return static_cast<std::uint16_t>(v); }
+constexpr std::int16_t  i16(long long v)          { return static_cast<std::int16_t>(v); }
+constexpr std::uint32_t u32(unsigned long long v) { return static_cast<std::uint32_t>(v); }
+constexpr std::int32_t  i32(long long v)          { return static_cast<std::int32_t>(v); }
+constexpr std::uint64_t u64(unsigned long long v) { return static_cast<std::uint64_t>(v); }
+constexpr std::int64_t  i64(long long v)          { return static_cast<std::int64_t>(v); }
+// clang-format on

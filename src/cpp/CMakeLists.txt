@@ -21,6 +21,9 @@ cmake_policy(SET CMP0091 NEW)
 
 project("DisplayProber" VERSION "1.0.0" LANGUAGES CXX)
 
+option(BUILD_TESTING "Build tests" OFF)
+include(CTest)
+
 ################################################################################
 # EXE FILE PROPERTIES
 ################################################################################
@@ -132,6 +135,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(STATIC_CRT "Static runtime" ON)
 
+add_library(TestStringUtils STATIC
+  StringUtils.cpp
+)
+target_compile_features(TestStringUtils PUBLIC cxx_std_20)
+target_include_directories(TestStringUtils PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_executable(${PROJECT_NAME}
   CLI.cpp
   BasicMonitorInfo.cpp
@@ -140,11 +151,18 @@ add_executable(${PROJECT_NAME}
   EdidBytes.cpp
   GdiDisplayConfig.cpp
   JsonUtils.cpp
-  StringUtils.cpp
   SysUtils.cpp
   WmiQueries.cpp
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE dxgi mi Setupapi Shcore Wtsapi32)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  TestStringUtils
+  dxgi
+  mi
+  Setupapi
+  Shcore
+  Wtsapi32
+)
 
 set_property(SOURCE CLI.cpp APPEND PROPERTY COMPILE_DEFINITIONS
   DP4W_VERSION_TAG="${DP4W_VERSION_TAG}"
@@ -162,6 +180,10 @@ if(MSVC)
   target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/DisplayProberVersion.rc")
 
   if(STATIC_CRT)
+    set_target_properties(TestStringUtils PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+
     set_target_properties(${PROJECT_NAME} PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
@@ -182,4 +204,16 @@ else()
   if(STATIC_CRT)
     target_link_options(${PROJECT_NAME} PRIVATE "-static")
   endif()
+endif()
+
+if(BUILD_TESTING)
+  enable_testing()
+
+  add_library(doctest INTERFACE)
+  add_library(doctest::doctest ALIAS doctest)
+  target_include_directories(doctest INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/doctest
+  )
+
+  add_subdirectory(tests)
 endif()
