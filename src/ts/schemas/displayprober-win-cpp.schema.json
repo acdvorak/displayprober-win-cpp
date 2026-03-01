@@ -62,14 +62,41 @@
           "markdownDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.",
           "fullDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.\n\n@example \"\\\\\\\\.\\\\DISPLAY1\" (multi-monitor)\n@example \"\\\\\\\\.\\\\DISPLAY2\" (multi-monitor)\n@example \"\\\\\\\\.\\\\DISPLAY129\" (Remote Desktop)\n@example \"DISPLAY\" (single-monitor)\n@example \"WinDisc\" (SSH console)"
         },
-        "device_path": {
+        "adapter_device_path": {
           "type": [
             "string",
             "null"
           ],
-          "description": "E.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
-          "markdownDescription": "E.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
-          "fullDescription": "E.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`"
+          "description": "Persistent across reboots in the common case (same GPU/driver instance).\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`",
+          "markdownDescription": "Persistent across reboots in the common case (same GPU/driver instance).\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`",
+          "fullDescription": "Persistent across reboots in the common case (same GPU/driver instance).\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`"
+        },
+        "target_path_id": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.",
+          "markdownDescription": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.",
+          "fullDescription": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.\n\n@uint32"
+        },
+        "primary_port_key": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "✅ PRIMARY STABLE ID\n\nThe closest thing to a \"persistent adapter identity\" you can get without dropping into SetupAPI/PCI location plumbing.\n\n`adapter_device_path` stays the same across reboots in the common case (same GPU/driver instance).\n\n`DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the \"output/target on that adapter\".",
+          "markdownDescription": "✅ PRIMARY STABLE ID\n\nThe closest thing to a \"persistent adapter identity\" you can get without\ndropping into SetupAPI/PCI location plumbing.\n\n`adapter_device_path` stays the same across reboots in the common case\n(same GPU/driver instance).\n\n`DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the\n\"output/target on that adapter\".",
+          "fullDescription": "✅ PRIMARY STABLE ID\n\nThe closest thing to a \"persistent adapter identity\" you can get without\ndropping into SetupAPI/PCI location plumbing.\n\n`adapter_device_path` stays the same across reboots in the common case\n(same GPU/driver instance).\n\n`DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the\n\"output/target on that adapter\"."
+        },
+        "monitor_device_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor instance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
+          "markdownDescription": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
+          "fullDescription": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`"
         },
         "wmi_instance_name": {
           "type": [
@@ -522,7 +549,7 @@
     "WinEdidInfo": {
       "type": "object",
       "properties": {
-        "device_path": {
+        "monitor_device_path": {
           "type": "string",
           "description": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nE.g.: \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\" \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"",
           "markdownDescription": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nE.g.:\n\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"",
@@ -630,7 +657,7 @@
         }
       },
       "required": [
-        "device_path",
+        "monitor_device_path",
         "normalized_join_key"
       ],
       "additionalProperties": false

@@ -115,13 +115,14 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
     if (IsValidModeIndex(path.targetInfo.modeInfoIdx, modes)) {
       const auto& mode = modes[path.targetInfo.modeInfoIdx];
 
+      dc.modeTarget = mode;
+      dc.target_path_id = path.targetInfo.id;
+
       if (mode.infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET) {
         dc.refreshRate = mode.targetMode.targetVideoSignalInfo.vSyncFreq;
         dc.scanLineOrdering =
             mode.targetMode.targetVideoSignalInfo.scanLineOrdering;
       }
-
-      dc.modeTarget = mode;
 
       if (sys::is_win_11_v24H2_or_newer()) {
         DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2 color_info = {
@@ -163,18 +164,29 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
       }
     }
 
-    DISPLAYCONFIG_TARGET_DEVICE_NAME name = {
-        {DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME, sizeof(name),
+    DISPLAYCONFIG_TARGET_DEVICE_NAME target_dev_name = {
+        {DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME, sizeof(target_dev_name),
          path.sourceInfo.adapterId, path.targetInfo.id},
         {},
     };
 
-    res = DisplayConfigGetDeviceInfo(&name.header);
+    res = DisplayConfigGetDeviceInfo(&target_dev_name.header);
     if (res == ERROR_SUCCESS) {
-      dc.friendly_name = WideToUtf8(name.monitorFriendlyDeviceName);
-      dc.monitor_device_path = WideToUtf8(name.monitorDevicePath);
-      dc.edidManufactureId = name.edidManufactureId;
-      dc.edidProductCodeId = name.edidProductCodeId;
+      dc.friendly_name = WideToUtf8(target_dev_name.monitorFriendlyDeviceName);
+      dc.monitor_device_path = WideToUtf8(target_dev_name.monitorDevicePath);
+      dc.edidManufactureId = target_dev_name.edidManufactureId;
+      dc.edidProductCodeId = target_dev_name.edidProductCodeId;
+    }
+
+    DISPLAYCONFIG_ADAPTER_NAME adapter_name = {
+        {DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME, sizeof(adapter_name),
+         path.sourceInfo.adapterId, path.targetInfo.id},
+        {},
+    };
+
+    res = DisplayConfigGetDeviceInfo(&adapter_name.header);
+    if (res == ERROR_SUCCESS) {
+      dc.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
     }
   }
 

@@ -248,10 +248,36 @@ json::WinDisplay MergeDisplayDataToJson(
   if (display_config) {
     const auto& config = *display_config;
 
-    DevicePath device_path = config.monitor_device_path;
+    if (!config.adapter_device_path.empty()) {
+      json_obj.adapter_device_path = config.adapter_device_path;
+    }
+    if (config.target_path_id != 0) {
+      json_obj.target_path_id = config.target_path_id;
+    }
 
-    json_obj.device_path = device_path;
-    json_obj.edid_info = wmi::GetWinEdidInfoFromDevicePath(device_path);
+    if (!config.adapter_device_path.empty()) {
+      // ✅ PRIMARY STABLE ID
+      // `adapterDevicePath` stays the same across reboots in the common case
+      // (same GPU/driver instance). `path.targetInfo.id` is the "output/target
+      // on that adapter".
+      //
+      // `adapter_device_path` can be empty when
+      // `DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME)`
+      // fails (for example, no active console session). In that case, leave
+      // `primary_port_key` unset to avoid emitting a degenerate identifier.
+      json_obj.primary_port_key = std::format(
+          "adapter_device_path={}::target_path_id={}",
+          config.adapter_device_path, IntsToHex(config.target_path_id));
+    }
+
+    // ✅ SECONDARY STABLE ID
+    DevicePath monitor_device_path = config.monitor_device_path;
+
+    if (!monitor_device_path.empty()) {
+      json_obj.monitor_device_path = monitor_device_path;
+      json_obj.edid_info =
+          wmi::GetWinEdidInfoFromDevicePath(monitor_device_path);
+    }
 
     json_obj.scan_line_ordering =
         json_utils::ScanLineOrderingToJson(config.scanLineOrdering);
@@ -395,6 +421,41 @@ std::string GetDisplayProberJson() {
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
   const std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice>
       dxgi_output_devices = dxgi::GetDxgiOutputDevices();
+
+  if (gdi_display_configs.size() > basic_monitor_infos.size()) {
+    std::cerr << std::endl;
+    std::cerr << "WARNING: gdi_display_configs.size="
+              << gdi_display_configs.size()
+              << " is greater than basic_monitor_infos.size="
+              << basic_monitor_infos.size() << "." << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "basic_monitor_infos:" << std::endl;
+    for (const auto& [key, _] : basic_monitor_infos) {
+      std::cerr << "    - " << key << std::endl;
+    }
+    std::cerr << std::endl;
+    std::cerr << "gdi_display_configs:" << std::endl;
+    for (const auto& [key, _] : gdi_display_configs) {
+      std::cerr << "    - " << key << std::endl;
+      std::cerr << "        - friendly_name: " << _.friendly_name << std::endl;
+      std::cerr << "        - adapter_device_path: " << _.adapter_device_path
+                << std::endl;
+      std::cerr << "        - target_path_id: " << _.target_path_id
+                << std::endl;
+      std::cerr << "        - monitor_device_path: " << _.monitor_device_path
+                << std::endl;
+    }
+    std::cerr << std::endl;
+  }
+
+  if (dxgi_output_devices.size() > basic_monitor_infos.size()) {
+    std::cerr << std::endl;
+    std::cerr << "WARNING: dxgi_output_devices.size="
+              << dxgi_output_devices.size()
+              << " is greater than basic_monitor_infos.size="
+              << basic_monitor_infos.size() << "." << std::endl;
+    std::cerr << std::endl;
+  }
 
   json::WinDisplayProberJson json_payload;
 

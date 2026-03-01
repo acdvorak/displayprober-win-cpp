@@ -6,6 +6,8 @@
 #include <cctype>
 #include <cstdint>
 #include <cwctype>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -194,4 +196,23 @@ std::string Base64Encode(const std::vector<std::uint8_t>& bytes) {
   }
 
   return encoded;
+}
+
+std::string BytesToHex(std::span<const std::uint8_t> bytes) {
+  if (bytes.empty()) {
+    return {};
+  }
+
+  static constexpr char kHexDigits[] = "0123456789abcdef";
+
+  std::string hex;
+  hex.resize(bytes.size() * 2);
+
+  for (std::size_t i = 0; i < bytes.size(); ++i) {
+    const std::uint8_t b = bytes[i];
+    hex[(i * 2)] = kHexDigits[(b >> 4u) & 0x0fu];
+    hex[(i * 2) + 1] = kHexDigits[b & 0x0fu];
+  }
+
+  return hex;
 }

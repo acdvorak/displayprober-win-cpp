@@ -18,9 +18,10 @@
 
 namespace {
 
-// Example device_path:
+// Example monitor_device_path:
 // `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
-NormalizedJoinKey NormalizeJoinKeyFromDevicePath(const DevicePath& device_path);
+NormalizedJoinKey NormalizeJoinKeyFromDevicePath(
+    const DevicePath& monitor_device_path);
 
 // Example instance_name:
 // `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153_0"`
@@ -322,23 +323,23 @@ void QueryClassForBestMatchingInstance(
   }
 }
 
-// Example device_path:
+// Example monitor_device_path:
 // `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
 NormalizedJoinKey NormalizeJoinKeyFromDevicePath(
-    const DevicePath& device_path) {
+    const DevicePath& monitor_device_path) {
   constexpr const char* kPrefix = "\\\\?\\DISPLAY#";
-  const std::size_t prefix_pos = device_path.find(kPrefix);
+  const std::size_t prefix_pos = monitor_device_path.find(kPrefix);
   if (prefix_pos == std::string::npos) {
     return {};
   }
 
   const std::size_t start = prefix_pos + std::string(kPrefix).size();
-  const std::size_t end = device_path.find("#{", start);
+  const std::size_t end = monitor_device_path.find("#{", start);
   if (end == std::string::npos || end <= start) {
     return {};
   }
 
-  std::string tail = device_path.substr(start, end - start);
+  std::string tail = monitor_device_path.substr(start, end - start);
   for (char& ch : tail) {
     if (ch == '#') {
       ch = '\\';
@@ -437,10 +438,10 @@ std::optional<std::uint32_t> Uint16ArrayToU32Decimal(const MI_Instance* inst,
 
 namespace wmi {
 
-// Example device_path:
+// Example monitor_device_path:
 // `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
 std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
-    const DevicePath& device_path) {
+    const DevicePath& monitor_device_path) {
   const HMODULE mi_module = LoadLibraryW(L"mi.dll");
   if (mi_module == nullptr) {
     return std::nullopt;
@@ -449,11 +450,12 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
 
   json::WinEdidInfo info{};
 
-  info.device_path = device_path;
+  info.monitor_device_path = monitor_device_path;
 
   // Example normalized_join_key:
   // `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
-  info.normalized_join_key = NormalizeJoinKeyFromDevicePath(device_path);
+  info.normalized_join_key =
+      NormalizeJoinKeyFromDevicePath(monitor_device_path);
 
   if (info.normalized_join_key.empty()) {
     return std::nullopt;
@@ -542,7 +544,7 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
         }
       });
 
-  auto bytes = edid::GetEdidBytesFromMonitorDevicePath(device_path);
+  auto bytes = edid::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
   if (bytes.has_value() && !bytes.value().empty()) {
     std::string base64 = Base64Encode(bytes.value());
     info.edid_bytes_base64 = base64;
