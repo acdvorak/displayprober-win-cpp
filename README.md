@@ -193,7 +193,7 @@ correlate/aggregate the results:
    - `EnumDisplayMonitors()`
    - `GetMonitorInfoW()`
    - `HMONITOR`
-2. **Display Coonfiguration** APIs:
+2. **Display Configuration** APIs:
    - Topology graph: sources/targets, active paths, modes.
    - `QueryDisplayConfig()`
    - `DisplayConfigGetDeviceInfo()`
