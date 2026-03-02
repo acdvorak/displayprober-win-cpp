@@ -24,6 +24,7 @@
     {
       "name": "x64-tests",
       "inherits": "x64",
+      "binaryDir": "${sourceDir}/../../out/x64-tests",
       "cacheVariables": {
         "BUILD_TESTING": true
       }

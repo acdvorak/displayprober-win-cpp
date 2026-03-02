@@ -135,14 +135,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(STATIC_CRT "Static runtime" ON)
 
-add_library(TestStringUtils STATIC
-  StringUtils.cpp
-)
-target_compile_features(TestStringUtils PUBLIC cxx_std_20)
-target_include_directories(TestStringUtils PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
 add_executable(${PROJECT_NAME}
   CLI.cpp
   BasicMonitorInfo.cpp
@@ -151,12 +143,12 @@ add_executable(${PROJECT_NAME}
   EdidBytes.cpp
   GdiDisplayConfig.cpp
   JsonUtils.cpp
+  StringUtils.cpp
   SysUtils.cpp
   WmiQueries.cpp
 )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  TestStringUtils
   dxgi
   mi
   Setupapi
@@ -180,10 +172,6 @@ if(MSVC)
   target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/DisplayProberVersion.rc")
 
   if(STATIC_CRT)
-    set_target_properties(TestStringUtils PROPERTIES
-      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-    )
-
     set_target_properties(${PROJECT_NAME} PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
@@ -208,6 +196,19 @@ endif()
 
 if(BUILD_TESTING)
   enable_testing()
+
+  add_library(TestStringUtils STATIC
+    StringUtils.cpp
+  )
+  target_compile_features(TestStringUtils PUBLIC cxx_std_20)
+  target_include_directories(TestStringUtils PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestStringUtils PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
 
   add_library(doctest INTERFACE)
   add_library(doctest::doctest ALIAS doctest)
