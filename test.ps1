@@ -1,6 +1,5 @@
-# Windows PowerShell v5.1
+# PowerShell v5.1 or above
 #Requires -Version 5.1
-#Requires -PSEdition Desktop
 
 $InformationPreference = 'Continue'
 $ErrorActionPreference = 'Stop'
