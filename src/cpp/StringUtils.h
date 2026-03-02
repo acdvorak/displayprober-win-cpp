@@ -69,15 +69,6 @@ inline void AppendRawBytes(std::vector<std::uint8_t>& out, const T& value) {
 }
 
 template <typename T>
-inline void AppendNativeBytes(std::vector<std::uint8_t>& out, const T& value) {
-  static_assert(kHexByteConcatenable<T>,
-                "IntsToHex only accepts integral, enum, or trivially copyable "
-                "types");
-
-  AppendRawBytes(out, value);
-}
-
-template <typename T>
 std::string IntsToHex(const T& value) {
   static_assert(kHexByteConcatenable<T>,
                 "IntsToHex only accepts integral, enum, or trivially copyable "
