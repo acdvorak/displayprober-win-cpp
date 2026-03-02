@@ -1,4 +1,3 @@
-# Windows PowerShell v2.0 or newer
 #Requires -Version 2.0
 
 # Parent directory of this script (power_utils.ps1).

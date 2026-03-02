@@ -1,15 +1,13 @@
-# Modern PowerShell v7+
 #Requires -Version 7
-#Requires -PSEdition Core
 
 $InformationPreference = 'Continue'
 
 $targets = @(
-  @{ Arch = "x86"; CMakeArch = "Win32" },
-  @{ Arch = "x64"; CMakeArch = "x64" }
+  @{ Arch = 'x86'; CMakeArch = 'Win32' },
+  @{ Arch = 'x64'; CMakeArch = 'x64' }
 )
 
-$sourceDir = Join-Path $env:GITHUB_WORKSPACE "src/cpp"
+$sourceDir = Join-Path $env:GITHUB_WORKSPACE 'src/cpp'
 
 foreach ($target in $targets) {
   $buildDir = Join-Path $env:GITHUB_WORKSPACE "out/$($target.Arch)"

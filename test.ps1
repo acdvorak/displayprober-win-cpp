@@ -1,4 +1,3 @@
-# PowerShell v5.1 or above
 #Requires -Version 5.1
 
 $InformationPreference = 'Continue'
