@@ -195,8 +195,6 @@ else()
 endif()
 
 if(BUILD_TESTING)
-  enable_testing()
-
   add_library(TestStringUtils STATIC
     StringUtils.cpp
   )
