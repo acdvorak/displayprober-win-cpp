@@ -2,8 +2,8 @@
 
 #include <array>
 #include <cstdint>
-#include <string>
 #include <span>
+#include <string>
 #include <vector>
 
 #include "CommonTypes.h"
@@ -125,4 +125,28 @@ TEST_CASE("IntsToHex serializes multiple arguments") {
                   u32(0xB0C0D0E0), u64(0x0F01020304050607),
                   u64(0x8090A0B0C0D0E0F0)) ==
         "0120030450600708090AB0C0D0E00F010203040506078090A0B0C0D0E0F0");
+}
+
+TEST_CASE("IntsToHex serializes enum class values via underlying type") {
+  enum class TestEnum : std::uint16_t {
+    kKnown = 0xABCD,
+  };
+
+  CHECK(IntsToHex(TestEnum::kKnown) == "ABCD");
+}
+
+TEST_CASE("IntsToHex serializes signed enum class values") {
+  enum class SignedTestEnum : std::int16_t {
+    kMinusOne = -1,
+  };
+
+  CHECK(IntsToHex(SignedTestEnum::kMinusOne) == "FFFF");
+}
+
+TEST_CASE("IntsToHex serializes mixed enum and integral arguments") {
+  enum class MixedEnum : std::uint16_t {
+    kCode = 0xBEEF,
+  };
+
+  CHECK(IntsToHex(u8(0x01), MixedEnum::kCode, u16(0x0203)) == "01BEEF0203");
 }
