@@ -1,3 +1,9 @@
+// Windows Management Instrumentation.
+//
+// Returns EDID-derived monitor identity/capabilities and a few
+// connection-related fields (e.g., physical connection type: HDMI, DisplayPort,
+// DVI, VGA, etc.).
+
 #include "WmiQueries.h"
 
 // This header needs to be imported first.
@@ -15,21 +21,9 @@
 #include "EdidBytes.h"
 #include "GdiDisplayConfig.h"
 #include "StringUtils.h"
+#include "WmiQueriesInternal.h"
 
 namespace {
-
-// Example monitor_device_path:
-// `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
-NormalizedJoinKey NormalizeJoinKeyFromDevicePath(
-    const DevicePath& monitor_device_path);
-
-// Example instance_name:
-// `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153_0"`
-//
-// Example normalized_join_key:
-// `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
-bool InstanceNameMatches(const WmiInstanceName& instance_name,
-                         const NormalizedJoinKey& normalized_join_key);
 
 std::optional<std::string> Uint16ArrayToString(const MI_Instance* inst,
                                                const char* propName);
@@ -64,28 +58,6 @@ std::basic_string<MI_Char> ToMiString(const std::string& value) {
     out.push_back(static_cast<MI_Char>(ch));
   }
   return out;
-}
-
-bool AsciiStartsWithCaseInsensitive(const std::string& value,
-                                    const std::string& prefix) {
-  if (prefix.size() > value.size()) {
-    return false;
-  }
-
-  for (std::size_t i = 0; i < prefix.size(); ++i) {
-    const auto lhs = static_cast<unsigned char>(value[i]);
-    const auto rhs = static_cast<unsigned char>(prefix[i]);
-    if (std::tolower(lhs) != std::tolower(rhs)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool AsciiEqualsCaseInsensitive(const std::string& lhs,
-                                const std::string& rhs) {
-  return lhs.size() == rhs.size() && AsciiStartsWithCaseInsensitive(lhs, rhs);
 }
 
 class ScopedMiApplication {
@@ -260,16 +232,6 @@ std::optional<std::string> GetStringProperty(const MI_Instance* inst,
   return text;
 }
 
-// Example instance_name:
-// `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153_0"`
-//
-// Example normalized_join_key:
-// `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
-bool IsPreferredInstanceName(const WmiInstanceName& instance_name,
-                             const NormalizedJoinKey& normalized_join_key) {
-  return AsciiEqualsCaseInsensitive(instance_name, normalized_join_key + "_0");
-}
-
 // Example normalized_join_key:
 // `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
 template <typename ApplyMatchFn>
@@ -306,9 +268,10 @@ void QueryClassForBestMatchingInstance(
     if (instance != nullptr && !has_preferred_match) {
       const auto instance_name = GetStringProperty(instance, "InstanceName");
       if (instance_name.has_value() &&
-          InstanceNameMatches(*instance_name, normalized_join_key)) {
-        const bool is_preferred =
-            IsPreferredInstanceName(*instance_name, normalized_join_key);
+          wmi::internal::InstanceNameMatches(*instance_name,
+                                             normalized_join_key)) {
+        const bool is_preferred = wmi::internal::IsPreferredInstanceName(
+            *instance_name, normalized_join_key);
         if (!has_any_match || is_preferred) {
           apply_match(instance, *instance_name);
           has_any_match = true;
@@ -321,66 +284,6 @@ void QueryClassForBestMatchingInstance(
       return;
     }
   }
-}
-
-// Example monitor_device_path:
-// `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
-NormalizedJoinKey NormalizeJoinKeyFromDevicePath(
-    const DevicePath& monitor_device_path) {
-  constexpr const char* kPrefix = "\\\\?\\DISPLAY#";
-  const std::size_t prefix_pos = monitor_device_path.find(kPrefix);
-  if (prefix_pos == std::string::npos) {
-    return {};
-  }
-
-  const std::size_t start = prefix_pos + std::string(kPrefix).size();
-  const std::size_t end = monitor_device_path.find("#{", start);
-  if (end == std::string::npos || end <= start) {
-    return {};
-  }
-
-  std::string tail = monitor_device_path.substr(start, end - start);
-  for (char& ch : tail) {
-    if (ch == '#') {
-      ch = '\\';
-    }
-  }
-
-  return "DISPLAY\\" + tail;
-}
-
-// Example instance_name:
-// `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153_0"`
-//
-// Example normalized_join_key:
-// `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
-bool InstanceNameMatches(const WmiInstanceName& instance_name,
-                         const NormalizedJoinKey& normalized_join_key) {
-  if (normalized_join_key.empty() ||
-      !AsciiStartsWithCaseInsensitive(instance_name, normalized_join_key)) {
-    return false;
-  }
-
-  if (instance_name.size() == normalized_join_key.size()) {
-    return true;
-  }
-
-  if (instance_name[normalized_join_key.size()] != '_') {
-    return false;
-  }
-
-  const std::size_t suffix_start = normalized_join_key.size() + 1;
-  if (suffix_start >= instance_name.size()) {
-    return false;
-  }
-
-  for (std::size_t i = suffix_start; i < instance_name.size(); ++i) {
-    if (!std::isdigit(static_cast<unsigned char>(instance_name[i]))) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 std::optional<std::string> Uint16ArrayToString(const MI_Instance* inst,
@@ -442,6 +345,7 @@ namespace wmi {
 // `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
 std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
     const DevicePath& monitor_device_path) {
+  // WMI = Windows Management Infrastructure
   const HMODULE mi_module = LoadLibraryW(L"mi.dll");
   if (mi_module == nullptr) {
     return std::nullopt;
@@ -455,7 +359,7 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
   // Example normalized_join_key:
   // `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
   info.normalized_join_key =
-      NormalizeJoinKeyFromDevicePath(monitor_device_path);
+      wmi::internal::NormalizeJoinKeyFromDevicePath(monitor_device_path);
 
   if (info.normalized_join_key.empty()) {
     return std::nullopt;

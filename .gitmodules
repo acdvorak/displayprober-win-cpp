@@ -1,3 +1,6 @@
+[submodule "src/cpp/third_party/doctest"]
+	path = src/cpp/third_party/doctest
+	url = https://github.com/doctest/doctest.git
 [submodule "src/cpp/third_party/nlohmann/json"]
 	path = src/cpp/third_party/nlohmann/json
 	url = https://github.com/nlohmann/json.git

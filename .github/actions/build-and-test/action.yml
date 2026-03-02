@@ -35,5 +35,4 @@ runs:
     - name: Test
       if: ${{ inputs.run-tests == 'true' }}
       shell: pwsh
-      working-directory: ${{ github.workspace }}/out
-      run: ctest -C Release
+      run: ./test.ps1

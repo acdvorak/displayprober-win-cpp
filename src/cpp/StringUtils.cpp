@@ -138,11 +138,12 @@ bool EqualsIgnoreCase(const std::wstring_view& lhs,
   return result == CSTR_EQUAL;
 }
 
-bool ContainsAnyToken(std::string_view haystack,
-                      std::initializer_list<std::string_view> tokens) {
+bool ContainsAnySubstring(std::string_view haystack,
+                          std::initializer_list<std::string_view> needles) {
   const std::string upperHaystack = ToUpperAscii(haystack);
-  for (const auto token : tokens) {
-    if (upperHaystack.find(ToUpperAscii(token)) != std::string::npos) {
+  for (const auto needle : needles) {
+    if (!needle.empty() &&
+        upperHaystack.find(ToUpperAscii(needle)) != std::string::npos) {
       return true;
     }
   }

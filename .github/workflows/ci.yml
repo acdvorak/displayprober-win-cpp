@@ -23,7 +23,7 @@ jobs:
         uses: ./.github/actions/build-and-test
         with:
           release-tag-input: ''
-          run-tests: 'false'
+          run-tests: 'true'
 
       - name: Azure login and sign files
         uses: ./.github/actions/azure-sign

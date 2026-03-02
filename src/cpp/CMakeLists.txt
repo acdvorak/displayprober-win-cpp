@@ -21,6 +21,9 @@ cmake_policy(SET CMP0091 NEW)
 
 project("DisplayProber" VERSION "1.0.0" LANGUAGES CXX)
 
+option(BUILD_TESTING "Build tests" OFF)
+include(CTest)
+
 ################################################################################
 # EXE FILE PROPERTIES
 ################################################################################
@@ -135,6 +138,7 @@ option(STATIC_CRT "Static runtime" ON)
 add_executable(${PROJECT_NAME}
   CLI.cpp
   BasicMonitorInfo.cpp
+  DisplayProberInternal.cpp
   DisplayProberLib.cpp
   DxgiOutputDevice.cpp
   EdidBytes.cpp
@@ -142,9 +146,17 @@ add_executable(${PROJECT_NAME}
   JsonUtils.cpp
   StringUtils.cpp
   SysUtils.cpp
+  WmiQueriesInternal.cpp
   WmiQueries.cpp
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE dxgi mi Setupapi Shcore Wtsapi32)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  dxgi
+  mi
+  Setupapi
+  Shcore
+  Wtsapi32
+)
 
 set_property(SOURCE CLI.cpp APPEND PROPERTY COMPILE_DEFINITIONS
   DP4W_VERSION_TAG="${DP4W_VERSION_TAG}"
@@ -182,4 +194,70 @@ else()
   if(STATIC_CRT)
     target_link_options(${PROJECT_NAME} PRIVATE "-static")
   endif()
+endif()
+
+if(BUILD_TESTING)
+  add_library(TestStringUtils STATIC
+    StringUtils.cpp
+  )
+  target_compile_features(TestStringUtils PUBLIC cxx_std_20)
+  target_include_directories(TestStringUtils PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestStringUtils PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
+
+  add_library(TestDisplayProberInternal STATIC
+    DisplayProberInternal.cpp
+    StringUtils.cpp
+  )
+  target_compile_features(TestDisplayProberInternal PUBLIC cxx_std_20)
+  target_include_directories(TestDisplayProberInternal PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann/json/include
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestDisplayProberInternal PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
+
+  add_library(TestWmiQueriesInternal STATIC
+    WmiQueriesInternal.cpp
+  )
+  target_compile_features(TestWmiQueriesInternal PUBLIC cxx_std_20)
+  target_include_directories(TestWmiQueriesInternal PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestWmiQueriesInternal PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
+
+  add_library(TestJsonUtils STATIC
+    JsonUtils.cpp
+    tests/stub_SysUtils.cpp
+  )
+  target_compile_features(TestJsonUtils PUBLIC cxx_std_20)
+  target_include_directories(TestJsonUtils PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann/json/include
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestJsonUtils PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
+
+  add_library(doctest INTERFACE)
+  add_library(doctest::doctest ALIAS doctest)
+  target_include_directories(doctest INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/doctest
+  )
+
+  add_subdirectory(tests)
 endif()

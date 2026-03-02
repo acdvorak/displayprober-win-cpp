@@ -20,6 +20,14 @@
       "inherits": "vs2022-base",
       "architecture": "x64",
       "binaryDir": "${sourceDir}/../../out/x64"
+    },
+    {
+      "name": "x64-tests",
+      "inherits": "x64",
+      "binaryDir": "${sourceDir}/../../out/x64-tests",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
     }
   ],
   "buildPresets": [
@@ -42,6 +50,21 @@
       "name": "x64-Release",
       "configurePreset": "x64",
       "configuration": "Release"
+    },
+    {
+      "name": "x64-Debug-Tests",
+      "configurePreset": "x64-tests",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "x64-Debug-Tests",
+      "configurePreset": "x64-tests",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
