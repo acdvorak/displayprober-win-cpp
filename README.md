@@ -1,6 +1,6 @@
 # DisplayProber for Windows (DP4Win) 🛰️
 
-CLI that outputs a list of all connected displays (monitors/TVs) as
+CLI that outputs a list of all connected displays (monitors and TV screens) as
 [JSON](./src/ts/schemas/displayprober-win-cpp.schema.json).
 
 Supports Windows 7 SP1 and newer, both 32-bit and 64-bit. \
@@ -12,7 +12,7 @@ This tool returns:
 - Resolution, working area, rotation, and refresh rate
 - Primary vs. extended
 - Physical connector type (HDMI, DisplayPort, DVI, VGA, internal, etc.)
-- Unique-ish identifier (not stable across reboots, unfortunately)
+- Unique identifiers that are often stable across reboots (not guaranteed)
 - Basic EDID properties like manufacturer name, manufacture week/year, physical
   screen dimensions (width and height in MM), serial number, and product code
 - Raw EDID bytes
