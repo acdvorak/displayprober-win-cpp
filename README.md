@@ -203,7 +203,7 @@ correlate/aggregate the results:
    - `IDXGIFactory::EnumAdapters()` (or `EnumAdapters1()`)
    - `IDXGIAdapter::EnumOutputs()`
    - `IDXGIOutput6::GetDesc1()` (populates `DXGI_OUTPUT_DESC1`)
-4. **`SetupAPI`** and **PNP device APIs**:
+4. **`SetupAPI`** and **PnP device APIs**:
    - Raw EDID bytes, PnP device tree enumeration, device instance IDs, hardware
      IDs, and location paths
    - `SetupDiGetClassDevsW()`
