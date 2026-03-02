@@ -1,8 +1,14 @@
+// Topology graph of the current display configuration: "paths" + "modes".
+//
+// Gives you per-target details like EDID-derived identifiers (not raw EDID
+// bytes), friendly names, and device paths.
+
 #include "GdiDisplayConfig.h"
 
 // This header needs to be imported first.
-#include <SetupAPI.h>
+// Keep other .h headers separate from Windows.h to prevent auto-sorting.
 #include <Windows.h>
+#include <SetupAPI.h>
 #include <ntddvdeo.h>
 
 #include <cstdint>

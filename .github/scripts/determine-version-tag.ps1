@@ -1,6 +1,4 @@
-# Modern PowerShell v7+
 #Requires -Version 7
-#Requires -PSEdition Core
 
 $InformationPreference = 'Continue'
 
@@ -10,12 +8,12 @@ if (-not $releaseTag) {
   $cmakeLists = Get-Content -Raw "$env:GITHUB_WORKSPACE/src/cpp/CMakeLists.txt"
   $match = [regex]::Match($cmakeLists, 'project\("DisplayProber"\s+VERSION\s+"([^"]+)"')
   if (-not $match.Success) {
-    throw "Unable to read project version from src/cpp/CMakeLists.txt"
+    throw 'Unable to read project version from src/cpp/CMakeLists.txt'
   }
   $releaseTag = "v$($match.Groups[1].Value)"
 }
 
-if (-not $releaseTag.StartsWith("v")) {
+if (-not $releaseTag.StartsWith('v')) {
   $releaseTag = "v$releaseTag"
 }
 
