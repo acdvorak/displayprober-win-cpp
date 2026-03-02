@@ -1,3 +1,5 @@
+// Retrieves the raw EDID bytes for a monitor from the registry (if available).
+
 #include "EdidBytes.h"
 
 // TODO(acdvorak): Can this be removed?

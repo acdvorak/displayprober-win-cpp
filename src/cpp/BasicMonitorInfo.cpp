@@ -1,3 +1,8 @@
+// Classic Win32 display monitor enumeration APIs (`HMONITOR`).
+//
+// Enumerates "display monitors" in the Windows desktop/virtual-screen
+// coordinate space, including pseudo-monitors (e.g. mirroring drivers).
+
 #include "BasicMonitorInfo.h"
 
 #include <windows.h>

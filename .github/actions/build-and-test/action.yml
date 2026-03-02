@@ -1,4 +1,4 @@
-name: Determine Version, Build, and Optional Test
+name: Version, Build, and Test
 description: Determines version tag, builds artifacts, and optionally runs tests
 
 inputs:

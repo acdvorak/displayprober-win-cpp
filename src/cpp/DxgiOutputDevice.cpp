@@ -1,3 +1,7 @@
+// DirectX Graphics Infrastructure.
+//
+// Provides advanced color and luminance characteristics.
+
 #include "DxgiOutputDevice.h"
 
 #include <dxgi.h>
