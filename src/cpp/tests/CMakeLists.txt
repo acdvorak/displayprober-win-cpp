@@ -1,11 +1,17 @@
 add_executable(cpp_tests
   doctest_main.cpp
+  test_DisplayProberInternal.cpp
+  test_JsonUtils.cpp
   test_StringUtils.cpp
+  test_WmiQueriesInternal.cpp
 )
 
 target_compile_features(cpp_tests PRIVATE cxx_std_20)
 target_link_libraries(cpp_tests PRIVATE
+  TestDisplayProberInternal
+  TestJsonUtils
   TestStringUtils
+  TestWmiQueriesInternal
   doctest::doctest
 )
 

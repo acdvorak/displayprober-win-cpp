@@ -138,6 +138,7 @@ option(STATIC_CRT "Static runtime" ON)
 add_executable(${PROJECT_NAME}
   CLI.cpp
   BasicMonitorInfo.cpp
+  DisplayProberInternal.cpp
   DisplayProberLib.cpp
   DxgiOutputDevice.cpp
   EdidBytes.cpp
@@ -145,6 +146,7 @@ add_executable(${PROJECT_NAME}
   JsonUtils.cpp
   StringUtils.cpp
   SysUtils.cpp
+  WmiQueriesInternal.cpp
   WmiQueries.cpp
 )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
@@ -204,6 +206,49 @@ if(BUILD_TESTING)
   )
   if(MSVC AND STATIC_CRT)
     set_target_properties(TestStringUtils PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
+
+  add_library(TestDisplayProberInternal STATIC
+    DisplayProberInternal.cpp
+    StringUtils.cpp
+  )
+  target_compile_features(TestDisplayProberInternal PUBLIC cxx_std_20)
+  target_include_directories(TestDisplayProberInternal PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann/json/include
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestDisplayProberInternal PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
+
+  add_library(TestWmiQueriesInternal STATIC
+    WmiQueriesInternal.cpp
+  )
+  target_compile_features(TestWmiQueriesInternal PUBLIC cxx_std_20)
+  target_include_directories(TestWmiQueriesInternal PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestWmiQueriesInternal PROPERTIES
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
+  endif()
+
+  add_library(TestJsonUtils STATIC
+    JsonUtils.cpp
+    tests/stub_SysUtils.cpp
+  )
+  target_compile_features(TestJsonUtils PUBLIC cxx_std_20)
+  target_include_directories(TestJsonUtils PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann/json/include
+  )
+  if(MSVC AND STATIC_CRT)
+    set_target_properties(TestJsonUtils PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
   endif()
