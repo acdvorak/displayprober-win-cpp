@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <span>
 #include <vector>
 
 #include "CommonTypes.h"
