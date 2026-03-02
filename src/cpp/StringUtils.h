@@ -30,8 +30,6 @@ bool ContainsAnySubstring(std::string_view haystack,
 
 std::string Base64Encode(const std::vector<std::uint8_t>& bytes);
 
-std::string Base64Encode(const std::vector<std::uint8_t>& bytes);
-
 std::string BytesToHexUpper(std::span<const std::uint8_t> bytes);
 
 template <typename T>
