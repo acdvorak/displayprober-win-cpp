@@ -6,9 +6,8 @@
 #include "GdiDisplayConfig.h"
 
 // This header needs to be imported first.
+// Keep other .h headers separate from Windows.h to prevent auto-sorting.
 #include <Windows.h>
-
-// Second
 #include <SetupAPI.h>
 #include <ntddvdeo.h>
 
