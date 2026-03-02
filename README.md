@@ -225,7 +225,7 @@ TODO(acdvorak)
 
 # PowerShell equivalents
 
-In Windows PowerShell v5.1 and above, you can run the following commands to get
+In PowerShell v5.1+ on Windows, you can run the following commands to get
 some of the same raw underlying data that this C++ CLI returns:
 
 ```ps1
