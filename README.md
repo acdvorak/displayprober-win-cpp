@@ -30,6 +30,8 @@ Detects if the following features are _supported_ and/or _actively enabled_:
 _NOTE: For feature detection to work, every device in the chain must support
 that feature: OS, GPU, monitor/TV, **and** HDMI/DisplayPort cables._
 
+_NOTE: The terms "Display", "Screen", and "Monitor" are effectively synonyms._
+
 # Usage
 
 ```ps1
@@ -183,187 +185,77 @@ For your journey into the abyss, you will need:
 3. A licensed professional therapist
 
 To truly capture everything there is to know about all connected displays, you
-must use a combination of four different Windows API families and
-correlate/aggregate the results.
+must use a combination of **five** different Windows API families and
+correlate/aggregate the results:
 
-## 1. User32 multi-monitor APIs (`HMONITOR`)
-
-What they are:
-
-> Classic Win32 display monitor enumeration APIs (`HMONITOR`).
-
-What they do:
-
-> Enumerate "display monitors" in the Windows desktop/virtual-screen coordinate
-> space, including pseudo-monitors (e.g. mirroring drivers).
-
-Primary functions:
-
-- `EnumDisplayMonitors()`
-  - Returns a list of `HMONITOR` handles
-- `GetMonitorInfoW()`
-  - Fills `MONITORINFO` / `MONITORINFOEX` structures (bounds + work area +
-    optional device name)
-
-Pseudo-code (simplified for clarity):
-
-```cpp
-EnumDisplayMonitors(..., callback = (HMONITOR h) => {
-  GetMonitorInfoW(h, MONITORINFOEX* info);
-  // info->rcMonitor, info->rcWork, info->szDevice
-})
-```
-
-## 2. Display Configuration APIs (`QueryDisplayConfig`)
-
-What they are:
-
-> A topology-level view of the current display configuration: "paths" + "modes".
-
-What they give you:
-
-- `QueryDisplayConfig()`: topology graph (sources/targets, active paths, mode.
-  sets).
-- `DisplayConfigGetDeviceInfo()`: per-target details like EDID-derived
-  identifiers (not raw EDID bytes), friendly names, and device paths.
-
-Primary functions:
-
-- `QueryDisplayConfig()`
-  - Returns `DISPLAYCONFIG_PATH_INFO` + `DISPLAYCONFIG_MODE_INFO`
-- `DisplayConfigGetDeviceInfo()`
-  - Packet-based details (e.g. target name, preferred mode, advanced color info)
-  - Note: can fail when you do not have access to the current console session
-    (common in services / some remote contexts)
-
-Pseudo-code (simplified for clarity):
-
-```cpp
-QueryDisplayConfig(..., out paths[], out modes[]);
-
-for (auto path in paths[]) {
-  // identify adapterId + targetId from the path
-  DisplayConfigGetDeviceInfo(
-    GET_TARGET_NAME, adapterId, targetId, out targetName
-  );
-  DisplayConfigGetDeviceInfo(
-    GET_ADVANCED_COLOR_INFO, adapterId, targetId, out colorInfo
-  );
-}
-```
-
-## 3. DXGI output enumeration APIs (`IDXGIOutput`)
-
-What they are:
-
-> Adapter/output model (DirectX Graphics Infrastructure).
-
-What they give you:
-
-> Advanced color and luminance characteristics (via `DXGI_OUTPUT_DESC1`).
-
-Primary functions:
-
-- `CreateDXGIFactory()` (or `CreateDXGIFactory1()`)
-- `IDXGIFactory::EnumAdapters()` (or `EnumAdapters1()`)
-- `IDXGIAdapter::EnumOutputs()`
-- `IDXGIOutput6::GetDesc1()`
-
-Pseudo-code (simplified for clarity):
-
-```cpp
-factory = CreateDXGIFactory(...);
-
-for (auto adapter in factory.EnumAdapters()) {
-  for (auto output in adapter.EnumOutputs()) {
-    output6 = (IDXGIOutput6)output
-    output6.GetDesc1(out DXGI_OUTPUT_DESC1 desc)
-  }
-}
-```
-
-## 4. SetupAPI and PnP device properties
-
-What they are:
-
-> PnP device tree enumeration + device properties.
-
-What they give you:
-
-- Raw EDID bytes (commonly via the monitor devnode's registry key; often a value
-  named `EDID`)
-- Device instance IDs and Hardware IDs (devnode-dependent: GPU vs monitor
-  differ)
-- Location paths (often the most useful for physical/topology correlation; PCI
-  topology strings are common for GPUs)
-- Container ID (GUID) (groups devnodes into a physical device container)
-
-Primary functions:
-
-- `SetupDiGetClassDevsW()`
-- `SetupDiEnumDeviceInfo()` (or `SetupDiEnumDeviceInterfaces()`)
-- `SetupDiGetDeviceInstanceIdW()`
-- `SetupDiGetDeviceRegistryPropertyW()` (legacy) or
-  `SetupDiGetDevicePropertyW()` (recommended for modern device properties)
-- `SetupDiOpenDevRegKey()` + `RegQueryValueExW()` (commonly used to read `EDID`)
-
-Pseudo-code (simplified for clarity):
-
-```cpp
-h = SetupDiGetClassDevsW(MONITOR_CLASS_GUID, ...);
-
-for (auto dev in SetupDiEnumDeviceInfo(h)) {
-  instId      = SetupDiGetDeviceInstanceIdW(h, dev);
-  locPaths    = SetupDiGetDevicePropertyW(h, dev, DEVPKEY_Device_LocationPaths);
-  containerId = SetupDiGetDevicePropertyW(h, dev, DEVPKEY_Device_ContainerId);
-  regKey      = SetupDiOpenDevRegKey(h, dev, ...);
-  edid        = RegQueryValueExW(regKey, "EDID");
-}
-```
+1. **User32** multi-monitor APIs:
+   - Classic Win32 display monitor enumeration APIs.
+   - `EnumDisplayMonitors()`
+   - `GetMonitorInfoW()`
+   - `HMONITOR`
+2. **Display Coonfiguration** APIs:
+   - Topology graph: sources/targets, active paths, modes.
+   - `QueryDisplayConfig()`
+   - `DisplayConfigGetDeviceInfo()`
+3. **DirectX Graphics Infrastructure** adapter/output APIs:
+   - Advanced color and luminance characteristics.
+   - `CreateDXGIFactory()` (or `CreateDXGIFactory1()`)
+   - `IDXGIFactory::EnumAdapters()` (or `EnumAdapters1()`)
+   - `IDXGIAdapter::EnumOutputs()`
+   - `IDXGIOutput6::GetDesc1()` (populates `DXGI_OUTPUT_DESC1`)
+4. **`SetupAPI`** and **PNP device APIs**:
+   - Raw EDID bytes, PnP device tree enumeration, device instance IDs, hardware
+     IDs, and location paths
+   - `SetupDiGetClassDevsW()`
+   - `SetupDiEnumDeviceInfo()` (or `SetupDiEnumDeviceInterfaces()`)
+   - `SetupDiGetDeviceInstanceIdW()`
+   - `SetupDiGetDeviceRegistryPropertyW()` (legacy) or
+     `SetupDiGetDevicePropertyW()` (recommended for modern device properties)
+   - `SetupDiOpenDevRegKey()` + `RegQueryValueExW()` (commonly used to read
+     EDID)
+5. **WMI queries**:
+   - EDID-derived monitor identity/capabilities and a few connection-related
+     fields (e.g., physical connection type: HDMI, DisplayPort, DVI, VGA, etc.)
+   - `MI_Session_QueryInstances()`
+   - `MI_Operation_GetInstance()`
 
 ## Stable identifiers
 
-TODO
+TODO(acdvorak)
 
 # PowerShell equivalents
 
-In Windows PowerShell v5.1 and above, you can run the following commands:
+In Windows PowerShell v5.1 and above, you can run the following commands to get
+some of the same raw underlying data that this C++ CLI returns:
 
 ```ps1
-# Windows Forms screen enumeration.
-# Returns a default placeholder display named "WinDisc", 1024x768, when called
-# over SSH.
+# Simple, strongly-typed Windows Forms .NET wrapper around User32
+# `EnumDisplayMonitors()`, `GetMonitorInfoW()`, and `HMONITOR`.
 Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::AllScreens |
   ConvertTo-Json
 
-# GPU(s).
-# Works even over SSH.
+# GPU adapters.
 Get-CimInstance Win32_VideoController |
   ConvertTo-Json
 
-# Windows "PnP" monitors.
-# Works even over SSH.
+# Windows Plug-n-Play devices.
 Get-CimInstance Win32_PnPEntity |
   Where-Object { $_.PNPClass -in @('Monitor','Display') } |
   ConvertTo-Json
 
 # Parsed EDID "Basic Display Parameters" block.
-# Works even over SSH.
 Get-CimInstance -Namespace root\wmi WmiMonitorBasicDisplayParams |
   ConvertTo-Json
 
 # Physical connector type (HDMI, DisplayPort, DVI, VGA, etc.).
-# Works even over SSH.
 Get-CimInstance -Namespace root\wmi WmiMonitorConnectionParams |
   ConvertTo-Json
 
 # Parsed EDID "Video Input Definition" block.
-# Works even over SSH.
 Get-CimInstance -Namespace root\wmi WmiMonitorDescriptorMethods |
   ConvertTo-Json
 
 # Parsed EDID "Vendor/Product Identification" block.
-# Works even over SSH.
 Get-CimInstance -Namespace root\wmi WmiMonitorID |
   ConvertTo-Json
 ```
@@ -374,34 +266,29 @@ Native binaries:
 
 - [NirSoft DumpEDID](https://www.nirsoft.net/utils/dump_edid.html)
   - Reads and parses EDID data
+  - `DumpEDID.exe -a > path/to/output.txt`
 - [NirSoft MonitorInfoView](https://www.nirsoft.net/utils/monitor_info_view.html)
   - Reads and parses EDID data
+  - `MonitorInfoView.exe /HideInactiveMonitors 1 /sxml path/to/output.xml`
 - [NirSoft MultiMonitorTool](https://www.nirsoft.net/utils/multi_monitor_tool.html)
   - Prints most of the basic facts that Windows knows about your monitors:
     resolution, refresh rate, DPI scaling, rotation, position
+  - `MultiMonitorTool.exe /HideInactiveMonitors 1 /sxml path/to/output.xml`
 - [NirSoft ControlMyMonitor](https://www.nirsoft.net/utils/control_my_monitor.html)
   - Prints a few basic details about your monitors, and lets you query/control
     their brightness, contrast, etc. via DDC/CI
+  - `ControlMyMonitor.exe /smonitors path/to/output.txt`
 - [`edid-decode`](https://git.linuxtv.org/v4l-utils.git/tree/utils/edid-decode)
   - Reference-quality EDID and DisplayID parser
   - Nominally cross-platform, but harder to compile on Windows/macOS
   - [Windows port of `edid-decode`](https://github.com/a1ive/edid-decode)
+    ```ps1
+    edid-decode.exe /MONITOR0
+    edid-decode.exe path/to/edid.bin
+    edid-decode.exe /MONITOR0 path/to/edid.bin
+    ```
 
-```ps1
-DumpEDID.exe -a > path/to/output.txt
-
-MonitorInfoView.exe /HideInactiveMonitors 1 /sxml path/to/output.xml
-
-MultiMonitorTool.exe /HideInactiveMonitors 1 /sxml path/to/output.xml
-
-ControlMyMonitor.exe /smonitors path/to/output.txt
-
-edid-decode.exe /MONITOR0
-edid-decode.exe path/to/edid.bin
-edid-decode.exe /MONITOR0 path/to/edid.bin
-```
-
-# Related projects
+# Reference implementations
 
 - [AutoActions: `HDRController.cpp`](https://github.com/Codectory/AutoActions/blob/main/Source/HDRController/HDRController/HDRController.cpp)
 - [HDR Tray: `HDR.cpp`](https://github.com/res2k/HDRTray/blob/main/common/HDR.cpp)
@@ -421,7 +308,7 @@ edid-decode.exe /MONITOR0 path/to/edid.bin
 ## Prerequisites
 
 - Windows 10 or newer
-- Windows PowerShell v5.1 (built in to all versions of Windows) or newer
+- PowerShell v5.1 or newer
 
 Run:
 
