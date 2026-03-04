@@ -141,7 +141,7 @@ export interface WinDisplay {
   monitor_path_key?: string | null;
 
   /**
-   * ✅ TERIARY STABLE ID (when available)
+   * ✅ TERTIARY STABLE ID (when available)
    *
    * Deterministic monitor identity key based on EDID.
    *

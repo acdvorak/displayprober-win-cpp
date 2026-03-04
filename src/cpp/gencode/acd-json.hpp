@@ -311,7 +311,7 @@ namespace json {
         std::optional<uint32_t> dpi_scaling_percent;
         std::optional<WinEdidInfo> edid_info;
         /**
-         * ✅ TERIARY STABLE ID (when available)
+         * ✅ TERTIARY STABLE ID (when available)
          *
          * Deterministic monitor identity key based on EDID.
          *
