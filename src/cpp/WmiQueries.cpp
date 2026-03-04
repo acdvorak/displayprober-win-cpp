@@ -232,15 +232,14 @@ std::optional<std::string> GetStringProperty(const MI_Instance* inst,
   return text;
 }
 
-// Example normalized_join_key:
+// Example wmi_join_key:
 // `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
 template <typename ApplyMatchFn>
-void QueryClassForBestMatchingInstance(
-    MI_Session* session, const char* class_name,
-    const NormalizedJoinKey& normalized_join_key,
-    const ApplyMatchFn& apply_match) {
-  if (session == nullptr || class_name == nullptr ||
-      normalized_join_key.empty()) {
+void QueryClassForBestMatchingInstance(MI_Session* session,
+                                       const char* class_name,
+                                       const WmiJoinKey& wmi_join_key,
+                                       const ApplyMatchFn& apply_match) {
+  if (session == nullptr || class_name == nullptr || wmi_join_key.empty()) {
     return;
   }
 
@@ -268,10 +267,9 @@ void QueryClassForBestMatchingInstance(
     if (instance != nullptr && !has_preferred_match) {
       const auto instance_name = GetStringProperty(instance, "InstanceName");
       if (instance_name.has_value() &&
-          wmi::internal::InstanceNameMatches(*instance_name,
-                                             normalized_join_key)) {
+          wmi::internal::InstanceNameMatches(*instance_name, wmi_join_key)) {
         const bool is_preferred = wmi::internal::IsPreferredInstanceName(
-            *instance_name, normalized_join_key);
+            *instance_name, wmi_join_key);
         if (!has_any_match || is_preferred) {
           apply_match(instance, *instance_name);
           has_any_match = true;
@@ -356,12 +354,12 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
 
   info.monitor_device_path = monitor_device_path;
 
-  // Example normalized_join_key:
+  // Example wmi_join_key:
   // `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
-  info.normalized_join_key =
+  info.wmi_join_key =
       wmi::internal::NormalizeJoinKeyFromDevicePath(monitor_device_path);
 
-  if (info.normalized_join_key.empty()) {
+  if (info.wmi_join_key.empty()) {
     return std::nullopt;
   }
 
@@ -378,7 +376,8 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
   bool has_populated_data = false;
 
   QueryClassForBestMatchingInstance(
-      session.get(), "WmiMonitorBasicDisplayParams", info.normalized_join_key,
+      // https://learn.microsoft.com/en-us/windows/win32/wmicoreprov/wmimonitorbasicdisplayparams
+      session.get(), "WmiMonitorBasicDisplayParams", info.wmi_join_key,
       [&info, &has_populated_data](const MI_Instance* inst,
                                    const WmiInstanceName&) {
         if (const auto horizontal_cm =
@@ -397,7 +396,8 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
       });
 
   QueryClassForBestMatchingInstance(
-      session.get(), "WmiMonitorConnectionParams", info.normalized_join_key,
+      // https://learn.microsoft.com/en-us/windows/win32/wmicoreprov/wmimonitorconnectionparams
+      session.get(), "WmiMonitorConnectionParams", info.wmi_join_key,
       [&info, &has_populated_data](const MI_Instance* inst,
                                    const WmiInstanceName&) {
         if (const auto value = GetUint32Property(inst, "VideoOutputTechnology");
@@ -411,7 +411,8 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
       });
 
   QueryClassForBestMatchingInstance(
-      session.get(), "WmiMonitorID", info.normalized_join_key,
+      // https://learn.microsoft.com/en-us/windows/win32/wmicoreprov/wmimonitorid
+      session.get(), "WmiMonitorID", info.wmi_join_key,
       [&info, &has_populated_data](const MI_Instance* inst,
                                    const WmiInstanceName& instance_name) {
         info.wmi_instance_name = instance_name;

@@ -1,3 +1,11 @@
 #Requires -Version 5.1
 
-.\out\x64\Debug\DisplayProber.exe @args
+& {
+  Push-Location src/ts/
+  try {
+    npx tsx probe.ts
+  }
+  finally {
+    Pop-Location
+  }
+}

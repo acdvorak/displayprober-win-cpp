@@ -134,19 +134,20 @@ void PopulateStableKeyFields(json::WinDisplay& json_obj) {
   json_obj.stable_id_candidates = candidates;
   json_obj.stable_id = candidates.front();
 
-  if (json_obj.primary_port_key &&
-      *json_obj.primary_port_key == candidates[0]) {
+  auto ppk = json_obj.primary_port_key.value_or("");
+  if (!ppk.empty() && ppk == candidates[0]) {
     json_obj.stable_id_source = json::StableIdSource::PRIMARY_PORT_KEY;
     return;
   }
 
-  if (json_obj.monitor_path_key &&
-      *json_obj.monitor_path_key == candidates[0]) {
+  auto mpk = json_obj.monitor_path_key.value_or("");
+  if (!mpk.empty() && mpk == candidates[0]) {
     json_obj.stable_id_source = json::StableIdSource::MONITOR_PATH_KEY;
     return;
   }
 
-  if (json_obj.edid_key && *json_obj.edid_key == candidates[0]) {
+  auto edk = json_obj.edid_key.value_or("");
+  if (!edk.empty() && edk == candidates[0]) {
     json_obj.stable_id_source = json::StableIdSource::EDID_KEY;
   }
 }

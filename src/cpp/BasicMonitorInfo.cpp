@@ -52,7 +52,8 @@ BOOL CALLBACK EnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM) {
 
   basic::BasicMonitorInfo& monitor = basic_monitor_infos[monitorNameUtf8];
   monitor.short_lived_identifier = monitorNameUtf8;
-  monitor.hmonitor_id = reinterpret_cast<std::uintptr_t>(hMonitor);
+  monitor.process_local_monitor_handle_ptr =
+      reinterpret_cast<std::uintptr_t>(hMonitor);
 
   monitor.is_primary = ((monitorInfoEx.dwFlags & MONITORINFOF_PRIMARY) != 0);
 

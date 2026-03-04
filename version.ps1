@@ -3,7 +3,7 @@
 # Parent directory of this script (version.ps1).
 $VerScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-. (Join-Path -Path $VerScriptRoot -ChildPath 'scripts\power_utils.ps1')
+. (Join-Path -Path $VerScriptRoot -ChildPath 'scripts/power_utils.ps1')
 
 function Format-DotNetVersionList {
   param(

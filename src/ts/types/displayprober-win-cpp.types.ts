@@ -10,31 +10,51 @@ export interface WinDisplayProberJson {
    * - Remote console
    * - Headless server
    *
-   * TODO(acdvorak): Further clarify the difference between
-   * {@link has_interactive_desktop} and {@is_attached_to_desktop}.
+   * TODO(acdvorak): Clarify the difference between
+   * {@link has_interactive_desktop} and {@link is_attached_to_desktop}.
    */
   has_interactive_desktop: boolean;
 
   /**
+   * Indicates whether the current session is Microsoft Remote Desktop (RDP).
+   *
    * This is a *session-level* value, not specific to an individual display.
    */
   is_remote_desktop: boolean;
 
   /**
-   * This is a *session-level* value, not specific to an individual display.
-   *
    * Best-effort signal that this display is *probably* running in a VM guest.
+   *
+   * This is a *session-level* value, not specific to an individual display.
    */
   is_virtual_machine: boolean;
 }
 
 export interface WinDisplay {
   /**
-   * Manufacturer-provided model name from the DisplayID or EDID.
+   * Human-friendly name of the display.
    *
-   * @example "DELL ST2320L"
-   * @example "QCQ95S"  // Samsung S95C TV
-   * @example "SAMSUNG" // Some devices don't give us an actual model number
+   * Value comes from one of the following sources, in descending order of
+   * quality (i.e., the "best" available value is returned):
+   *
+   * 1. EDID "monitor descriptor" name (e.g., `"DELL ST2320L"`)
+   * 2. `"Remote Desktop"` or `"Remote Desktop #N"` if RDP
+   * 3. `"Virtual Machine"` or `"Virtual Machine #N"` if a VM
+   * 4. 7-digit Windows EDID identifier (e.g., `"SAM73A5"` or `"DELF023"`)
+   * 5. Short-lived Windows display number (e.g., `"DISPLAY1"`)
+   *
+   * Examples:
+   *
+   * - `"DELL ST2320L"`
+   * - `"QCQ95S"`      // Samsung S95C TV
+   * - `"SAMSUNG"`     // Some devices don't give us an actual model number
+   * - `"SAM73A5"`     // Samsung S95C TV
+   * - `"DELF023"`     // Dell ST2320L monitor
+   * - `"DISPLAY1"`    // Primary monitor
+   * - `"DISPLAY2"`    // Secondary monitor
+   * - `"DISPLAY129"`  // RDP monitor
+   * - `"DISPLAY"`     // Single monitor
+   * - `"WinDisc"`     // Non-interactive remote SSH console session
    */
   friendly_name?: string | null;
 
@@ -43,28 +63,40 @@ export interface WinDisplay {
    *
    * ⚠️ NOT stable across device disconnects/reconnects.
    *
-   * @example "\\\\.\\DISPLAY1" (multi-monitor)
-   * @example "\\\\.\\DISPLAY2" (multi-monitor)
-   * @example "\\\\.\\DISPLAY129" (Remote Desktop)
-   * @example "DISPLAY" (single-monitor)
-   * @example "WinDisc" (SSH console)
+   * Examples:
+   *
+   * - `"\\\\.\\DISPLAY1"`   (multi-monitor)
+   * - `"\\\\.\\DISPLAY2"`   (multi-monitor)
+   * - `"\\\\.\\DISPLAY129"` (Remote Desktop)
+   * - `"DISPLAY"`           (single-monitor)
+   * - `"WinDisc"`           (SSH console)
    */
   short_lived_identifier: WinMonitorDeviceName;
 
   /**
-   * Adapter Plug and Play instance id.
+   * Adapter Plug and Play instance ID (typically the GPU's unique ID).
+   *
+   * For a single GPU with two ports (e.g., one DisplayPort and one DVI), where
+   * both ports are connected to an active monitor/TV, both displays will have
+   * the same `adapter_instance_id`.
+   *
+   * TODO(acdvorak): Describe GPU vs Adapter vs Driver.
    *
    * More persistent than `adapter_device_path` across reboots and driver
    * churn.
    *
-   * @example "PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"
+   * Examples:
+   *
+   * - `"PCI\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\4&2B1C6285&0&0010"`
    */
   adapter_instance_id?: string | null;
 
   /**
    * Persistent across reboots in the common case (same GPU/driver instance).
    *
-   * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
+   * TODO(acdvorak): Describe GPU vs Adapter vs Driver.
+   *
+   * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath`
    */
   adapter_device_path?: string | null;
 
@@ -76,41 +108,41 @@ export interface WinDisplay {
   target_path_id?: number | null;
 
   /**
-   * ✅ PRIMARY STABLE ID
+   * ✅ PRIMARY STABLE ID (when available)
    *
-   * The closest thing to a "persistent adapter identity" you can get without
-   * dropping into SetupAPI/PCI location plumbing.
+   * Value:
    *
-   * `adapter_device_path` stays the same across reboots in the common case
-   * (same GPU/driver instance).
-   *
-   * `DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the
-   * "output/target on that adapter".
+   * ```
+   * (adapter_instance_id ?? adapter_device_path) + target_path_id
+   * ```
    */
   primary_port_key?: string | null;
 
   /**
-   * ✅ SECONDARY STABLE ID
-   *
    * Typically stable across reboots and uniquely identifies the monitor
    * instance on that connection path.
    *
-   * It is also very useful for correlating to EDID retrieval.
+   * It is also useful for correlating to EDID retrieval.
    *
-   * E.g.:
-   * - "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-   * - "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+   * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
    *
-   * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`
+   * Examples:
+   *
+   * - `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+   * - `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
    */
   monitor_device_path?: string | null;
 
   /**
+   * ✅ SECONDARY STABLE ID (when available)
+   *
    * Deterministic key derived from {@link monitor_device_path}.
    */
   monitor_path_key?: string | null;
 
   /**
+   * ✅ TERIARY STABLE ID (when available)
+   *
    * Deterministic monitor identity key based on EDID.
    *
    * Only emitted when manufacturer, product code, and serial are available.
@@ -118,44 +150,31 @@ export interface WinDisplay {
   edid_key?: string | null;
 
   /**
+   * Effective stable ID after applying candidate ordering.
+   */
+  stable_id?: string | null;
+
+  /**
    * Candidate stable keys ordered from strongest to weakest.
    *
    * 1. `primary_port_key`
    * 2. `monitor_path_key`
    * 3. `edid_key`
+   *
+   * TODO(acdvorak): Refactor
    */
   stable_id_candidates?: string[] | null;
 
   /**
-   * Effective stable id after applying candidate ordering.
-   */
-  stable_id?: string | null;
-
-  /**
    * Indicates which candidate produced {@link stable_id}.
+   *
+   * TODO(acdvorak): Refactor
    */
   stable_id_source?:
     | 'primary_port_key'
     | 'monitor_path_key'
     | 'edid_key'
     | null;
-
-  /**
-   * E.g.:
-   * - "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
-   * - "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"
-   */
-  wmi_instance_name?: string | null;
-
-  /**
-   * Normalized join key, with trailing `_0` removed from
-   * {@link wmi_instance_name}.
-   *
-   * E.g.:
-   * - "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153"
-   * - "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"
-   */
-  normalized_join_key?: string | null;
 
   is_primary: boolean;
 
@@ -173,8 +192,8 @@ export interface WinDisplay {
    *     "Show only on 1" (or you've "Disconnect this display" for the other).
    *     That other output can still exist, but it is not attached, so false.
    *
-   * TODO(acdvorak): Further clarify the difference between
-   * {@link has_interactive_desktop} and {@is_attached_to_desktop}.
+   * TODO(acdvorak): Clarify the difference between
+   * {@link has_interactive_desktop} and {@link is_attached_to_desktop}.
    */
   is_attached_to_desktop?: boolean | null;
 
@@ -193,15 +212,12 @@ export interface WinDisplay {
   /**
    * The full size and position of the display, *including* the taskbar and any
    * other areas that are not usable by maximized (non-fullscreen) applications.
-   *
-   * Might not be available in some edge cases like virtual desktops.
    */
   bounds: WinScreenRectangle;
 
   /**
-   * Available working area on the screen.
-   *
-   * This *excludes* taskbars and other docked windows.
+   * Available working area on the screen, *excluding* taskbars and other docked
+   * windows.
    */
   working_area: WinScreenRectangle;
 
@@ -213,7 +229,11 @@ export interface WinDisplay {
   /**
    * {@link refresh_rate_numerator} / {@link refresh_rate_denominator}.
    *
-   * @example 60, 120, 144
+   * Examples:
+   *
+   * - `60`
+   * - `120`
+   * - `144`
    *
    * @double
    */
@@ -272,25 +292,27 @@ export interface WinStandardColorInfo {
   bits_per_channel?: WinBitsPerColorChannel | null;
 
   /**
-   * TODO: What unit of measurement is this?
+   * In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).
    *
    * @double
    */
-  min_luminance?: number | null;
+  min_luminance_nits?: number | null;
 
   /**
-   * TODO: What unit of measurement is this?
+   * In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).
    *
    * @double
    */
-  max_luminance?: number | null;
+  max_luminance_nits?: number | null;
 
   /**
-   * TODO: What unit of measurement is this?
+   * Full-screen sustained luminance.
+   *
+   * In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).
    *
    * @double
    */
-  max_full_frame_luminance?: number | null;
+  max_full_frame_luminance_nits?: number | null;
 }
 
 export interface WinAdvancedColorInfo {
@@ -312,27 +334,39 @@ export interface WinEdidInfo {
   /**
    * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
    *
-   * E.g.:
-   * "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-   * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+   * Examples:
+   *
+   * - `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+   * - `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
    */
   monitor_device_path: string;
 
   /**
-   * E.g.:
-   * "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
-   * "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"
+   * Corresponds to the `InstanceName` field of these WMI object classes:
+   *
+   * - `WmiMonitorBasicDisplayParams`
+   * - `WmiMonitorConnectionParams`
+   * - `WmiMonitorDescriptorMethods`
+   * - `WmiMonitorID`
+   * - `WmiMonitorListedSupportedSourceModes`
+   *
+   * Examples:
+   *
+   * - `"DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"`
+   * - `"DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"`
    */
   wmi_instance_name?: string | null;
 
   /**
-   * Normalized join key, with trailing `_0` removed from wmi_instance_name.
+   * Normalized join key, with trailing `_0` removed from
+   * {@link wmi_instance_name}.
    *
    * E.g.:
-   * "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153"
-   * "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"
+   *
+   * - `"DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153"`
+   * - `"DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"`
    */
-  normalized_join_key: string;
+  wmi_join_key: string;
 
   /** @double */
   max_horizontal_image_size_mm?: number | null;
@@ -348,8 +382,10 @@ export interface WinEdidInfo {
   /**
    * 3-letter Vendor ID (aka PnP ID).
    *
-   * @example "SAM" (Samsung)
-   * @example "DEL" (Dell)
+   * Examples:
+   *
+   * - `"SAM"` (Samsung)
+   * - `"DEL"` (Dell)
    */
   manufacturer_vid?: string | null;
 
@@ -360,9 +396,11 @@ export interface WinEdidInfo {
   serial_number_id?: number | null;
 
   /**
-   * @example "DELL ST2320L"
-   * @example "QCQ95S"  // Samsung S95C TV
-   * @example "SAMSUNG" // Some devices don't give us an actual model number
+   * Examples:
+   *
+   * - `"DELL ST2320L"`
+   * - `"QCQ95S"`  // Samsung S95C TV
+   * - `"SAMSUNG"` // Some devices don't give us an actual model number
    */
   user_friendly_name?: string | null;
 
@@ -381,23 +419,26 @@ export interface WinEdidInfo {
 /**
  * On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win
  * "monitor device name" string (the `szDevice` field of `MONITORINFOEX`,
- * filled by `GetMonitorInfo`).
+ * filled by `GetMonitorInfo()`).
  *
  * In the common case, that comes out as the familiar GDI device path form:
+ *
  * - `\\.\DISPLAY1`
  * - `\\.\DISPLAY2`
  * - ... (1-based index, can go higher than 2)
  *
  * WinForms historically also has a special-case fallback for "single monitor"
  * and "no multimon" where it sets the device name to:
+
  * - `DISPLAY` (no `\\.\` prefix)
  *
  * You can see both facts in the `WinForms` reference source:
- * - single-monitor path sets `"DISPLAY"`
- * - multi-monitor path uses `MONITORINFOEX.szDevice`
  *
- * NOTE: Technically, This string may contain arbitrary non-printable characters
- * according to Microsoft Learn.
+ * - Single-monitor path sets `"DISPLAY"`
+ * - Multi-monitor path uses `MONITORINFOEX.szDevice`
+ *
+ * NOTE: Technically, this string may contain arbitrary non-printable
+ * characters, though I have never observed that in the wild.
  *
  * @see https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.screen.devicename?view=windowsdesktop-10.0
  * @see https://github.com/dotnet/dotnet/blob/3bc68b106/src/winforms/src/System.Windows.Forms/System/Windows/Forms/Screen.cs#L63
@@ -471,8 +512,7 @@ export type WinDisplayRotationDegrees = 0 | 90 | 180 | 270;
  * values, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and
  * `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.
  *
- * An embedded display port or UDI is also known as an integrated display port
- * or UDI.
+ * An embedded display port is also known as an integrated display port or UDI.
  *
  * @see https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ne-wingdi-displayconfig_video_output_technology
  */

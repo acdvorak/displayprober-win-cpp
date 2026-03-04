@@ -20,7 +20,12 @@ namespace dxgi {
 // buffer management, and resource sharing, including screen capturing via the
 // Desktop Duplication API.
 struct DxgiOutputDevice {
-  // Windows "monitor device name" from `MONITORINFOEX.szDevice`.
+  // Windows "monitor device name".
+  //
+  // Corresponds to `BasicMonitorInfo.short_lived_identifier`.
+  //
+  // Value comes from `DXGI_OUTPUT_DESC1.DeviceName[32]`,
+  // populated by `(ComPtr<IDXGIOutput6> output6)->GetDesc1(&desc)`.
   //
   // ⚠️ NOT stable across device disconnects/reconnects.
   //
@@ -33,32 +38,68 @@ struct DxgiOutputDevice {
   // "DISPLAY"           (single-monitor)
   // "WinDisc"           (SSH console)
   // ```
-  ShortLivedIdentifier device_name;
+  ShortLivedIdentifier short_lived_identifier;
 
-  std::uintptr_t hmonitor_id = 0;
+  // Raw `HMONITOR` handle (pointer value) from `DXGI_OUTPUT_DESC1.Monitor`,
+  // populated by `(ComPtr<IDXGIOutput6> output6)->GetDesc1(&desc)`.
+  //
+  // Corresponds to `BasicMonitorInfo.process_local_monitor_handle_ptr`.
+  //
+  // Value is process-local and NOT stable across topology changes
+  // (device connects/disconnects).
+  //
+  // Example: `17749131`
+  std::uintptr_t process_local_monitor_handle_ptr = 0;
 
-  // This value MIGHT be `false` under the following conditions:
+  // Indicates whether the output device is connected, enabled, and active
+  // (i.e., currently being used).
   //
-  // - Unused connectors on the GPU:
-  //   - Many drivers expose one IDXGIOutput per physical connector
-  //     (HDMI/DP/DVI), even if nothing is plugged in.
-  //   - Those "ports" can enumerate, but they are not part of the desktop, so
-  //     AttachedToDesktop is false.
+  // Value comes from `DXGI_OUTPUT_DESC1.AttachedToDesktop`
+  // populated by `(ComPtr<IDXGIOutput6> output6)->GetDesc1(&desc)`.
   //
-  // - A monitor is connected but disabled in Display Settings:
-  //   - Example: you have 2 monitors connected, but Windows is set to
-  //     "Show only on 1" (or you've "Disconnect this display" for the other).
-  //     That other output can still exist, but it is not attached, so false.
+  // A value of `false` means "this output exists, but Windows is not currently
+  // using it as part of the active desktop topology (the active VidPN)".
+  //
+  // If Windows Display Settings would show it as "not connected" or
+  // "not in use" (even if the cable is plugged in), DXGI can still enumerate
+  // an output object for it, and `AttachedToDesktop` is the bit that tells you
+  // whether it is actually in the current desktop.
   bool is_attached_to_desktop = false;
 
   std::optional<RECT> desktop_coordinates;
   std::optional<DXGI_MODE_ROTATION> rotation_type;
 
   std::optional<DXGI_COLOR_SPACE_TYPE> color_space;
-  std::optional<UINT> bits_per_color;
-  std::optional<FLOAT> min_luminance;
-  std::optional<FLOAT> max_luminance;
-  std::optional<FLOAT> max_full_frame_luminance;
+
+  // Bits per color channel.
+  //
+  // Typical real-world values:
+  //
+  // - `6`: Rare, but can appear when the active wire format is effectively
+  //   6 bpc (or 6 bpc + dithering).
+  // - `8`: Most SDR desktop setups (standard 8 bpc output).
+  // - `10`: Very common when Windows "Use HDR" / advanced color is active, or
+  //   when the active output format is 10 bpc.
+  // - `12`: Less common, but shows up on some HDR-capable pipelines
+  //   (often depends on GPU, link bandwidth, and chosen output format).
+  //
+  // The API field is just a UINT describing the active wire format, so oddball
+  // values are not forbidden.
+  //
+  // NOTES:
+  //
+  // - This is "bits per color channel for the active wire format" on that
+  //   output, not "panel native bit depth". So an "8-bit + FRC" panel can still
+  //   report 10 if the link is running 10 bpc.
+  //
+  // - Seeing 8 bpc does not mean "not HDR". There are reports of HDR
+  //   colorspaces while BitsPerColor is 8, depending on
+  //   driver/cable/mode behavior.
+  std::optional<UINT> bits_per_channel;
+
+  std::optional<FLOAT> min_luminance_nits;
+  std::optional<FLOAT> max_luminance_nits;
+  std::optional<FLOAT> max_full_frame_luminance_nits;
 };
 
 std::map<ShortLivedIdentifier, DxgiOutputDevice> GetDxgiOutputDevices();

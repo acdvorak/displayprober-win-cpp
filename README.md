@@ -84,9 +84,9 @@ DisplayProber.exe
         "dxgi_color_space": "rgb_full_g22_none_p709",
         "is_hdr_supported": false,
         "is_hdr_enabled": false,
-        "min_luminance": 0.009999999776482582,
-        "max_luminance": 1499.0,
-        "max_full_frame_luminance": 799.0,
+        "min_luminance_nits": 0.009999999776482582,
+        "max_luminance_nits": 1499.0,
+        "max_full_frame_luminance_nits": 799.0,
       },
       "advanced_color_info": {
         "is_advanced_color_active": false,
@@ -225,8 +225,8 @@ TODO(acdvorak)
 
 # PowerShell equivalents
 
-In PowerShell v5.1+ on Windows, you can run the following commands to get
-some of the same raw underlying data that this C++ CLI returns:
+In PowerShell v5.1+ on Windows, you can run the following commands to get some
+of the same raw underlying data that this C++ CLI returns:
 
 ```ps1
 # Simple, strongly-typed Windows Forms .NET wrapper around User32
@@ -290,9 +290,25 @@ Native binaries:
 
 # Reference implementations
 
+Basic display properties and enumeration:
+
+- Chromium:
+  - [`ui/display/win/display_info.cc`](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/ui/display/win/display_info.cc)
+  - [`ui/display/win/screen_win.cc`](https://chromium.googlesource.com/chromium/src/+/master/ui/display/win/screen_win.cc)
+- Looking Glass:
+  [`Windows/capture/DXGI/src/dxgi.c`](https://github.com/gnif/LookingGlass/blob/7f31ecf5e/host/platform/Windows/capture/DXGI/src/dxgi.c)
+- Windows Classic Samples:
+  [`DXGIDesktopDuplication/cpp/DuplicationManager.cpp`](https://github.com/microsoft/Windows-classic-samples/blob/0b4e48a88/Samples/DXGIDesktopDuplication/cpp/DuplicationManager.cpp)
+- WinUIEx:
+  [`MonitorInfo.cs`](https://github.com/dotMorten/WinUIEx/blob/main/src/WinUIEx/MonitorInfo.cs)
+
+HDR:
+
 - [AutoActions: `HDRController.cpp`](https://github.com/Codectory/AutoActions/blob/main/Source/HDRController/HDRController/HDRController.cpp)
 - [HDR Tray: `HDR.cpp`](https://github.com/res2k/HDRTray/blob/main/common/HDR.cpp)
-- [WinUIEx: `MonitorInfo.cs`](https://github.com/dotMorten/WinUIEx/blob/main/src/WinUIEx/MonitorInfo.cs)
+
+EDID and DisplayID parsing:
+
 - `libdisplay-info`:
   - EDID and DisplayID parsing library written in C
   - [freedesktop.org source code](https://gitlab.freedesktop.org/emersion/libdisplay-info)
@@ -313,7 +329,7 @@ Native binaries:
 Run:
 
 ```ps1
-.\deps.ps1
+./deps.ps1
 ```
 
 This will install all necessary dependencies:
@@ -329,11 +345,33 @@ This will install all necessary dependencies:
 ## Building
 
 ```ps1
-.\build.ps1 [-Debug|-Release] [-x64|-x86|-Both]
+./build.ps1 [-Debug|-Release] [-x64|-x86|-Both]
 ```
 
 ## Running
 
 ```ps1
-.\run.ps1
+./run.ps1
+```
+
+## Unit tests
+
+```ps1
+./test.ps1
+```
+
+## Helper scripts
+
+Print the OS name/version, PowerShell name/version, and a list of installed .NET
+runtimes:
+
+```ps1
+./version.ps1
+```
+
+Enumerate display properties using a combination of tools (DisplayProber,
+NirSoft utilities, PowerShell scripts), and write their stdout to disk:
+
+```ps1
+./dump.ps1
 ```
