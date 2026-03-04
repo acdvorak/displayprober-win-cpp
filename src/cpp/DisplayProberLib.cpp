@@ -313,7 +313,7 @@ json::WinDisplay MergeDisplayDataToJson(
     const std::uint8_t dxgi_bpc =
         static_cast<std::uint8_t>(device.bits_per_channel.value_or(0));
 
-    if (json_bpc > 0 && json_bpc != device.bits_per_channel) {
+    if (json_bpc > 0 && json_bpc != dxgi_bpc) {
       std::cerr << "WARNING: DxgiOutputDevice.bits_per_channel=" << dxgi_bpc
                 << " differs from GdiDisplayConfig.bits_per_channel="
                 << json_bpc << std::endl;
