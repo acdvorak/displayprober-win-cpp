@@ -145,13 +145,9 @@ namespace json {
      * The full size and position of the display, *including* the taskbar and any other areas
      * that are not usable by maximized (non-fullscreen) applications.
      *
-     * Might not be available in some edge cases like virtual desktops.
-     *
      * Rectangle payload used by Bounds and WorkingArea.
      *
-     * Available working area on the screen.
-     *
-     * This *excludes* taskbars and other docked windows.
+     * Available working area on the screen, *excluding* taskbars and other docked windows.
      */
     struct WinScreenRectangle {
         int32_t bottom;
@@ -171,6 +167,11 @@ namespace json {
         std::optional<std::string> edid_bytes_base64;
         /**
          * 3-letter Vendor ID (aka PnP ID).
+         *
+         * Examples:
+         *
+         * - `"SAM"` (Samsung)
+         * - `"DEL"` (Dell)
          */
         std::optional<std::string> manufacturer_vid;
         std::optional<double> max_horizontal_image_size_mm;
@@ -178,20 +179,23 @@ namespace json {
         /**
          * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
          *
-         * E.g.:
-         * "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-         * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+         * Examples:
+         *
+         * -
+         * `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+         * -
+         * `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
          */
         std::string monitor_device_path;
-        /**
-         * Normalized join key, with trailing `_0` removed from wmi_instance_name.
-         *
-         * E.g.: "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153"
-         * "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"
-         */
-        std::string normalized_join_key;
         std::optional<uint16_t> product_code_id;
         std::optional<uint32_t> serial_number_id;
+        /**
+         * Examples:
+         *
+         * - `"DELL ST2320L"`
+         * - `"QCQ95S"`  // Samsung S95C TV
+         * - `"SAMSUNG"` // Some devices don't give us an actual model number
+         */
         std::optional<std::string> user_friendly_name;
         /**
          * Raw numeric value that gets mapped to  {@link  WinDisplayConnectorType } .
@@ -199,10 +203,29 @@ namespace json {
         std::optional<WmiVideoOutputTechnology> video_output_technology_type;
         std::optional<uint8_t> week_of_manufacture;
         /**
-         * E.g.: "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
-         * "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"
+         * Corresponds to the `InstanceName` field of these WMI object classes:
+         *
+         * - `WmiMonitorBasicDisplayParams`
+         * - `WmiMonitorConnectionParams`
+         * - `WmiMonitorDescriptorMethods`
+         * - `WmiMonitorID`
+         * - `WmiMonitorListedSupportedSourceModes`
+         *
+         * Examples:
+         *
+         * - `"DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"`
+         * - `"DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"`
          */
         std::optional<std::string> wmi_instance_name;
+        /**
+         * Normalized join key, with trailing `_0` removed from  {@link  wmi_instance_name } .
+         *
+         * E.g.:
+         *
+         * - `"DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153"`
+         * - `"DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"`
+         */
+        std::string wmi_join_key;
         std::optional<uint16_t> year_of_manufacture;
     };
 
@@ -215,7 +238,7 @@ namespace json {
      * embedded values, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and
      * `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.
      *
-     * An embedded display port or UDI is also known as an integrated display port or UDI.
+     * An embedded display port is also known as an integrated display port or UDI.
      */
     enum class WinDisplayConnectorType : int { COMPONENT_VIDEO, COMPOSITE_VIDEO, DISPLAYPORT_EMBEDDED, DISPLAYPORT_EXTERNAL, DISPLAYPORT_USB_TUNNEL, DVI, D_JPN, FAKE, HDMI, INDIRECT_VIRTUAL, INDIRECT_WIRED, INTERNAL, LVDS, MIRACAST, OTHER, RDP, SDI, SDTVDONGLE, SVIDEO, UDI_EMBEDDED, UDI_EXTERNAL, VGA };
 
@@ -234,38 +257,50 @@ namespace json {
         bool is_hdr_enabled;
         bool is_hdr_supported;
         /**
-         * TODO: What unit of measurement is this?
+         * Full-screen sustained luminance.
+         *
+         * In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).
          */
-        std::optional<double> max_full_frame_luminance;
+        std::optional<double> max_full_frame_luminance_nits;
         /**
-         * TODO: What unit of measurement is this?
+         * In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).
          */
-        std::optional<double> max_luminance;
+        std::optional<double> max_luminance_nits;
         /**
-         * TODO: What unit of measurement is this?
+         * In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).
          */
-        std::optional<double> min_luminance;
+        std::optional<double> min_luminance_nits;
     };
 
     struct WinDisplay {
         /**
          * Persistent across reboots in the common case (same GPU/driver instance).
          *
-         * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
+         * TODO(acdvorak): Describe GPU vs Adapter vs Driver.
+         *
+         * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath`
          */
         std::optional<std::string> adapter_device_path;
         /**
-         * Adapter Plug and Play instance id.
+         * Adapter Plug and Play instance ID (typically the GPU's unique ID).
+         *
+         * For a single GPU with two ports (e.g., one DisplayPort and one DVI), where both ports are
+         * connected to an active monitor/TV, both displays will have the same
+         * `adapter_instance_id`.
+         *
+         * TODO(acdvorak): Describe GPU vs Adapter vs Driver.
          *
          * More persistent than `adapter_device_path` across reboots and driver churn.
+         *
+         * Examples:
+         *
+         * - `"PCI\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\4&2B1C6285&0&0010"`
          */
         std::optional<std::string> adapter_instance_id;
         std::optional<WinAdvancedColorInfo> advanced_color_info;
         /**
          * The full size and position of the display, *including* the taskbar and any other areas
          * that are not usable by maximized (non-fullscreen) applications.
-         *
-         * Might not be available in some edge cases like virtual desktops.
          */
         WinScreenRectangle bounds;
         /**
@@ -276,13 +311,36 @@ namespace json {
         std::optional<uint32_t> dpi_scaling_percent;
         std::optional<WinEdidInfo> edid_info;
         /**
+         * ✅ TERTIARY STABLE ID (when available)
+         *
          * Deterministic monitor identity key based on EDID.
          *
          * Only emitted when manufacturer, product code, and serial are available.
          */
         std::optional<std::string> edid_key;
         /**
-         * Manufacturer-provided model name from the DisplayID or EDID.
+         * Human-friendly name of the display.
+         *
+         * Value comes from one of the following sources, in descending order of quality (i.e., the
+         * "best" available value is returned):
+         *
+         * 1. EDID "monitor descriptor" name (e.g., `"DELL ST2320L"`) 2. `"Remote Desktop"` or
+         * `"Remote Desktop #N"` if RDP 3. `"Virtual Machine"` or `"Virtual Machine #N"` if a VM 4.
+         * 7-digit Windows EDID identifier (e.g., `"SAM73A5"` or `"DELF023"`) 5. Short-lived Windows
+         * display number (e.g., `"DISPLAY1"`)
+         *
+         * Examples:
+         *
+         * - `"DELL ST2320L"`
+         * - `"QCQ95S"`      // Samsung S95C TV
+         * - `"SAMSUNG"`     // Some devices don't give us an actual model number
+         * - `"SAM73A5"`     // Samsung S95C TV
+         * - `"DELF023"`     // Dell ST2320L monitor
+         * - `"DISPLAY1"`    // Primary monitor
+         * - `"DISPLAY2"`    // Secondary monitor
+         * - `"DISPLAY129"`  // RDP monitor
+         * - `"DISPLAY"`     // Single monitor
+         * - `"WinDisc"`     // Non-interactive remote SSH console session
          */
         std::optional<std::string> friendly_name;
         /**
@@ -297,58 +355,54 @@ namespace json {
          * this display" for the other).     That other output can still exist, but it is not
          * attached, so false.
          *
-         * TODO(acdvorak): Further clarify the difference between  {@link  has_interactive_desktop
-         * }  and {@is_attached_to_desktop}.
+         * TODO(acdvorak): Clarify the difference between  {@link  has_interactive_desktop  }  and
+         * {@link  is_attached_to_desktop } .
          */
         std::optional<bool> is_attached_to_desktop;
         bool is_primary;
         /**
-         * ✅ SECONDARY STABLE ID
-         *
          * Typically stable across reboots and uniquely identifies the monitor instance on that
          * connection path.
          *
-         * It is also very useful for correlating to EDID retrieval.
+         * It is also useful for correlating to EDID retrieval.
          *
-         * E.g.:
-         * - "\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
+         * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
+         *
+         * Examples:
+         *
          * -
-         * "\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"
-         *
-         * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`
+         * `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+         * -
+         * `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
          */
         std::optional<std::string> monitor_device_path;
         /**
+         * ✅ SECONDARY STABLE ID (when available)
+         *
          * Deterministic key derived from  {@link  monitor_device_path } .
          */
         std::optional<std::string> monitor_path_key;
-        /**
-         * Normalized join key, with trailing `_0` removed from  {@link  wmi_instance_name } .
-         *
-         * E.g.:
-         * - "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153"
-         * - "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"
-         */
-        std::optional<std::string> normalized_join_key;
         /**
          * Physical connector type, if applicable (HDMI, DVI, DisplayPort, etc.).
          */
         std::optional<WinDisplayConnectorType> physical_connector_type;
         /**
-         * ✅ PRIMARY STABLE ID
+         * ✅ PRIMARY STABLE ID (when available)
          *
-         * The closest thing to a "persistent adapter identity" you can get without dropping into
-         * SetupAPI/PCI location plumbing.
+         * Value:
          *
-         * `adapter_device_path` stays the same across reboots in the common case (same GPU/driver
-         * instance).
-         *
-         * `DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the "output/target on that adapter".
+         * ``` (adapter_instance_id ?? adapter_device_path) + target_path_id ```
          */
         std::optional<std::string> primary_port_key;
         std::optional<uint32_t> refresh_rate_denominator;
         /**
          * {@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .
+         *
+         * Examples:
+         *
+         * - `60`
+         * - `120`
+         * - `144`
          */
         std::optional<double> refresh_rate_hz;
         std::optional<uint32_t> refresh_rate_numerator;
@@ -361,20 +415,32 @@ namespace json {
          * Windows "monitor device name" from `MONITORINFOEX.szDevice`.
          *
          * ⚠️ NOT stable across device disconnects/reconnects.
+         *
+         * Examples:
+         *
+         * - `"\\\\.\\DISPLAY1"`   (multi-monitor)
+         * - `"\\\\.\\DISPLAY2"`   (multi-monitor)
+         * - `"\\\\.\\DISPLAY129"` (Remote Desktop)
+         * - `"DISPLAY"`           (single-monitor)
+         * - `"WinDisc"`           (SSH console)
          */
         std::string short_lived_identifier;
         /**
-         * Effective stable id after applying candidate ordering.
+         * Effective stable ID after applying candidate ordering.
          */
         std::optional<std::string> stable_id;
         /**
          * Candidate stable keys ordered from strongest to weakest.
          *
          * 1. `primary_port_key` 2. `monitor_path_key` 3. `edid_key`
+         *
+         * TODO(acdvorak): Refactor
          */
         std::optional<std::vector<std::string>> stable_id_candidates;
         /**
          * Indicates which candidate produced  {@link  stable_id } .
+         *
+         * TODO(acdvorak): Refactor
          */
         std::optional<StableIdSource> stable_id_source;
         WinStandardColorInfo standard_color_info;
@@ -383,15 +449,7 @@ namespace json {
          */
         std::optional<uint32_t> target_path_id;
         /**
-         * E.g.:
-         * - "DISPLAY\\SAM73A5\\5&21e6c3e1&0&UID5243153_0"
-         * - "DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152_0"
-         */
-        std::optional<std::string> wmi_instance_name;
-        /**
-         * Available working area on the screen.
-         *
-         * This *excludes* taskbars and other docked windows.
+         * Available working area on the screen, *excluding* taskbars and other docked windows.
          */
         WinScreenRectangle working_area;
     };
@@ -407,18 +465,20 @@ namespace json {
          * - Remote console
          * - Headless server
          *
-         * TODO(acdvorak): Further clarify the difference between  {@link  has_interactive_desktop
-         * }  and {@is_attached_to_desktop}.
+         * TODO(acdvorak): Clarify the difference between  {@link  has_interactive_desktop }  and
+         * {@link  is_attached_to_desktop  } .
          */
         bool has_interactive_desktop;
         /**
+         * Indicates whether the current session is Microsoft Remote Desktop (RDP).
+         *
          * This is a *session-level* value, not specific to an individual display.
          */
         bool is_remote_desktop;
         /**
-         * This is a *session-level* value, not specific to an individual display.
-         *
          * Best-effort signal that this display is *probably* running in a VM guest.
+         *
+         * This is a *session-level* value, not specific to an individual display.
          */
         bool is_virtual_machine;
     };
@@ -530,13 +590,13 @@ namespace json {
         x.max_horizontal_image_size_mm = get_stack_optional<double>(j, "max_horizontal_image_size_mm");
         x.max_vertical_image_size_mm = get_stack_optional<double>(j, "max_vertical_image_size_mm");
         x.monitor_device_path = j.at("monitor_device_path").get<std::string>();
-        x.normalized_join_key = j.at("normalized_join_key").get<std::string>();
         x.product_code_id = get_stack_optional<uint16_t>(j, "product_code_id");
         x.serial_number_id = get_stack_optional<uint32_t>(j, "serial_number_id");
         x.user_friendly_name = get_stack_optional<std::string>(j, "user_friendly_name");
         x.video_output_technology_type = get_stack_optional<WmiVideoOutputTechnology>(j, "video_output_technology_type");
         x.week_of_manufacture = get_stack_optional<uint8_t>(j, "week_of_manufacture");
         x.wmi_instance_name = get_stack_optional<std::string>(j, "wmi_instance_name");
+        x.wmi_join_key = j.at("wmi_join_key").get<std::string>();
         x.year_of_manufacture = get_stack_optional<uint16_t>(j, "year_of_manufacture");
     }
 
@@ -555,7 +615,6 @@ namespace json {
             j["max_vertical_image_size_mm"] = x.max_vertical_image_size_mm;
         }
         j["monitor_device_path"] = x.monitor_device_path;
-        j["normalized_join_key"] = x.normalized_join_key;
         if (x.product_code_id) {
             j["product_code_id"] = x.product_code_id;
         }
@@ -574,6 +633,7 @@ namespace json {
         if (x.wmi_instance_name) {
             j["wmi_instance_name"] = x.wmi_instance_name;
         }
+        j["wmi_join_key"] = x.wmi_join_key;
         if (x.year_of_manufacture) {
             j["year_of_manufacture"] = x.year_of_manufacture;
         }
@@ -585,9 +645,9 @@ namespace json {
         x.dxgi_color_space = get_stack_optional<WinDxgiColorSpace>(j, "dxgi_color_space");
         x.is_hdr_enabled = j.at("is_hdr_enabled").get<bool>();
         x.is_hdr_supported = j.at("is_hdr_supported").get<bool>();
-        x.max_full_frame_luminance = get_stack_optional<double>(j, "max_full_frame_luminance");
-        x.max_luminance = get_stack_optional<double>(j, "max_luminance");
-        x.min_luminance = get_stack_optional<double>(j, "min_luminance");
+        x.max_full_frame_luminance_nits = get_stack_optional<double>(j, "max_full_frame_luminance_nits");
+        x.max_luminance_nits = get_stack_optional<double>(j, "max_luminance_nits");
+        x.min_luminance_nits = get_stack_optional<double>(j, "min_luminance_nits");
     }
 
     inline void to_json(json & j, const WinStandardColorInfo & x) {
@@ -603,14 +663,14 @@ namespace json {
         }
         j["is_hdr_enabled"] = x.is_hdr_enabled;
         j["is_hdr_supported"] = x.is_hdr_supported;
-        if (x.max_full_frame_luminance) {
-            j["max_full_frame_luminance"] = x.max_full_frame_luminance;
+        if (x.max_full_frame_luminance_nits) {
+            j["max_full_frame_luminance_nits"] = x.max_full_frame_luminance_nits;
         }
-        if (x.max_luminance) {
-            j["max_luminance"] = x.max_luminance;
+        if (x.max_luminance_nits) {
+            j["max_luminance_nits"] = x.max_luminance_nits;
         }
-        if (x.min_luminance) {
-            j["min_luminance"] = x.min_luminance;
+        if (x.min_luminance_nits) {
+            j["min_luminance_nits"] = x.min_luminance_nits;
         }
     }
 
@@ -627,7 +687,6 @@ namespace json {
         x.is_primary = j.at("is_primary").get<bool>();
         x.monitor_device_path = get_stack_optional<std::string>(j, "monitor_device_path");
         x.monitor_path_key = get_stack_optional<std::string>(j, "monitor_path_key");
-        x.normalized_join_key = get_stack_optional<std::string>(j, "normalized_join_key");
         x.physical_connector_type = get_stack_optional<WinDisplayConnectorType>(j, "physical_connector_type");
         x.primary_port_key = get_stack_optional<std::string>(j, "primary_port_key");
         x.refresh_rate_denominator = get_stack_optional<uint32_t>(j, "refresh_rate_denominator");
@@ -641,7 +700,6 @@ namespace json {
         x.stable_id_source = get_stack_optional<StableIdSource>(j, "stable_id_source");
         x.standard_color_info = j.at("standard_color_info").get<WinStandardColorInfo>();
         x.target_path_id = get_stack_optional<uint32_t>(j, "target_path_id");
-        x.wmi_instance_name = get_stack_optional<std::string>(j, "wmi_instance_name");
         x.working_area = j.at("working_area").get<WinScreenRectangle>();
     }
 
@@ -679,9 +737,6 @@ namespace json {
         if (x.monitor_path_key) {
             j["monitor_path_key"] = x.monitor_path_key;
         }
-        if (x.normalized_join_key) {
-            j["normalized_join_key"] = x.normalized_join_key;
-        }
         if (x.physical_connector_type) {
             j["physical_connector_type"] = x.physical_connector_type;
         }
@@ -716,9 +771,6 @@ namespace json {
         j["standard_color_info"] = x.standard_color_info;
         if (x.target_path_id) {
             j["target_path_id"] = x.target_path_id;
-        }
-        if (x.wmi_instance_name) {
-            j["wmi_instance_name"] = x.wmi_instance_name;
         }
         j["working_area"] = x.working_area;
     }

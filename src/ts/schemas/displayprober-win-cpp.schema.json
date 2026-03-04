@@ -14,21 +14,21 @@
         },
         "has_interactive_desktop": {
           "type": "boolean",
-          "description": "This is a *session-level* value, not specific to an individual display.\n\nIt will be `false` in all non-interactive sessions, such as:\n\n- SSH\n- Remote console\n- Headless server\n\nTODO(acdvorak): Further clarify the difference between  {@link  has_interactive_desktop }  and {@is_attached_to_desktop}.",
-          "markdownDescription": "This is a *session-level* value, not specific to an individual display.\n\nIt will be `false` in all non-interactive sessions, such as:\n\n- SSH\n- Remote console\n- Headless server\n\nTODO(acdvorak): Further clarify the difference between\n {@link  has_interactive_desktop }  and {@is_attached_to_desktop}.",
-          "fullDescription": "This is a *session-level* value, not specific to an individual display.\n\nIt will be `false` in all non-interactive sessions, such as:\n\n- SSH\n- Remote console\n- Headless server\n\nTODO(acdvorak): Further clarify the difference between\n{@link has_interactive_desktop} and {@is_attached_to_desktop}."
+          "description": "This is a *session-level* value, not specific to an individual display.\n\nIt will be `false` in all non-interactive sessions, such as:\n\n- SSH\n- Remote console\n- Headless server\n\nTODO(acdvorak): Clarify the difference between  {@link  has_interactive_desktop }  and  {@link  is_attached_to_desktop  } .",
+          "markdownDescription": "This is a *session-level* value, not specific to an individual display.\n\nIt will be `false` in all non-interactive sessions, such as:\n\n- SSH\n- Remote console\n- Headless server\n\nTODO(acdvorak): Clarify the difference between\n {@link  has_interactive_desktop }  and  {@link  is_attached_to_desktop  } .",
+          "fullDescription": "This is a *session-level* value, not specific to an individual display.\n\nIt will be `false` in all non-interactive sessions, such as:\n\n- SSH\n- Remote console\n- Headless server\n\nTODO(acdvorak): Clarify the difference between\n{@link has_interactive_desktop} and {@link is_attached_to_desktop}."
         },
         "is_remote_desktop": {
           "type": "boolean",
-          "description": "This is a *session-level* value, not specific to an individual display.",
-          "markdownDescription": "This is a *session-level* value, not specific to an individual display.",
-          "fullDescription": "This is a *session-level* value, not specific to an individual display."
+          "description": "Indicates whether the current session is Microsoft Remote Desktop (RDP).\n\nThis is a *session-level* value, not specific to an individual display.",
+          "markdownDescription": "Indicates whether the current session is Microsoft Remote Desktop (RDP).\n\nThis is a *session-level* value, not specific to an individual display.",
+          "fullDescription": "Indicates whether the current session is Microsoft Remote Desktop (RDP).\n\nThis is a *session-level* value, not specific to an individual display."
         },
         "is_virtual_machine": {
           "type": "boolean",
-          "description": "This is a *session-level* value, not specific to an individual display.\n\nBest-effort signal that this display is *probably* running in a VM guest.",
-          "markdownDescription": "This is a *session-level* value, not specific to an individual display.\n\nBest-effort signal that this display is *probably* running in a VM guest.",
-          "fullDescription": "This is a *session-level* value, not specific to an individual display.\n\nBest-effort signal that this display is *probably* running in a VM guest."
+          "description": "Best-effort signal that this display is *probably* running in a VM guest.\n\nThis is a *session-level* value, not specific to an individual display.",
+          "markdownDescription": "Best-effort signal that this display is *probably* running in a VM guest.\n\nThis is a *session-level* value, not specific to an individual display.",
+          "fullDescription": "Best-effort signal that this display is *probably* running in a VM guest.\n\nThis is a *session-level* value, not specific to an individual display."
         }
       },
       "required": [
@@ -43,51 +43,31 @@
       "type": "object",
       "properties": {
         "friendly_name": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Manufacturer-provided model name from the DisplayID or EDID.",
-          "markdownDescription": "Manufacturer-provided model name from the DisplayID or EDID.",
-          "fullDescription": "Manufacturer-provided model name from the DisplayID or EDID.\n\n@example \"DELL ST2320L\"\n@example \"QCQ95S\"  // Samsung S95C TV\n@example \"SAMSUNG\" // Some devices don't give us an actual model number",
-          "examples": [
-            "DELL ST2320L",
-            "QCQ95S",
-            "SAMSUNG"
-          ]
+          "type": ["string", "null"],
+          "description": "Human-friendly name of the display.\n\nValue comes from one of the following sources, in descending order of quality (i.e., the \"best\" available value is returned):\n\n1. EDID \"monitor descriptor\" name (e.g., `\"DELL ST2320L\"`) 2. `\"Remote Desktop\"` or `\"Remote Desktop #N\"` if RDP 3. `\"Virtual Machine\"` or `\"Virtual Machine #N\"` if a VM 4. 7-digit Windows EDID identifier (e.g., `\"SAM73A5\"` or `\"DELF023\"`) 5. Short-lived Windows display number (e.g., `\"DISPLAY1\"`)\n\nExamples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`      // Samsung S95C TV\n- `\"SAMSUNG\"`     // Some devices don't give us an actual model number\n- `\"SAM73A5\"`     // Samsung S95C TV\n- `\"DELF023\"`     // Dell ST2320L monitor\n- `\"DISPLAY1\"`    // Primary monitor\n- `\"DISPLAY2\"`    // Secondary monitor\n- `\"DISPLAY129\"`  // RDP monitor\n- `\"DISPLAY\"`     // Single monitor\n- `\"WinDisc\"`     // Non-interactive remote SSH console session",
+          "markdownDescription": "Human-friendly name of the display.\n\nValue comes from one of the following sources, in descending order of\nquality (i.e., the \"best\" available value is returned):\n\n1. EDID \"monitor descriptor\" name (e.g., `\"DELL ST2320L\"`)\n2. `\"Remote Desktop\"` or `\"Remote Desktop #N\"` if RDP\n3. `\"Virtual Machine\"` or `\"Virtual Machine #N\"` if a VM\n4. 7-digit Windows EDID identifier (e.g., `\"SAM73A5\"` or `\"DELF023\"`)\n5. Short-lived Windows display number (e.g., `\"DISPLAY1\"`)\n\nExamples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`      // Samsung S95C TV\n- `\"SAMSUNG\"`     // Some devices don't give us an actual model number\n- `\"SAM73A5\"`     // Samsung S95C TV\n- `\"DELF023\"`     // Dell ST2320L monitor\n- `\"DISPLAY1\"`    // Primary monitor\n- `\"DISPLAY2\"`    // Secondary monitor\n- `\"DISPLAY129\"`  // RDP monitor\n- `\"DISPLAY\"`     // Single monitor\n- `\"WinDisc\"`     // Non-interactive remote SSH console session",
+          "fullDescription": "Human-friendly name of the display.\n\nValue comes from one of the following sources, in descending order of\nquality (i.e., the \"best\" available value is returned):\n\n1. EDID \"monitor descriptor\" name (e.g., `\"DELL ST2320L\"`)\n2. `\"Remote Desktop\"` or `\"Remote Desktop #N\"` if RDP\n3. `\"Virtual Machine\"` or `\"Virtual Machine #N\"` if a VM\n4. 7-digit Windows EDID identifier (e.g., `\"SAM73A5\"` or `\"DELF023\"`)\n5. Short-lived Windows display number (e.g., `\"DISPLAY1\"`)\n\nExamples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`      // Samsung S95C TV\n- `\"SAMSUNG\"`     // Some devices don't give us an actual model number\n- `\"SAM73A5\"`     // Samsung S95C TV\n- `\"DELF023\"`     // Dell ST2320L monitor\n- `\"DISPLAY1\"`    // Primary monitor\n- `\"DISPLAY2\"`    // Secondary monitor\n- `\"DISPLAY129\"`  // RDP monitor\n- `\"DISPLAY\"`     // Single monitor\n- `\"WinDisc\"`     // Non-interactive remote SSH console session"
         },
         "short_lived_identifier": {
           "$ref": "#/definitions/WinMonitorDeviceName",
-          "description": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.",
-          "markdownDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.",
-          "fullDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.\n\n@example \"\\\\\\\\.\\\\DISPLAY1\" (multi-monitor)\n@example \"\\\\\\\\.\\\\DISPLAY2\" (multi-monitor)\n@example \"\\\\\\\\.\\\\DISPLAY129\" (Remote Desktop)\n@example \"DISPLAY\" (single-monitor)\n@example \"WinDisc\" (SSH console)"
+          "description": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.\n\nExamples:\n\n- `\"\\\\\\\\.\\\\DISPLAY1\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY2\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY129\"` (Remote Desktop)\n- `\"DISPLAY\"`           (single-monitor)\n- `\"WinDisc\"`           (SSH console)",
+          "markdownDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.\n\nExamples:\n\n- `\"\\\\\\\\.\\\\DISPLAY1\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY2\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY129\"` (Remote Desktop)\n- `\"DISPLAY\"`           (single-monitor)\n- `\"WinDisc\"`           (SSH console)",
+          "fullDescription": "Windows \"monitor device name\" from `MONITORINFOEX.szDevice`.\n\n⚠️ NOT stable across device disconnects/reconnects.\n\nExamples:\n\n- `\"\\\\\\\\.\\\\DISPLAY1\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY2\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY129\"` (Remote Desktop)\n- `\"DISPLAY\"`           (single-monitor)\n- `\"WinDisc\"`           (SSH console)"
         },
         "adapter_instance_id": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Adapter Plug and Play instance id.\n\nMore persistent than `adapter_device_path` across reboots and driver churn.",
-          "markdownDescription": "Adapter Plug and Play instance id.\n\nMore persistent than `adapter_device_path` across reboots and driver\nchurn.",
-          "fullDescription": "Adapter Plug and Play instance id.\n\nMore persistent than `adapter_device_path` across reboots and driver\nchurn.\n\n@example \"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\\\4&2A5F5B12&0&0008\"",
-          "examples": [
-            "PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"
-          ]
+          "type": ["string", "null"],
+          "description": "Adapter Plug and Play instance ID (typically the GPU's unique ID).\n\nFor a single GPU with two ports (e.g., one DisplayPort and one DVI), where both ports are connected to an active monitor/TV, both displays will have the same `adapter_instance_id`.\n\nTODO(acdvorak): Describe GPU vs Adapter vs Driver.\n\nMore persistent than `adapter_device_path` across reboots and driver churn.\n\nExamples:\n\n- `\"PCI\\\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\\\4&2B1C6285&0&0010\"`",
+          "markdownDescription": "Adapter Plug and Play instance ID (typically the GPU's unique ID).\n\nFor a single GPU with two ports (e.g., one DisplayPort and one DVI), where\nboth ports are connected to an active monitor/TV, both displays will have\nthe same `adapter_instance_id`.\n\nTODO(acdvorak): Describe GPU vs Adapter vs Driver.\n\nMore persistent than `adapter_device_path` across reboots and driver\nchurn.\n\nExamples:\n\n- `\"PCI\\\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\\\4&2B1C6285&0&0010\"`",
+          "fullDescription": "Adapter Plug and Play instance ID (typically the GPU's unique ID).\n\nFor a single GPU with two ports (e.g., one DisplayPort and one DVI), where\nboth ports are connected to an active monitor/TV, both displays will have\nthe same `adapter_instance_id`.\n\nTODO(acdvorak): Describe GPU vs Adapter vs Driver.\n\nMore persistent than `adapter_device_path` across reboots and driver\nchurn.\n\nExamples:\n\n- `\"PCI\\\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\\\4&2B1C6285&0&0010\"`"
         },
         "adapter_device_path": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Persistent across reboots in the common case (same GPU/driver instance).\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`",
-          "markdownDescription": "Persistent across reboots in the common case (same GPU/driver instance).\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`",
-          "fullDescription": "Persistent across reboots in the common case (same GPU/driver instance).\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`"
+          "type": ["string", "null"],
+          "description": "Persistent across reboots in the common case (same GPU/driver instance).\n\nTODO(acdvorak): Describe GPU vs Adapter vs Driver.\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath`",
+          "markdownDescription": "Persistent across reboots in the common case (same GPU/driver instance).\n\nTODO(acdvorak): Describe GPU vs Adapter vs Driver.\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath`",
+          "fullDescription": "Persistent across reboots in the common case (same GPU/driver instance).\n\nTODO(acdvorak): Describe GPU vs Adapter vs Driver.\n\nCorresponds to: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath`"
         },
         "target_path_id": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.",
           "markdownDescription": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.",
           "fullDescription": "Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.\n\n@uint32",
@@ -95,40 +75,34 @@
           "maximum": 4294967295
         },
         "primary_port_key": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "✅ PRIMARY STABLE ID\n\nThe closest thing to a \"persistent adapter identity\" you can get without dropping into SetupAPI/PCI location plumbing.\n\n`adapter_device_path` stays the same across reboots in the common case (same GPU/driver instance).\n\n`DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the \"output/target on that adapter\".",
-          "markdownDescription": "✅ PRIMARY STABLE ID\n\nThe closest thing to a \"persistent adapter identity\" you can get without\ndropping into SetupAPI/PCI location plumbing.\n\n`adapter_device_path` stays the same across reboots in the common case\n(same GPU/driver instance).\n\n`DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the\n\"output/target on that adapter\".",
-          "fullDescription": "✅ PRIMARY STABLE ID\n\nThe closest thing to a \"persistent adapter identity\" you can get without\ndropping into SetupAPI/PCI location plumbing.\n\n`adapter_device_path` stays the same across reboots in the common case\n(same GPU/driver instance).\n\n`DISPLAYCONFIG_PATH_INFO.targetInfo.id` is the\n\"output/target on that adapter\"."
+          "type": ["string", "null"],
+          "description": "✅ PRIMARY STABLE ID (when available)\n\nValue:\n\n``` (adapter_instance_id ?? adapter_device_path) + target_path_id ```",
+          "markdownDescription": "✅ PRIMARY STABLE ID (when available)\n\nValue:\n\n```\n(adapter_instance_id ?? adapter_device_path) + target_path_id\n```",
+          "fullDescription": "✅ PRIMARY STABLE ID (when available)\n\nValue:\n\n```\n(adapter_instance_id ?? adapter_device_path) + target_path_id\n```"
         },
         "monitor_device_path": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor instance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
-          "markdownDescription": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`",
-          "fullDescription": "✅ SECONDARY STABLE ID\n\nTypically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also very useful for correlating to EDID retrieval.\n\nE.g.:\n- \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n- \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`"
+          "type": ["string", "null"],
+          "description": "Typically stable across reboots and uniquely identifies the monitor instance on that connection path.\n\nIt is also useful for correlating to EDID retrieval.\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`",
+          "markdownDescription": "Typically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also useful for correlating to EDID retrieval.\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`",
+          "fullDescription": "Typically stable across reboots and uniquely identifies the monitor\ninstance on that connection path.\n\nIt is also useful for correlating to EDID retrieval.\n\nCorresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`"
         },
         "monitor_path_key": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Deterministic key derived from  {@link  monitor_device_path } .",
-          "markdownDescription": "Deterministic key derived from  {@link  monitor_device_path } .",
-          "fullDescription": "Deterministic key derived from {@link monitor_device_path}."
+          "type": ["string", "null"],
+          "description": "✅ SECONDARY STABLE ID (when available)\n\nDeterministic key derived from  {@link  monitor_device_path } .",
+          "markdownDescription": "✅ SECONDARY STABLE ID (when available)\n\nDeterministic key derived from  {@link  monitor_device_path } .",
+          "fullDescription": "✅ SECONDARY STABLE ID (when available)\n\nDeterministic key derived from {@link monitor_device_path}."
         },
         "edid_key": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Deterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.",
-          "markdownDescription": "Deterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.",
-          "fullDescription": "Deterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available."
+          "type": ["string", "null"],
+          "description": "✅ TERTIARY STABLE ID (when available)\n\nDeterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.",
+          "markdownDescription": "✅ TERTIARY STABLE ID (when available)\n\nDeterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.",
+          "fullDescription": "✅ TERTIARY STABLE ID (when available)\n\nDeterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available."
+        },
+        "stable_id": {
+          "type": ["string", "null"],
+          "description": "Effective stable ID after applying candidate ordering.",
+          "markdownDescription": "Effective stable ID after applying candidate ordering.",
+          "fullDescription": "Effective stable ID after applying candidate ordering."
         },
         "stable_id_candidates": {
           "anyOf": [
@@ -142,69 +116,28 @@
               "type": "null"
             }
           ],
-          "description": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key` 2. `monitor_path_key` 3. `edid_key`",
-          "markdownDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`",
-          "fullDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`"
-        },
-        "stable_id": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Effective stable id after applying candidate ordering.",
-          "markdownDescription": "Effective stable id after applying candidate ordering.",
-          "fullDescription": "Effective stable id after applying candidate ordering."
+          "description": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key` 2. `monitor_path_key` 3. `edid_key`\n\nTODO(acdvorak): Refactor",
+          "markdownDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`\n\nTODO(acdvorak): Refactor",
+          "fullDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`\n\nTODO(acdvorak): Refactor"
         },
         "stable_id_source": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "enum": [
-            "primary_port_key",
-            "monitor_path_key",
-            "edid_key",
-            null
-          ],
-          "description": "Indicates which candidate produced  {@link  stable_id } .",
-          "markdownDescription": "Indicates which candidate produced  {@link  stable_id } .",
-          "fullDescription": "Indicates which candidate produced {@link stable_id}."
-        },
-        "wmi_instance_name": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "E.g.:\n- \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"\n- \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"",
-          "markdownDescription": "E.g.:\n- \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"\n- \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"",
-          "fullDescription": "E.g.:\n- \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"\n- \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\""
-        },
-        "normalized_join_key": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Normalized join key, with trailing `_0` removed from  {@link  wmi_instance_name } .\n\nE.g.:\n- \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"\n- \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"",
-          "markdownDescription": "Normalized join key, with trailing `_0` removed from\n {@link  wmi_instance_name } .\n\nE.g.:\n- \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"\n- \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"",
-          "fullDescription": "Normalized join key, with trailing `_0` removed from\n{@link wmi_instance_name}.\n\nE.g.:\n- \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"\n- \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\""
+          "type": ["string", "null"],
+          "enum": ["primary_port_key", "monitor_path_key", "edid_key", null],
+          "description": "Indicates which candidate produced  {@link  stable_id } .\n\nTODO(acdvorak): Refactor",
+          "markdownDescription": "Indicates which candidate produced  {@link  stable_id } .\n\nTODO(acdvorak): Refactor",
+          "fullDescription": "Indicates which candidate produced {@link stable_id}.\n\nTODO(acdvorak): Refactor"
         },
         "is_primary": {
           "type": "boolean"
         },
         "is_attached_to_desktop": {
-          "type": [
-            "boolean",
-            "null"
-          ],
-          "description": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:   - Many drivers expose one IDXGIOutput per physical connector     (HDMI/DP/DVI), even if nothing is plugged in.   - Those \"ports\" can enumerate, but they are not part of the desktop, so     AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:   - Example: you have 2 monitors connected, but Windows is set to     \"Show only on 1\" (or you've \"Disconnect this display\" for the other).     That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between  {@link  has_interactive_desktop  }  and {@is_attached_to_desktop}.",
-          "markdownDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between\n {@link  has_interactive_desktop  }  and {@is_attached_to_desktop}.",
-          "fullDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Further clarify the difference between\n{@link has_interactive_desktop} and {@is_attached_to_desktop}."
+          "type": ["boolean", "null"],
+          "description": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:   - Many drivers expose one IDXGIOutput per physical connector     (HDMI/DP/DVI), even if nothing is plugged in.   - Those \"ports\" can enumerate, but they are not part of the desktop, so     AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:   - Example: you have 2 monitors connected, but Windows is set to     \"Show only on 1\" (or you've \"Disconnect this display\" for the other).     That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Clarify the difference between  {@link  has_interactive_desktop  }  and  {@link  is_attached_to_desktop } .",
+          "markdownDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Clarify the difference between\n {@link  has_interactive_desktop  }  and  {@link  is_attached_to_desktop } .",
+          "fullDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Clarify the difference between\n{@link has_interactive_desktop} and {@link is_attached_to_desktop}."
         },
         "dpi_scaling_percent": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "The most common standard values are: `100 | 125 | 150 | 175 | 200`.\n\nThe user can technically set any arbitrary value via registry hacks.",
           "markdownDescription": "The most common standard values are: `100 | 125 | 150 | 175 | 200`.\n\nThe user can technically set any arbitrary value via registry hacks.",
           "fullDescription": "The most common standard values are: `100 | 125 | 150 | 175 | 200`.\n\nThe user can technically set any arbitrary value via registry hacks.\n\n@see https://superuser.com/questions/1328938/scale-100-on-windows-10/1328941#1328941\n@see https://learn.microsoft.com/en-us/windows/win32/learnwin32/dpi-and-device-independent-pixels\n\n@uint32",
@@ -213,15 +146,15 @@
         },
         "bounds": {
           "$ref": "#/definitions/WinScreenRectangle",
-          "description": "The full size and position of the display, *including* the taskbar and any other areas that are not usable by maximized (non-fullscreen) applications.\n\nMight not be available in some edge cases like virtual desktops.",
-          "markdownDescription": "The full size and position of the display, *including* the taskbar and any\nother areas that are not usable by maximized (non-fullscreen) applications.\n\nMight not be available in some edge cases like virtual desktops.",
-          "fullDescription": "The full size and position of the display, *including* the taskbar and any\nother areas that are not usable by maximized (non-fullscreen) applications.\n\nMight not be available in some edge cases like virtual desktops."
+          "description": "The full size and position of the display, *including* the taskbar and any other areas that are not usable by maximized (non-fullscreen) applications.",
+          "markdownDescription": "The full size and position of the display, *including* the taskbar and any\nother areas that are not usable by maximized (non-fullscreen) applications.",
+          "fullDescription": "The full size and position of the display, *including* the taskbar and any\nother areas that are not usable by maximized (non-fullscreen) applications."
         },
         "working_area": {
           "$ref": "#/definitions/WinScreenRectangle",
-          "description": "Available working area on the screen.\n\nThis *excludes* taskbars and other docked windows.",
-          "markdownDescription": "Available working area on the screen.\n\nThis *excludes* taskbars and other docked windows.",
-          "fullDescription": "Available working area on the screen.\n\nThis *excludes* taskbars and other docked windows."
+          "description": "Available working area on the screen, *excluding* taskbars and other docked windows.",
+          "markdownDescription": "Available working area on the screen, *excluding* taskbars and other docked\nwindows.",
+          "fullDescription": "Available working area on the screen, *excluding* taskbars and other docked\nwindows."
         },
         "scan_line_ordering": {
           "anyOf": [
@@ -237,28 +170,19 @@
           "fullDescription": "Progressive or interlaced."
         },
         "refresh_rate_hz": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "description": "{@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .",
-          "markdownDescription": "{@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .",
-          "fullDescription": "{@link refresh_rate_numerator} / {@link refresh_rate_denominator}.\n\n@example 60, 120, 144\n\n@double"
+          "type": ["number", "null"],
+          "description": "{@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .\n\nExamples:\n\n- `60`\n- `120`\n- `144`",
+          "markdownDescription": "{@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .\n\nExamples:\n\n- `60`\n- `120`\n- `144`",
+          "fullDescription": "{@link refresh_rate_numerator} / {@link refresh_rate_denominator}.\n\nExamples:\n\n- `60`\n- `120`\n- `144`\n\n@double"
         },
         "refresh_rate_numerator": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
         },
         "refresh_rate_denominator": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
@@ -324,9 +248,9 @@
     },
     "WinMonitorDeviceName": {
       "type": "string",
-      "description": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win \"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`, filled by `GetMonitorInfo`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\" and \"no multimon\" where it sets the device name to:\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n- single-monitor path sets `\"DISPLAY\"`\n- multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, This string may contain arbitrary non-printable characters according to Microsoft Learn.",
-      "markdownDescription": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win\n\"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`,\nfilled by `GetMonitorInfo`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\"\nand \"no multimon\" where it sets the device name to:\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n- single-monitor path sets `\"DISPLAY\"`\n- multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, This string may contain arbitrary non-printable characters\naccording to Microsoft Learn.",
-      "fullDescription": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win\n\"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`,\nfilled by `GetMonitorInfo`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\"\nand \"no multimon\" where it sets the device name to:\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n- single-monitor path sets `\"DISPLAY\"`\n- multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, This string may contain arbitrary non-printable characters\naccording to Microsoft Learn.\n\n@see https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.screen.devicename?view=windowsdesktop-10.0\n@see https://github.com/dotnet/dotnet/blob/3bc68b106/src/winforms/src/System.Windows.Forms/System/Windows/Forms/Screen.cs#L63\n@see https://github.com/dotnet/dotnet/blob/3bc68b106/src/winforms/src/System.Windows.Forms/System/Windows/Forms/Screen.cs#L78"
+      "description": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win \"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`, filled by `GetMonitorInfo()`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\" and \"no multimon\" where it sets the device name to:\n\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n\n- Single-monitor path sets `\"DISPLAY\"`\n- Multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, this string may contain arbitrary non-printable characters, though I have never observed that in the wild.",
+      "markdownDescription": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win\n\"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`,\nfilled by `GetMonitorInfo()`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\"\nand \"no multimon\" where it sets the device name to:\n\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n\n- Single-monitor path sets `\"DISPLAY\"`\n- Multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, this string may contain arbitrary non-printable\ncharacters, though I have never observed that in the wild.",
+      "fullDescription": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win\n\"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`,\nfilled by `GetMonitorInfo()`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\"\nand \"no multimon\" where it sets the device name to:\n\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n\n- Single-monitor path sets `\"DISPLAY\"`\n- Multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, this string may contain arbitrary non-printable\ncharacters, though I have never observed that in the wild.\n\n@see https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.screen.devicename?view=windowsdesktop-10.0\n@see https://github.com/dotnet/dotnet/blob/3bc68b106/src/winforms/src/System.Windows.Forms/System/Windows/Forms/Screen.cs#L63\n@see https://github.com/dotnet/dotnet/blob/3bc68b106/src/winforms/src/System.Windows.Forms/System/Windows/Forms/Screen.cs#L78"
     },
     "WinScreenRectangle": {
       "type": "object",
@@ -406,12 +330,7 @@
     },
     "WinDisplayRotationDegrees": {
       "type": "integer",
-      "enum": [
-        0,
-        90,
-        180,
-        270
-      ],
+      "enum": [0, 90, 180, 270],
       "description": "Rotation in degrees.",
       "markdownDescription": "Rotation in degrees.",
       "fullDescription": "Rotation in degrees."
@@ -442,9 +361,9 @@
         "displayport_usb_tunnel",
         "internal"
       ],
-      "description": "Values with \"embedded\" in their names indicate that the graphics adapter's video output device connects internally to the display device.\n\nIn those cases, the `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` value is redundant. The caller should ignore `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` and just process the embedded values, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.\n\nAn embedded display port or UDI is also known as an integrated display port or UDI.",
-      "markdownDescription": "Values with \"embedded\" in their names indicate that the graphics adapter's\nvideo output device connects internally to the display device.\n\nIn those cases, the `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` value is\nredundant. The caller should ignore\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` and just process the embedded\nvalues, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.\n\nAn embedded display port or UDI is also known as an integrated display port\nor UDI.",
-      "fullDescription": "Values with \"embedded\" in their names indicate that the graphics adapter's\nvideo output device connects internally to the display device.\n\nIn those cases, the `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` value is\nredundant. The caller should ignore\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` and just process the embedded\nvalues, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.\n\nAn embedded display port or UDI is also known as an integrated display port\nor UDI.\n\n@see https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ne-wingdi-displayconfig_video_output_technology"
+      "description": "Values with \"embedded\" in their names indicate that the graphics adapter's video output device connects internally to the display device.\n\nIn those cases, the `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` value is redundant. The caller should ignore `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` and just process the embedded values, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.\n\nAn embedded display port is also known as an integrated display port or UDI.",
+      "markdownDescription": "Values with \"embedded\" in their names indicate that the graphics adapter's\nvideo output device connects internally to the display device.\n\nIn those cases, the `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` value is\nredundant. The caller should ignore\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` and just process the embedded\nvalues, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.\n\nAn embedded display port is also known as an integrated display port or UDI.",
+      "fullDescription": "Values with \"embedded\" in their names indicate that the graphics adapter's\nvideo output device connects internally to the display device.\n\nIn those cases, the `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` value is\nredundant. The caller should ignore\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL` and just process the embedded\nvalues, `DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EMBEDDED` and\n`DISPLAYCONFIG_OUTPUT_TECHNOLOGY_UDI_EMBEDDED`.\n\nAn embedded display port is also known as an integrated display port or UDI.\n\n@see https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ne-wingdi-displayconfig_video_output_technology"
     },
     "WinStandardColorInfo": {
       "type": "object",
@@ -488,49 +407,31 @@
           "minimum": 0,
           "maximum": 255
         },
-        "min_luminance": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "description": "TODO: What unit of measurement is this?",
-          "markdownDescription": "TODO: What unit of measurement is this?",
-          "fullDescription": "TODO: What unit of measurement is this?\n\n@double"
+        "min_luminance_nits": {
+          "type": ["number", "null"],
+          "description": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
+          "markdownDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
+          "fullDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).\n\n@double"
         },
-        "max_luminance": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "description": "TODO: What unit of measurement is this?",
-          "markdownDescription": "TODO: What unit of measurement is this?",
-          "fullDescription": "TODO: What unit of measurement is this?\n\n@double"
+        "max_luminance_nits": {
+          "type": ["number", "null"],
+          "description": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
+          "markdownDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
+          "fullDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).\n\n@double"
         },
-        "max_full_frame_luminance": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "description": "TODO: What unit of measurement is this?",
-          "markdownDescription": "TODO: What unit of measurement is this?",
-          "fullDescription": "TODO: What unit of measurement is this?\n\n@double"
+        "max_full_frame_luminance_nits": {
+          "type": ["number", "null"],
+          "description": "Full-screen sustained luminance.\n\nIn `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
+          "markdownDescription": "Full-screen sustained luminance.\n\nIn `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
+          "fullDescription": "Full-screen sustained luminance.\n\nIn `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).\n\n@double"
         }
       },
-      "required": [
-        "is_hdr_supported",
-        "is_hdr_enabled"
-      ],
+      "required": ["is_hdr_supported", "is_hdr_enabled"],
       "additionalProperties": false
     },
     "WinColorEncoding": {
       "type": "string",
-      "enum": [
-        "unspecified",
-        "rgb",
-        "ycbcr444",
-        "ycbcr422",
-        "ycbcr420"
-      ]
+      "enum": ["unspecified", "rgb", "ycbcr444", "ycbcr422", "ycbcr420"]
     },
     "WinDxgiColorSpace": {
       "type": "string",
@@ -566,15 +467,7 @@
     },
     "WinBitsPerColorChannel": {
       "type": "integer",
-      "enum": [
-        0,
-        6,
-        8,
-        10,
-        12,
-        14,
-        16
-      ]
+      "enum": [0, 6, 8, 10, 12, 14, 16]
     },
     "WinAdvancedColorInfo": {
       "type": "object",
@@ -636,12 +529,7 @@
     },
     "WinActiveColorMode": {
       "type": "string",
-      "enum": [
-        "unspecified",
-        "sdr",
-        "wcg",
-        "hdr"
-      ],
+      "enum": ["unspecified", "sdr", "wcg", "hdr"],
       "fullDescription": "@see https://learn.microsoft.com/en-us/uwp/api/windows.graphics.display.advancedcolorkind?view=winrt-26100"
     },
     "WinEdidInfo": {
@@ -649,37 +537,28 @@
       "properties": {
         "monitor_device_path": {
           "type": "string",
-          "description": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nE.g.: \"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\" \"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"",
-          "markdownDescription": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nE.g.:\n\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"",
-          "fullDescription": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nE.g.:\n\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"\n\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\""
+          "description": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`",
+          "markdownDescription": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`",
+          "fullDescription": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`"
         },
         "wmi_instance_name": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "E.g.: \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\" \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"",
-          "markdownDescription": "E.g.:\n\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"\n\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"",
-          "fullDescription": "E.g.:\n\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"\n\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\""
+          "type": ["string", "null"],
+          "description": "Corresponds to the `InstanceName` field of these WMI object classes:\n\n- `WmiMonitorBasicDisplayParams`\n- `WmiMonitorConnectionParams`\n- `WmiMonitorDescriptorMethods`\n- `WmiMonitorID`\n- `WmiMonitorListedSupportedSourceModes`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"`",
+          "markdownDescription": "Corresponds to the `InstanceName` field of these WMI object classes:\n\n- `WmiMonitorBasicDisplayParams`\n- `WmiMonitorConnectionParams`\n- `WmiMonitorDescriptorMethods`\n- `WmiMonitorID`\n- `WmiMonitorListedSupportedSourceModes`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"`",
+          "fullDescription": "Corresponds to the `InstanceName` field of these WMI object classes:\n\n- `WmiMonitorBasicDisplayParams`\n- `WmiMonitorConnectionParams`\n- `WmiMonitorDescriptorMethods`\n- `WmiMonitorID`\n- `WmiMonitorListedSupportedSourceModes`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"`"
         },
-        "normalized_join_key": {
+        "wmi_join_key": {
           "type": "string",
-          "description": "Normalized join key, with trailing `_0` removed from wmi_instance_name.\n\nE.g.: \"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\" \"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"",
-          "markdownDescription": "Normalized join key, with trailing `_0` removed from wmi_instance_name.\n\nE.g.:\n\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"\n\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"",
-          "fullDescription": "Normalized join key, with trailing `_0` removed from wmi_instance_name.\n\nE.g.:\n\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"\n\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\""
+          "description": "Normalized join key, with trailing `_0` removed from  {@link  wmi_instance_name } .\n\nE.g.:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"`",
+          "markdownDescription": "Normalized join key, with trailing `_0` removed from\n {@link  wmi_instance_name } .\n\nE.g.:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"`",
+          "fullDescription": "Normalized join key, with trailing `_0` removed from\n{@link wmi_instance_name}.\n\nE.g.:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"`"
         },
         "max_horizontal_image_size_mm": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "fullDescription": "@double"
         },
         "max_vertical_image_size_mm": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "fullDescription": "@double"
         },
         "video_output_technology_type": {
@@ -696,99 +575,55 @@
           "fullDescription": "Raw numeric value that gets mapped to {@link WinDisplayConnectorType}."
         },
         "manufacturer_vid": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "3-letter Vendor ID (aka PnP ID).",
-          "markdownDescription": "3-letter Vendor ID (aka PnP ID).",
-          "fullDescription": "3-letter Vendor ID (aka PnP ID).\n\n@example \"SAM\" (Samsung)\n@example \"DEL\" (Dell)"
+          "type": ["string", "null"],
+          "description": "3-letter Vendor ID (aka PnP ID).\n\nExamples:\n\n- `\"SAM\"` (Samsung)\n- `\"DEL\"` (Dell)",
+          "markdownDescription": "3-letter Vendor ID (aka PnP ID).\n\nExamples:\n\n- `\"SAM\"` (Samsung)\n- `\"DEL\"` (Dell)",
+          "fullDescription": "3-letter Vendor ID (aka PnP ID).\n\nExamples:\n\n- `\"SAM\"` (Samsung)\n- `\"DEL\"` (Dell)"
         },
         "product_code_id": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint16",
           "minimum": 0,
           "maximum": 65535
         },
         "serial_number_id": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
         },
         "user_friendly_name": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "fullDescription": "@example \"DELL ST2320L\"\n@example \"QCQ95S\"  // Samsung S95C TV\n@example \"SAMSUNG\" // Some devices don't give us an actual model number",
-          "examples": [
-            "DELL ST2320L",
-            "QCQ95S",
-            "SAMSUNG"
-          ]
+          "type": ["string", "null"],
+          "description": "Examples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`  // Samsung S95C TV\n- `\"SAMSUNG\"` // Some devices don't give us an actual model number",
+          "markdownDescription": "Examples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`  // Samsung S95C TV\n- `\"SAMSUNG\"` // Some devices don't give us an actual model number",
+          "fullDescription": "Examples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`  // Samsung S95C TV\n- `\"SAMSUNG\"` // Some devices don't give us an actual model number"
         },
         "week_of_manufacture": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint8",
           "minimum": 0,
           "maximum": 255
         },
         "year_of_manufacture": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint16",
           "minimum": 0,
           "maximum": 65535
         },
         "edid_bytes_base64": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Raw EDID bytes, Base64-encoded.",
           "markdownDescription": "Raw EDID bytes, Base64-encoded.",
           "fullDescription": "Raw EDID bytes, Base64-encoded."
         }
       },
-      "required": [
-        "monitor_device_path",
-        "normalized_join_key"
-      ],
+      "required": ["monitor_device_path", "wmi_join_key"],
       "additionalProperties": false
     },
     "WmiVideoOutputTechnology": {
       "type": "integer",
       "enum": [
-        -2,
-        -1,
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
+        -2, -1, 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16,
         2147483648
       ],
       "description": "Type of physical connector a video output device (on the display adapter) uses to connect to an external display device.\n\nKnown values for  {@link  WmiMonitorConnectionParams.VideoOutputTechnology  } .",

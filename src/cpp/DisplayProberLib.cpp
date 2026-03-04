@@ -61,8 +61,8 @@ std::string GetFriendlyName(
     // - `"DISPLAY129"` (RDP)
     // - `"DISPLAY"` (single monitor)
     // - `"WinDisc"` (non-interactive remote SSH console session)
-    backups.push_back(
-        dp::internal::TryToExtractShortLivedIdentifier(dev.device_name));
+    backups.push_back(dp::internal::TryToExtractShortLivedIdentifier(
+        dev.short_lived_identifier));
   }
 
   if (sys::IsRdpSession()) {
@@ -204,8 +204,10 @@ json::WinDisplay MergeDisplayDataToJson(
 
     if (config.hasAdvancedColorInfo) {
       json_obj.standard_color_info.bits_per_channel =
+          // TODO(acdvorak): Rename fields to lower_snake_case.
           static_cast<json::WinBitsPerColorChannel>(config.bitsPerChannel);
       json_obj.standard_color_info.color_encoding =
+          // TODO(acdvorak): Rename fields to lower_snake_case.
           json_utils::ColorEncodingToJson(config.colorEncoding);
 
       // Initialize all primitive fields to their default values.
@@ -278,12 +280,12 @@ json::WinDisplay MergeDisplayDataToJson(
     //     "Show only on 1" (or you've "Disconnect this display" for the other).
     //     That other output can still exist, but it is not attached, so false.
     if (!device.is_attached_to_desktop) {
-      std::cerr << "WARNING: DXGI device \"" << device.device_name
+      std::cerr << "WARNING: DXGI device \"" << device.short_lived_identifier
                 << "\" is not attached to a desktop." << std::endl;
     }
 
     if (dp::internal::RectHasZeroWidthOrHeight(device.desktop_coordinates)) {
-      std::cerr << "WARNING: DXGI device \"" << device.device_name
+      std::cerr << "WARNING: DXGI device \"" << device.short_lived_identifier
                 << "\" has zero width or height." << std::endl;
     }
 
@@ -292,13 +294,30 @@ json::WinDisplay MergeDisplayDataToJson(
     json_obj.rotation_deg =
         json_utils::DxgiRotationToJson(device.rotation_type);
 
-    json_obj.standard_color_info.min_luminance = device.min_luminance;
-    json_obj.standard_color_info.max_luminance = device.max_luminance;
-    json_obj.standard_color_info.max_full_frame_luminance =
-        device.max_full_frame_luminance;
+    json_obj.standard_color_info.min_luminance_nits = device.min_luminance_nits;
+    json_obj.standard_color_info.max_luminance_nits = device.max_luminance_nits;
+    json_obj.standard_color_info.max_full_frame_luminance_nits =
+        device.max_full_frame_luminance_nits;
 
     json_obj.standard_color_info.dxgi_color_space =
         json_utils::DxgiColorSpaceToJson(device.color_space);
+
+    // TODO(acdvorak): Make these values the same type (a uint8_t) and only
+    // convert them to an enum when inserting into JSON.
+    const std::uint8_t json_bpc = static_cast<std::uint8_t>(
+        json_obj.standard_color_info.bits_per_channel.value_or(
+            json::WinBitsPerColorChannel::VALUE_0));
+
+    // TODO(acdvorak): Make these values the same type (a uint8_t) and only
+    // convert them to an enum when inserting into JSON.
+    const std::uint8_t dxgi_bpc =
+        static_cast<std::uint8_t>(device.bits_per_channel.value_or(0));
+
+    if (json_bpc > 0 && json_bpc != dxgi_bpc) {
+      std::cerr << "WARNING: DxgiOutputDevice.bits_per_channel=" << dxgi_bpc
+                << " differs from GdiDisplayConfig.bits_per_channel="
+                << json_bpc << std::endl;
+    }
   }
 
   dp::internal::PopulateStableKeyFields(json_obj);
@@ -326,8 +345,9 @@ std::string GetDisplayProberJson() {
   std::map<std::uintptr_t, dxgi::DxgiOutputDevice>
       dxgi_output_devices_by_hmonitor;
   for (const auto& [_, device] : dxgi_output_devices) {
-    if (device.hmonitor_id != 0) {
-      dxgi_output_devices_by_hmonitor[device.hmonitor_id] = device;
+    if (device.process_local_monitor_handle_ptr != 0) {
+      dxgi_output_devices_by_hmonitor[device.process_local_monitor_handle_ptr] =
+          device;
     }
   }
 
@@ -382,9 +402,10 @@ std::string GetDisplayProberJson() {
 
     std::optional<dxgi::DxgiOutputDevice> dxgi_output_device;
 
-    if (basicMonitorInfo.hmonitor_id != 0) {
-      dxgi_output_device = TryGetOptionalValue(dxgi_output_devices_by_hmonitor,
-                                               basicMonitorInfo.hmonitor_id);
+    if (basicMonitorInfo.process_local_monitor_handle_ptr != 0) {
+      dxgi_output_device = TryGetOptionalValue(
+          dxgi_output_devices_by_hmonitor,
+          basicMonitorInfo.process_local_monitor_handle_ptr);
     }
 
     if (!dxgi_output_device) {

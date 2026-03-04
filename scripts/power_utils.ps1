@@ -130,7 +130,7 @@ function Convert-FileToUtf8 {
 }
 
 if (-not ('DotNetRuntimeVer' -as [type])) {
-  $resolvedPath = Get-AbsPath -From $PuScriptRoot -To '.\DotNetRuntimeVer.cs'
+  $resolvedPath = Get-AbsPath -From $PuScriptRoot -To './DotNetRuntimeVer.cs'
   $CS = [System.IO.File]::ReadAllText($resolvedPath)
   Add-Type -TypeDefinition $CS
 }
@@ -189,6 +189,10 @@ function Test-HasGetCimInstance {
 # - Windows 10 Pro 22H2 (build 19045)
 # - Windows 11 Pro 25H2 (build 26200)
 function Get-OsNameAndVersion {
+  if ($PSVersionTable.Platform -eq 'Windows') {
+    return (($PSVersionTable.OS.Split(' ') | Select-Object -First 2) -join ' ')
+  }
+
   $has_get_cm_instance = Test-HasGetCimInstance
 
   $os_obj = if ($has_get_cm_instance) {
@@ -239,7 +243,7 @@ function Get-OsNameAndVersion {
 function Get-PsNameAndVersion {
   $major = $PSVersionTable.PSVersion.Major
   $minor = $PSVersionTable.PSVersion.Minor
-  if ($PSVersionTable.Edition -eq 'Core') {
+  if ($PSVersionTable.PSEdition -eq 'Core') {
     return 'Core PowerShell v{0}.{1}' -f $major, $minor
   }
   else {

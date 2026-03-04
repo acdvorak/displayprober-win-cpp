@@ -56,8 +56,9 @@ void AppendDxgiOutputDevices(
 
     dxgi::DxgiOutputDevice& device = devices[deviceNameUtf8];
 
-    device.device_name = deviceNameUtf8;
-    device.hmonitor_id = reinterpret_cast<std::uintptr_t>(desc.Monitor);
+    device.short_lived_identifier = deviceNameUtf8;
+    device.process_local_monitor_handle_ptr =
+        reinterpret_cast<std::uintptr_t>(desc.Monitor);
 
     // This value MIGHT be `false` under the following conditions:
     //
@@ -78,13 +79,13 @@ void AppendDxgiOutputDevices(
     device.rotation_type = desc.Rotation;
 
     device.color_space = desc.ColorSpace;
-    device.bits_per_color = desc.BitsPerColor;
+    device.bits_per_channel = desc.BitsPerColor;
 
     if (desc.MinLuminance > 0 || desc.MaxLuminance > 0 ||
         desc.MaxFullFrameLuminance > 0) {
-      device.min_luminance = desc.MinLuminance;
-      device.max_luminance = desc.MaxLuminance;
-      device.max_full_frame_luminance = desc.MaxFullFrameLuminance;
+      device.min_luminance_nits = desc.MinLuminance;
+      device.max_luminance_nits = desc.MaxLuminance;
+      device.max_full_frame_luminance_nits = desc.MaxFullFrameLuminance;
     }
   }
 }

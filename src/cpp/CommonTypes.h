@@ -21,7 +21,13 @@ using Bytes = std::vector<std::uint8_t>;
 // ```
 using ShortLivedIdentifier = std::string;
 
-// Corresponds to WMI object's `InstanceName`.
+// Corresponds to the `InstanceName` field of the following WMI object classes:
+//
+// - `WmiMonitorBasicDisplayParams`
+// - `WmiMonitorConnectionParams`
+// - `WmiMonitorDescriptorMethods`
+// - `WmiMonitorID`
+// - `WmiMonitorListedSupportedSourceModes`
 //
 // Examples:
 //
@@ -35,7 +41,7 @@ using WmiInstanceName = std::string;
 //
 // - `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
 // - `"DISPLAY\\DELF023\\5&21e6c3e1&0&UID5243152"`
-using NormalizedJoinKey = std::string;
+using WmiJoinKey = std::string;
 
 // Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
 //

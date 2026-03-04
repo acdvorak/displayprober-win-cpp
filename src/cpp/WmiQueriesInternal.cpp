@@ -30,7 +30,12 @@ bool AsciiEqualsCaseInsensitive(const std::string& lhs,
 
 }  // namespace
 
-NormalizedJoinKey NormalizeJoinKeyFromDevicePath(
+// Example monitor_device_path:
+// `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+//
+// Example return value:
+// `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
+WmiJoinKey NormalizeJoinKeyFromDevicePath(
     const DevicePath& monitor_device_path) {
   constexpr const char* kPrefix = "\\\\?\\DISPLAY#";
   const std::size_t prefix_pos = monitor_device_path.find(kPrefix);
@@ -55,21 +60,21 @@ NormalizedJoinKey NormalizeJoinKeyFromDevicePath(
 }
 
 bool InstanceNameMatches(const WmiInstanceName& instance_name,
-                         const NormalizedJoinKey& normalized_join_key) {
-  if (normalized_join_key.empty() ||
-      !AsciiStartsWithCaseInsensitive(instance_name, normalized_join_key)) {
+                         const WmiJoinKey& wmi_join_key) {
+  if (wmi_join_key.empty() ||
+      !AsciiStartsWithCaseInsensitive(instance_name, wmi_join_key)) {
     return false;
   }
 
-  if (instance_name.size() == normalized_join_key.size()) {
+  if (instance_name.size() == wmi_join_key.size()) {
     return true;
   }
 
-  if (instance_name[normalized_join_key.size()] != '_') {
+  if (instance_name[wmi_join_key.size()] != '_') {
     return false;
   }
 
-  const std::size_t suffix_start = normalized_join_key.size() + 1;
+  const std::size_t suffix_start = wmi_join_key.size() + 1;
   if (suffix_start >= instance_name.size()) {
     return false;
   }
@@ -84,8 +89,8 @@ bool InstanceNameMatches(const WmiInstanceName& instance_name,
 }
 
 bool IsPreferredInstanceName(const WmiInstanceName& instance_name,
-                             const NormalizedJoinKey& normalized_join_key) {
-  return AsciiEqualsCaseInsensitive(instance_name, normalized_join_key + "_0");
+                             const WmiJoinKey& wmi_join_key) {
+  return AsciiEqualsCaseInsensitive(instance_name, wmi_join_key + "_0");
 }
 
 }  // namespace wmi::internal
