@@ -16,7 +16,7 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Determine version, build, and optional test
+      - name: Build and test
         id: meta
         uses: ./.github/actions/build-and-test
         with:
