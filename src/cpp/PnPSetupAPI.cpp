@@ -244,18 +244,33 @@ std::optional<std::string> TryGetMonitorDriverKeyFromDeviceInstanceId(
     return std::nullopt;
   }
 
-  WCHAR driver_property[256] = {0};
   DWORD property_type = 0;
   DWORD required_size = 0;
 
-  if (SetupDiGetDeviceRegistryPropertyW(
-          dev_info.get(), &dev_info_data, SPDRP_DRIVER, &property_type,
-          reinterpret_cast<PBYTE>(driver_property), sizeof(driver_property),
-          &required_size)) {
-    return WideToUtf8(driver_property);
+  // First call to get the required buffer size for SPDRP_DRIVER.
+  if (!SetupDiGetDeviceRegistryPropertyW(dev_info.get(), &dev_info_data,
+                                         SPDRP_DRIVER, &property_type,
+                                         nullptr, 0, &required_size)) {
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER || required_size == 0) {
+      return std::nullopt;
+    }
   }
 
-  return std::nullopt;
+  std::vector<BYTE> buffer(required_size);
+  property_type = 0;
+  if (!SetupDiGetDeviceRegistryPropertyW(
+          dev_info.get(), &dev_info_data, SPDRP_DRIVER, &property_type,
+          buffer.data(), static_cast<DWORD>(buffer.size()), &required_size)) {
+    return std::nullopt;
+  }
+
+  if (property_type != REG_SZ) {
+    return std::nullopt;
+  }
+
+  const WCHAR* driver_property =
+      reinterpret_cast<const WCHAR*>(buffer.data());
+  return WideToUtf8(driver_property);
 }
 
 }  // namespace pnp
