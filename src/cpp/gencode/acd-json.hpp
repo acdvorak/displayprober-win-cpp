@@ -565,7 +565,7 @@ namespace json {
          * Examples:
          *
          * -
-         * `"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\0004{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004"`
+         * `"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004"`
          * -
          * `"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0005"`
          *
