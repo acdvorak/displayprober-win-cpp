@@ -210,7 +210,7 @@ correlate/aggregate the results:
 
 Classic Win32 monitor enumeration APIs.
 
-**Windows 2000** and newer.
+⛳️ Windows 2000 and newer.
 
 GDI =
 [Graphics Device Interface](https://learn.microsoft.com/en-us/windows/win32/gdi/windows-gdi).
@@ -219,6 +219,9 @@ Primary API surface:
 
 - `EnumDisplayMonitors()`
 - `EnumDisplayDevices()`
+  - Must be called _twice_ to find physical monitors: first to enumerate
+    adapters, then again passing the adapter's `DeviceName` to enumerate its
+    attached monitors.
 - `EnumDisplaySettings()` / `EnumDisplaySettingsEx()`
 - `MonitorFromWindow()`
 - `GetMonitorInfo()` / `GetMonitorInfoW()` (populate
@@ -226,7 +229,8 @@ Primary API surface:
 
 These APIs are old and desktop-centric. They expose things like:
 
-- Session-scoped adapter "names" such as `\\.\DISPLAY1`
+- Session-scoped adapter "names" such as `\\.\DISPLAY1`.
+  - _This string is the correlation key used to join GDI with DXGI and CCD._
 - Monitor names attached to a GDI adapter
 - Monitor rectangles in virtual desktop coordinates
 - Current desktop modes
@@ -247,7 +251,7 @@ But GDI has limitations:
 
 Classic Win32 Plug-n-Play device tree enumeration APIs.
 
-**Windows 2000** and newer.
+⛳️ Windows 2000 and newer.
 
 Returns raw EDID bytes, hardware IDs, device instance IDs, and location paths.
 
@@ -263,6 +267,8 @@ Primary API surface:
 - `SetupDiGetDeviceInstanceIdW()`
 - `SetupDiGetDeviceInterfaceDetailW()`
   - Returns the interface path and related `SP_DEVINFO_DATA`.
+  - The device interface path (e.g., `\\?\DISPLAY#...`) is the _correlation key_
+    used to join SetupAPI physical devices with CCD targets.
 - `SetupDiGetDeviceRegistryPropertyW()`
   - Windows 2000 and newer
 - `SetupDiGetDevicePropertyW()`
@@ -275,7 +281,7 @@ Primary API surface:
 
 Modern path-based display topology graph: sources/targets, active paths, modes.
 
-**Windows 7 RTM** and newer.
+⛳️ Windows 7 RTM and newer.
 
 CCD =
 [Connecting and Configuring Display](https://learn.microsoft.com/en-us/windows-hardware/drivers/display/ccd-apis).
@@ -289,9 +295,9 @@ Primary API surface:
 
 CCD is path-based. It models:
 
-- Adapters
-- Sources
-- Targets
+- Adapters (GPUs)
+- Sources (display pipelines/viewports managed by the OS)
+- Targets (physical outputs/connectors on the GPU)
 - Paths between them
 - Source and target modes
 - Active vs. inactive paths
@@ -301,6 +307,13 @@ CCD is path-based. It models:
 - Friendly monitor names and target device names via
   `DISPLAYCONFIG_DEVICE_INFO_*` queries
 
+**💡 CCD acts as the central bridge for correlating APIs:**
+
+- `DISPLAYCONFIG_SOURCE_DEVICE_NAME.viewGdiDeviceName` links a CCD source back
+  to GDI and DXGI.
+- `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath` links a CCD target to
+  SetupAPI/PnP.
+
 This is the API family you use when you want the real display topology, not just
 the desktop view.
 
@@ -309,16 +322,21 @@ the desktop view.
 EDID-derived monitor identity/capabilities and a few connection-related fields
 (e.g., physical connection type: HDMI, DisplayPort, DVI, VGA, etc.).
 
-Windows 7 SP1 with WMF 3.0 or higher.
+⛳️ Windows 7 SP1 (with WMF 3.0) and newer.
+
+Primary API surface:
 
 - `MI_Session_QueryInstances()`
 - `MI_Operation_GetInstance()`
+
+The WMI `InstanceName` property loosely matches the SetupAPI PnP device instance
+ID, typically appended with a `_0` suffix.
 
 ### 5. **DirectX Graphics Infrastructure** adapter/output APIs
 
 Advanced color and luminance characteristics.
 
-**Windows Vista RTM** and newer.
+⛳️ Windows Vista RTM and newer.
 
 Primary API surface:
 
@@ -339,8 +357,10 @@ Primary API surface:
 - `IDXGIAdapter::EnumOutputs()`
 - `IDXGIOutput6::GetDesc1()` (populates `DXGI_OUTPUT_DESC1`)
   - Windows 10 and newer.
+    - On older systems, fall back to `IDXGIOutput::GetDesc()`.
   - Returns HDR information.
-  - On older systems, fall back to `IDXGIOutput::GetDesc()`.
+  - `DXGI_OUTPUT_DESC.DeviceName` matches the GDI `szDevice` (e.g.,
+    `\\.\DISPLAY1`), linking DXGI outputs to GDI adapters and CCD sources.
 
 ## Stable identifiers
 
