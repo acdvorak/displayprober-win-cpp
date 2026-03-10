@@ -1,3 +1,5 @@
+#pragma once
+
 // This header needs to be imported first.
 #include <Windows.h>
 
