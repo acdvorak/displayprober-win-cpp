@@ -18,8 +18,8 @@
 #include <optional>
 #include <string>
 
-#include "EdidBytes.h"
 #include "GdiDisplayConfig.h"
+#include "PnPSetupAPI.h"
 #include "StringUtils.h"
 #include "WmiQueriesInternal.h"
 
@@ -247,8 +247,9 @@ void QueryClassForBestMatchingInstance(MI_Session* session,
   const auto miQuery = ToMiString(query);
 
   ScopedMiOperation operation;
-  MI_Session_QueryInstances(session, 0, nullptr, MI_T("root\\wmi"), MI_T("WQL"),
-                            miQuery.c_str(), nullptr, operation.get());
+  MI_Session_QueryInstances(session, 0, nullptr, MI_T(R"(root\wmi)"),
+                            MI_T("WQL"), miQuery.c_str(), nullptr,
+                            operation.get());
 
   const MI_Instance* instance = nullptr;
   MI_Boolean more_results = MI_FALSE;
@@ -451,7 +452,7 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
         }
       });
 
-  auto bytes = edid::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
+  auto bytes = pnp::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
   if (bytes.has_value() && !bytes.value().empty()) {
     std::string base64 = Base64Encode(bytes.value());
     info.edid_bytes_base64 = base64;

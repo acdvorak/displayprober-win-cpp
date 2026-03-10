@@ -3,8 +3,8 @@
 CLI that outputs a list of all connected displays (monitors and TV screens) as
 [JSON](./src/ts/schemas/displayprober-win-cpp.schema.json).
 
-Supports Windows 7 SP1 and newer, both 32-bit and 64-bit. \
-Tested in Windows 7 SP1, Windows 10, and Windows 11.
+- Supports Windows 7 SP1 and newer, both 32-bit and 64-bit.
+- Tested in Windows 7 SP1, Windows 10, and Windows 11.
 
 This tool returns:
 
@@ -31,6 +31,24 @@ _NOTE: For feature detection to work, every device in the chain must support
 that feature: OS, GPU, monitor/TV, **and** HDMI/DisplayPort cables._
 
 _NOTE: The terms "Display", "Screen", and "Monitor" are effectively synonyms._
+
+# Contributing
+
+This tool is a passion project I wrote in my spare time. It's a hobby, not a
+job.
+
+Issues and pull requests are welcome, but don't be offended if you don't receive
+a timely response. It probably just means I'm busy with family, work, and life.
+
+# Versioning
+
+This project does not use semver (yet).
+
+Until it reaches stability, expect minor version bumps to have breaking changes.
+
+Specifically, the shape of JSON objects and the names of JSON fields will likely
+differ between version `1.x.0` and `1.y.0`. I may also add or remove fields, or
+change the format of unique identifier strings.
 
 # Usage
 
@@ -188,45 +206,161 @@ To truly capture everything there is to know about all connected displays, you
 must use a combination of **five** different Windows API families and
 correlate/aggregate the results:
 
-1. **User32** multi-monitor APIs:
-   - Classic Win32 display monitor enumeration APIs.
-   - `EnumDisplayMonitors()`
-   - `GetMonitorInfoW()`
-   - `HMONITOR`
-2. **Display Configuration** APIs:
-   - Topology graph: sources/targets, active paths, modes.
-   - `QueryDisplayConfig()`
-   - `DisplayConfigGetDeviceInfo()`
-3. **DirectX Graphics Infrastructure** adapter/output APIs:
-   - Advanced color and luminance characteristics.
-   - `CreateDXGIFactory()` (or `CreateDXGIFactory1()`)
-   - `IDXGIFactory::EnumAdapters()` (or `EnumAdapters1()`)
-   - `IDXGIAdapter::EnumOutputs()`
-   - `IDXGIOutput6::GetDesc1()` (populates `DXGI_OUTPUT_DESC1`)
-4. **`SetupAPI`** and **PnP device APIs**:
-   - Raw EDID bytes, PnP device tree enumeration, device instance IDs, hardware
-     IDs, and location paths
-   - `SetupDiGetClassDevsW()`
-   - `SetupDiEnumDeviceInfo()` (or `SetupDiEnumDeviceInterfaces()`)
-   - `SetupDiGetDeviceInstanceIdW()`
-   - `SetupDiGetDeviceRegistryPropertyW()` (legacy) or
-     `SetupDiGetDevicePropertyW()` (recommended for modern device properties)
-   - `SetupDiOpenDevRegKey()` + `RegQueryValueExW()` (commonly used to read
-     EDID)
-5. **WMI queries**:
-   - EDID-derived monitor identity/capabilities and a few connection-related
-     fields (e.g., physical connection type: HDMI, DisplayPort, DVI, VGA, etc.)
-   - `MI_Session_QueryInstances()`
-   - `MI_Operation_GetInstance()`
+### 1. **GDI** and **User32** multi-monitor APIs
+
+Classic Win32 monitor enumeration APIs.
+
+**Windows 2000** and newer.
+
+GDI =
+[Graphics Device Interface](https://learn.microsoft.com/en-us/windows/win32/gdi/windows-gdi).
+
+Primary API surface:
+
+- `EnumDisplayMonitors()`
+- `EnumDisplayDevices()`
+- `EnumDisplaySettings()` / `EnumDisplaySettingsEx()`
+- `MonitorFromWindow()`
+- `GetMonitorInfo()` / `GetMonitorInfoW()` (populate
+  `MONITORINFO`/`MONITORINFOEX` for an `HMONITOR`)
+
+These APIs are old and desktop-centric. They expose things like:
+
+- Session-scoped adapter "names" such as `\\.\DISPLAY1`
+- Monitor names attached to a GDI adapter
+- Monitor rectangles in virtual desktop coordinates
+- Current desktop modes
+- Primary monitor status
+
+GDI is useful when you care about what the Windows desktop currently looks like
+from the app/UI point of view.
+
+But GDI has limitations:
+
+- It is not the best source of truth for modern topology
+- It can be awkward for clone scenarios
+- It does not model the full source-to-target path structure directly
+- Some identifiers are more session-oriented or presentation-oriented than
+  hardware/topology-oriented
+
+### 2. **SetupAPI** and **PnP device** APIs
+
+Classic Win32 Plug-n-Play device tree enumeration APIs.
+
+**Windows 2000** and newer.
+
+Returns raw EDID bytes, hardware IDs, device instance IDs, and location paths.
+
+Primary API surface:
+
+- `SetupDiEnumDeviceInfo()`
+  - Enumerate _physical_ devices/devnodes in a set.
+  - `SP_DEVINFO_DATA`
+- `SetupDiEnumDeviceInterfaces()`
+  - Enumerates device interfaces exposed by a device/interface class.
+  - `SP_DEVICE_INTERFACE_DATA`
+- `SetupDiGetClassDevsW()`
+- `SetupDiGetDeviceInstanceIdW()`
+- `SetupDiGetDeviceInterfaceDetailW()`
+  - Returns the interface path and related `SP_DEVINFO_DATA`.
+- `SetupDiGetDeviceRegistryPropertyW()`
+  - Windows 2000 and newer
+- `SetupDiGetDevicePropertyW()`
+  - Vista RTM and newer
+  - Recommended for modern device properties
+- `SetupDiOpenDevRegKey()` + `RegQueryValueExW()`
+  - Used to read EDID bytes.
+
+### 3. **CCD Display Configuration** APIs
+
+Modern path-based display topology graph: sources/targets, active paths, modes.
+
+**Windows 7 RTM** and newer.
+
+CCD =
+[Connecting and Configuring Display](https://learn.microsoft.com/en-us/windows-hardware/drivers/display/ccd-apis).
+
+Primary API surface:
+
+- `GetDisplayConfigBufferSizes()`
+- `QueryDisplayConfig()`
+- `DisplayConfigGetDeviceInfo()`
+- `SetDisplayConfig()`
+
+CCD is path-based. It models:
+
+- Adapters
+- Sources
+- Targets
+- Paths between them
+- Source and target modes
+- Active vs. inactive paths
+- Clone / extend topology
+- Target output technology
+- Rotation, scaling, refresh, scanline ordering
+- Friendly monitor names and target device names via
+  `DISPLAYCONFIG_DEVICE_INFO_*` queries
+
+This is the API family you use when you want the real display topology, not just
+the desktop view.
+
+### 4. **WMI queries**
+
+EDID-derived monitor identity/capabilities and a few connection-related fields
+(e.g., physical connection type: HDMI, DisplayPort, DVI, VGA, etc.).
+
+Windows 7 SP1 with WMF 3.0 or higher.
+
+- `MI_Session_QueryInstances()`
+- `MI_Operation_GetInstance()`
+
+### 5. **DirectX Graphics Infrastructure** adapter/output APIs
+
+Advanced color and luminance characteristics.
+
+**Windows Vista RTM** and newer.
+
+Primary API surface:
+
+- `CreateDXGIFactory()`
+  - Vista RTM and newer
+  - Direct3D 10
+  - DXGI 1.0
+- `CreateDXGIFactory1()`
+  - Vista SP2 and newer
+  - Direct3D 11
+  - DXGI 1.1
+- `IDXGIFactory::EnumAdapters()` (or `EnumAdapters1()`)
+  - Used to iterate through all display subsystems, including both hardware and
+    software adapters, and those with or without outputs attached
+  - The adapter displaying the desktop primary is returned first (index zero).
+    Other adapters with outputs are returned next. Adapters without outputs are
+    returned last.
+- `IDXGIAdapter::EnumOutputs()`
+- `IDXGIOutput6::GetDesc1()` (populates `DXGI_OUTPUT_DESC1`)
+  - Windows 10 and newer.
+  - Returns HDR information.
+  - On older systems, fall back to `IDXGIOutput::GetDesc()`.
 
 ## Stable identifiers
 
 TODO(acdvorak)
 
+[Chromium `win/screen_win.cc`](https://chromium.googlesource.com/chromium/src/+/5331222/ui/display/win/screen_win.cc#557):
+
+> Gauge IDs derived from `DISPLAY_DEVICE`'s `DeviceID` and `DeviceKey`.
+> TODO([crbug.com/40233353](https://crbug.com/40233353)): Derive more stable and
+> sufficiently unique IDs.
+
+[WebRTC `win/screen_capture_utils.cc`](https://webrtc.googlesource.com/src/+/c0fd2e0/modules/desktop_capture/win/screen_capture_utils.cc?pli=1#184):
+
+> `DeviceKey` is documented as reserved, but it actually contains the registry
+> key for the device and is unique for each monitor, while `DeviceID` is not.
+
 # PowerShell equivalents
 
-In PowerShell v5.1+ on Windows, you can run the following commands to get some
-of the same raw underlying data that this C++ CLI returns:
+In PowerShell v5.1+ on Windows 8 and newer, you can run the following commands
+to get much of the same underlying data that this C++ CLI returns:
 
 ```ps1
 # Simple, strongly-typed Windows Forms .NET wrapper around User32
@@ -301,6 +435,8 @@ Basic display properties and enumeration:
   [`DXGIDesktopDuplication/cpp/DuplicationManager.cpp`](https://github.com/microsoft/Windows-classic-samples/blob/0b4e48a88/Samples/DXGIDesktopDuplication/cpp/DuplicationManager.cpp)
 - WinUIEx:
   [`MonitorInfo.cs`](https://github.com/dotMorten/WinUIEx/blob/main/src/WinUIEx/MonitorInfo.cs)
+- WebRTC:
+  [`desktop_capture/win/screen_capture_utils.cc`](https://webrtc.googlesource.com/src/+/refs/heads/main/modules/desktop_capture/win/screen_capture_utils.cc)
 
 HDR:
 
@@ -318,6 +454,12 @@ EDID and DisplayID parsing:
   - [LineageOS fork](https://github.com/LineageOS/android_external_libdisplay-info-upstream)
   - [Chromium mirror](https://chromium.googlesource.com/external/gitlab.freedesktop.org/emersion/libdisplay-info/)
   - [GitHub mirror](https://github.com/gjasny/v4l-utils)
+
+Microsoft Windows Classic Samples:
+
+- [DXGI desktop duplication sample](https://github.com/microsoft/Windows-classic-samples/tree/0b4e48a88ba446f3d87c5f7df12b33a74899a1e1/Samples/DXGIDesktopDuplication)
+- [Dynamic DPI sample](https://github.com/microsoft/Windows-classic-samples/tree/0b4e48a88ba446f3d87c5f7df12b33a74899a1e1/Samples/DynamicDPI)
+- [Per-Monitor Aware WPF Sample](https://github.com/microsoft/Windows-classic-samples/tree/0b4e48a88ba446f3d87c5f7df12b33a74899a1e1/Samples/PerMonitorDPIAware)
 
 # Development
 

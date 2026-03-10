@@ -41,7 +41,7 @@ std::string GetFriendlyName(
     // - `"DELL ST2320L"`
     // - `"QCQ95S"` (Samsung S95C TV)
     // - `"SAMSUNG"` (some devices don't give us an actual model number)
-    names.push_back(dc.friendly_name);
+    names.push_back(dc.display_friendly_name);
 
     // Example values:
     //
@@ -120,14 +120,14 @@ json::WinDisplay MergeDisplayDataToJson(
     const size_t index, const size_t count,
     const ShortLivedIdentifier& short_lived_identifier,
     const basic::BasicMonitorInfo& basic_info,
-    const std::optional<gdi::GdiDisplayConfig>& display_config,
-    const std::optional<dxgi::DxgiOutputDevice>& output_device) {
+    const std::optional<gdi::GdiDisplayConfig>& gdi_display_config,
+    const std::optional<dxgi::DxgiOutputDevice>& dxgi_output_device) {
   // Initialize all primitive fields to their default values.
   json::WinDisplay json_obj{};
 
   std::string friendly_name =
       GetFriendlyName(index, count, short_lived_identifier, basic_info,
-                      display_config, output_device);
+                      gdi_display_config, dxgi_output_device);
 
   json_obj.friendly_name = friendly_name;
   json_obj.short_lived_identifier = short_lived_identifier;
@@ -144,26 +144,38 @@ json::WinDisplay MergeDisplayDataToJson(
   // Initialize all primitive fields to their default values.
   json_obj.standard_color_info = {};
 
-  if (display_config) {
-    const auto& config = *display_config;
+  if (gdi_display_config) {
+    const auto& gdi = *gdi_display_config;
 
-    if (!config.adapter_instance_id.empty()) {
-      json_obj.adapter_instance_id = config.adapter_instance_id;
+    if (!gdi.adapter_instance_id.empty()) {
+      json_obj.adapter_instance_id = gdi.adapter_instance_id;
     }
 
-    if (config.adapter_device_path.has_value()) {
-      json_obj.adapter_device_path = *config.adapter_device_path;
+    if (!gdi.adapter_device_path.value_or("").empty()) {
+      json_obj.adapter_device_path = *gdi.adapter_device_path;
     }
-    json_obj.target_path_id = config.target_path_id;
+
+    if (gdi.adapter_info.has_value()) {
+      const auto& info = *gdi.adapter_info;
+      json_obj.adapter_friendly_name = info.adapter_friendly_name;
+      json_obj.adapter_hardware_id = info.adapter_hardware_id;
+      json_obj.adapter_registry_key = info.adapter_registry_key;
+    }
+
+    json_obj.target_path_id = gdi.target_path_id;
 
     if (const std::string primary_port_key =
-            dp::internal::BuildPrimaryPortKey(config);
+            dp::internal::BuildPrimaryPortKey(gdi);
         !primary_port_key.empty()) {
       json_obj.primary_port_key = primary_port_key;
     }
 
+    json_obj.monitor_instance_id = gdi.monitor_instance_id;
+    json_obj.monitor_driver_key = gdi.monitor_driver_key;
+    json_obj.monitor_registry_key = gdi.monitor_registry_key;
+
     // ✅ SECONDARY STABLE ID INPUT
-    DevicePath monitor_device_path = config.monitor_device_path;
+    DevicePath monitor_device_path = gdi.monitor_device_path;
 
     if (!monitor_device_path.empty()) {
       json_obj.monitor_device_path = monitor_device_path;
@@ -179,41 +191,41 @@ json::WinDisplay MergeDisplayDataToJson(
     }
 
     json_obj.scan_line_ordering =
-        json_utils::ScanLineOrderingToJson(config.scanLineOrdering);
+        json_utils::ScanLineOrderingToJson(gdi.scanLineOrdering);
 
-    json_obj.standard_color_info.is_hdr_supported = config.IsHdrSupported();
-    json_obj.standard_color_info.is_hdr_enabled = config.IsHdrEnabled();
+    json_obj.standard_color_info.is_hdr_supported = gdi.IsHdrSupported();
+    json_obj.standard_color_info.is_hdr_enabled = gdi.IsHdrEnabled();
 
-    if (json_obj.bounds.width != config.width ||
-        json_obj.bounds.height != config.height) {
+    if (json_obj.bounds.width != gdi.width ||
+        json_obj.bounds.height != gdi.height) {
       std::cerr << "WARNING: BasicMonitorInfo.bounds size does NOT match "
                    "GdiDisplayConfig size!"
                 << std::endl;
     }
 
-    if (gdi::IsValidRefreshRate(config.refreshRate)) {
+    if (gdi::IsValidRefreshRate(gdi.refreshRate)) {
       json_obj.refresh_rate_hz =
-          static_cast<double>(config.refreshRate.Numerator) /
-          static_cast<double>(config.refreshRate.Denominator);
-      json_obj.refresh_rate_numerator = config.refreshRate.Numerator;
-      json_obj.refresh_rate_denominator = config.refreshRate.Denominator;
+          static_cast<double>(gdi.refreshRate.Numerator) /
+          static_cast<double>(gdi.refreshRate.Denominator);
+      json_obj.refresh_rate_numerator = gdi.refreshRate.Numerator;
+      json_obj.refresh_rate_denominator = gdi.refreshRate.Denominator;
     }
 
     json_obj.physical_connector_type =
-        json_utils::OutputTechnologyToJson(config.outputTechnology);
+        json_utils::OutputTechnologyToJson(gdi.outputTechnology);
 
-    if (config.hasAdvancedColorInfo) {
+    if (gdi.hasAdvancedColorInfo) {
       json_obj.standard_color_info.bits_per_channel =
           // TODO(acdvorak): Rename fields to lower_snake_case.
-          static_cast<json::WinBitsPerColorChannel>(config.bitsPerChannel);
+          static_cast<json::WinBitsPerColorChannel>(gdi.bitsPerChannel);
       json_obj.standard_color_info.color_encoding =
           // TODO(acdvorak): Rename fields to lower_snake_case.
-          json_utils::ColorEncodingToJson(config.colorEncoding);
+          json_utils::ColorEncodingToJson(gdi.colorEncoding);
 
       // Initialize all primitive fields to their default values.
       json::WinAdvancedColorInfo advancedColorInfo{};
       if (sys::is_win_11_v24H2_or_newer()) {
-        auto& colors = config.windows1124H2Colors;
+        auto& colors = gdi.windows1124H2Colors;
         advancedColorInfo.is_advanced_color_supported =
             colors.advancedColorSupported != 0;
         advancedColorInfo.is_advanced_color_enabled =
@@ -237,7 +249,7 @@ json::WinDisplay MergeDisplayDataToJson(
         advancedColorInfo.active_color_mode =
             json_utils::ActiveColorModeToJson(colors.activeColorMode);
       } else {
-        auto& colors = config.advancedColor;
+        auto& colors = gdi.advancedColor;
         advancedColorInfo.is_advanced_color_supported =
             colors.advancedColorSupported != 0;
         advancedColorInfo.is_advanced_color_enabled =
@@ -251,9 +263,9 @@ json::WinDisplay MergeDisplayDataToJson(
         advancedColorInfo.is_advanced_color_limited_by_policy =
             colors.advancedColorForceDisabled != 0;
         advancedColorInfo.is_high_dynamic_range_supported =
-            config.IsHdrSupported();
+            gdi.IsHdrSupported();
         advancedColorInfo.is_high_dynamic_range_user_enabled =
-            config.IsHdrEnabled();
+            gdi.IsHdrEnabled();
         advancedColorInfo.is_wide_color_supported =
             colors.wideColorEnforced != 0;
         advancedColorInfo.is_wide_color_user_enabled =
@@ -264,8 +276,8 @@ json::WinDisplay MergeDisplayDataToJson(
     }
   }
 
-  if (output_device) {
-    auto& device = *output_device;
+  if (dxgi_output_device) {
+    auto& device = *dxgi_output_device;
 
     // This value MIGHT be `false` under the following conditions:
     //
@@ -365,7 +377,7 @@ std::string GetDisplayProberJson() {
     std::cerr << std::endl;
     std::cerr << "gdi_display_configs:" << std::endl;
     for (const auto& [key, _] : gdi_display_configs) {
-      auto name = _.friendly_name;
+      auto name = _.display_friendly_name;
       auto adpt_path = _.adapter_device_path.value_or("nullopt");
       auto tp_id = _.target_path_id;
       auto mon_path = _.monitor_device_path;

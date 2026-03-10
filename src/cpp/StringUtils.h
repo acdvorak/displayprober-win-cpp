@@ -7,6 +7,7 @@
 #include <cstring>
 #include <initializer_list>
 #include <limits>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -27,6 +28,8 @@ bool EqualsIgnoreCase(const std::wstring_view& lhs,
 
 bool ContainsAnySubstring(std::string_view haystack,
                           std::initializer_list<std::string_view> tokens);
+
+bool HasValue(std::optional<std::string_view> maybe);
 
 std::string Base64Encode(const std::vector<std::uint8_t>& bytes);
 

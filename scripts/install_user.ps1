@@ -48,7 +48,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ''
 
 ################################################################################
-# Install CMake (current user)
+# Install CMake (all users)
 ################################################################################
 
 $cmakeCommand = Get-Command cmake.exe -ErrorAction SilentlyContinue
@@ -62,8 +62,7 @@ if ($null -eq $cmakeCommand) {
     '--exact',
     '--silent',
     '--accept-package-agreements',
-    '--accept-source-agreements',
-    '--scope', 'user'
+    '--accept-source-agreements'
   )
 
   $wingetProcess = Start-Process -FilePath $winget.Source -ArgumentList $wingetArgs -Wait -PassThru

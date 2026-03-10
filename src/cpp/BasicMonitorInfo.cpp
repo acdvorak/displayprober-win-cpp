@@ -43,6 +43,16 @@ static std::map<ShortLivedIdentifier, basic::BasicMonitorInfo>
 // To stop the enumeration, return FALSE.
 // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nc-winuser-monitorenumproc
 BOOL CALLBACK EnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM) {
+  if (hMonitor == 0) {
+    // NOTE: An HMONITOR of 0 refers to a virtual monitor that spans all
+    // physical monitors.
+    //
+    // Source:
+    // https://webrtc.googlesource.com/src/+/c0fd2e0/modules/desktop_capture/win/screen_capture_utils.cc?pli=1#94
+    //
+    // I don't know if we can do anything useful with this information.
+  }
+
   MONITORINFOEXW monitorInfoEx = {sizeof(monitorInfoEx)};
   if (!GetMonitorInfoW(hMonitor, &monitorInfoEx)) {
     return TRUE;  // Continue enumerating other monitors

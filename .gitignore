@@ -12,4 +12,10 @@ cmake-*
 *.dll
 *.pdb
 
+# Manually-created shortcuts
+*.lnk
+
+# NirSoft utility config files
+*.cfg
+
 node_modules

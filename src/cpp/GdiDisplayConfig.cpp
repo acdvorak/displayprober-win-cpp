@@ -6,18 +6,13 @@
 #include "GdiDisplayConfig.h"
 
 // This header needs to be imported first.
-// Keep other .h headers separate from Windows.h to prevent auto-sorting.
 #include <Windows.h>
-#include <SetupAPI.h>
-#include <ntddvdeo.h>
 
-#include <cstdint>
 #include <map>
-#include <optional>
-#include <string>
 #include <vector>
 
 #include "GdiPolyfills.h"
+#include "PnPSetupAPI.h"
 #include "StringUtils.h"
 #include "SysUtils.h"
 
@@ -25,111 +20,33 @@ namespace gdi {
 
 namespace {
 
-class ScopedDevInfoSet {
- public:
-  explicit ScopedDevInfoSet(HDEVINFO handle) : handle_(handle) {}
+std::map<ShortLivedIdentifier, GdiAdapterInfo>
+GetShortLivedIdToAdapterInfoMap() {
+  std::map<ShortLivedIdentifier, GdiAdapterInfo> adapters;
 
-  ~ScopedDevInfoSet() {
-    if (handle_ != INVALID_HANDLE_VALUE) {
-      SetupDiDestroyDeviceInfoList(handle_);
-    }
-  }
+  for (DWORD idx = 0;; ++idx) {
+    DISPLAY_DEVICEW dd = {};
+    dd.cb = sizeof(dd);
 
-  HDEVINFO get() const { return handle_; }
-
- private:
-  HDEVINFO handle_ = INVALID_HANDLE_VALUE;
-};
-
-std::optional<std::string> TryGetAdapterInstanceIdFromAdapterPath(
-    const std::optional<std::string>& adapter_device_path) {
-  if (adapter_device_path.value_or("").empty()) {
-    return std::nullopt;
-  }
-
-  const HDEVINFO raw_dev_info_set =
-      SetupDiGetClassDevsW(&GUID_DEVINTERFACE_DISPLAY_ADAPTER, nullptr, nullptr,
-                           DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-  if (raw_dev_info_set == INVALID_HANDLE_VALUE) {
-    return std::nullopt;
-  }
-
-  ScopedDevInfoSet dev_info_set(raw_dev_info_set);
-
-  const std::wstring wanted_path = Utf8ToWide(*adapter_device_path);
-
-  for (DWORD interface_index = 0;; ++interface_index) {
-    SP_DEVICE_INTERFACE_DATA interface_data = {};
-    interface_data.cbSize = sizeof(interface_data);
-
-    if (!SetupDiEnumDeviceInterfaces(dev_info_set.get(), nullptr,
-                                     &GUID_DEVINTERFACE_DISPLAY_ADAPTER,
-                                     interface_index, &interface_data)) {
-      if (GetLastError() == ERROR_NO_MORE_ITEMS) {
-        break;
-      }
-      return std::nullopt;
+    if (!EnumDisplayDevicesW(nullptr, idx, &dd, 0)) {
+      break;
     }
 
-    DWORD required_size = 0;
-    if (SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
-                                         nullptr, 0, &required_size,
-                                         nullptr) != FALSE) {
-      return std::nullopt;
-    }
-
-    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER ||
-        required_size < sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W)) {
-      return std::nullopt;
-    }
-
-    std::vector<std::uint8_t> detail_buffer(required_size);
-    auto* detail_data = reinterpret_cast<PSP_DEVICE_INTERFACE_DETAIL_DATA_W>(
-        detail_buffer.data());
-    detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
-
-    SP_DEVINFO_DATA dev_info_data = {};
-    dev_info_data.cbSize = sizeof(dev_info_data);
-
-    if (!SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
-                                          detail_data, required_size, nullptr,
-                                          &dev_info_data)) {
-      return std::nullopt;
-    }
-
-    const std::wstring candidate_path(detail_data->DevicePath);
-    if (!EqualsIgnoreCase(candidate_path, wanted_path)) {
+    if (dd.DeviceName[0] == L'\0' || dd.DeviceString[0] == L'\0') {
       continue;
     }
 
-    DWORD instance_id_length = 0;
-    if (!SetupDiGetDeviceInstanceIdW(dev_info_set.get(), &dev_info_data,
-                                     nullptr, 0, &instance_id_length)) {
-      if (GetLastError() != ERROR_INSUFFICIENT_BUFFER ||
-          instance_id_length == 0) {
-        return std::nullopt;
-      }
-    }
+    GdiAdapterInfo info{};
 
-    std::wstring instance_id(instance_id_length, L'\0');
-    if (!SetupDiGetDeviceInstanceIdW(dev_info_set.get(), &dev_info_data,
-                                     instance_id.data(), instance_id_length,
-                                     nullptr)) {
-      return std::nullopt;
-    }
+    info.short_lived_identifier = WideToUtf8(dd.DeviceName);
+    info.adapter_friendly_name = WideToUtf8(dd.DeviceString);
+    info.adapter_hardware_id = WideToUtf8(dd.DeviceID);
+    info.adapter_registry_key = WideToUtf8(dd.DeviceKey);
 
-    if (!instance_id.empty() && instance_id.back() == L'\0') {
-      instance_id.pop_back();
-    }
-
-    const std::string instance_id_utf8 = WideToUtf8(instance_id);
-    if (!instance_id_utf8.empty()) {
-      return instance_id_utf8;
-    }
-    return std::nullopt;
+    adapters.emplace(info.short_lived_identifier, info);
   }
 
-  return std::nullopt;
+  return adapters;
 }
 
 }  // namespace
@@ -205,6 +122,8 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
   paths.resize(num_paths);
   modes.resize(num_modes);
 
+  const auto id_to_adapter_info_map = GetShortLivedIdToAdapterInfoMap();
+
   for (const auto& path : paths) {
     // Send a GET_SOURCE_NAME request
     DISPLAYCONFIG_SOURCE_DEVICE_NAME source = {
@@ -218,11 +137,12 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
       continue;
     }
 
-    ShortLivedIdentifier deviceNameUtf8 = WideToUtf8(source.viewGdiDeviceName);
+    ShortLivedIdentifier short_lived_identifier =
+        WideToUtf8(source.viewGdiDeviceName);
 
-    GdiDisplayConfig& dc = displayConfigs[deviceNameUtf8];
+    GdiDisplayConfig& dc = displayConfigs[short_lived_identifier];
 
-    dc.short_lived_identifier = deviceNameUtf8;
+    dc.short_lived_identifier = short_lived_identifier;
     dc.target_path_id = path.targetInfo.id;
     dc.outputTechnology = path.targetInfo.outputTechnology;
 
@@ -251,7 +171,6 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
                  DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO_2),
              sizeof(color_info), mode.adapterId, mode.id},
             {}};
-
         res = DisplayConfigGetDeviceInfo(&color_info.header);
         if (res == ERROR_SUCCESS) {
           dc.colorEncoding = color_info.colorEncoding;
@@ -265,7 +184,6 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
             {DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO,
              sizeof(color_info), mode.adapterId, mode.id},
             {}};
-
         res = DisplayConfigGetDeviceInfo(&color_info.header);
         if (res == ERROR_SUCCESS) {
           dc.colorEncoding = color_info.colorEncoding;
@@ -290,10 +208,10 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
          path.sourceInfo.adapterId, path.targetInfo.id},
         {},
     };
-
     res = DisplayConfigGetDeviceInfo(&target_dev_name.header);
     if (res == ERROR_SUCCESS) {
-      dc.friendly_name = WideToUtf8(target_dev_name.monitorFriendlyDeviceName);
+      dc.display_friendly_name =
+          WideToUtf8(target_dev_name.monitorFriendlyDeviceName);
       dc.monitor_device_path = WideToUtf8(target_dev_name.monitorDevicePath);
       dc.edidManufactureId = target_dev_name.edidManufactureId;
       dc.edidProductCodeId = target_dev_name.edidProductCodeId;
@@ -304,15 +222,35 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
          path.sourceInfo.adapterId, path.targetInfo.id},
         {},
     };
-
     res = DisplayConfigGetDeviceInfo(&adapter_name.header);
     if (res == ERROR_SUCCESS) {
       dc.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
 
       const auto adapter_instance_id =
-          TryGetAdapterInstanceIdFromAdapterPath(dc.adapter_device_path);
+          pnp::TryGetAdapterInstanceIdFromAdapterPath(dc.adapter_device_path);
       if (adapter_instance_id.has_value()) {
         dc.adapter_instance_id = *adapter_instance_id;
+      }
+    }
+
+    const auto adapter_name_it =
+        id_to_adapter_info_map.find(short_lived_identifier);
+    if (adapter_name_it != id_to_adapter_info_map.end()) {
+      dc.adapter_info = adapter_name_it->second;
+    }
+
+    if (HasValue(dc.monitor_device_path)) {
+      dc.monitor_instance_id =
+          pnp::TryGetMonitorInstanceIdFromMonitorPath(dc.monitor_device_path);
+    }
+
+    if (HasValue(dc.monitor_instance_id)) {
+      dc.monitor_driver_key = pnp::TryGetMonitorDriverKeyFromDeviceInstanceId(
+          *dc.monitor_instance_id);
+      if (HasValue(dc.monitor_driver_key)) {
+        dc.monitor_registry_key =
+            R"(HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\)" +
+            *dc.monitor_driver_key;
       }
     }
   }
