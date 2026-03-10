@@ -42,11 +42,63 @@ if (-not $isAdmin) {
   exit $elevated.ExitCode
 }
 
-################################################################################
-# Install VS 2022 Build Tools and Windows SDKs
-################################################################################
-
 try {
+  ##############################################################################
+  # Install CMake (all users)
+  ##############################################################################
+
+  Write-Host ''
+
+  $cmakeCommand = Get-Command cmake.exe -ErrorAction SilentlyContinue
+
+  if ($null -eq $cmakeCommand) {
+    Write-Host 'CMake not found. Installing via winget for current user...'
+
+    $wingetArgs = @(
+      'install',
+      '--id', 'Kitware.CMake',
+      '--exact',
+      '--scope', 'machine',
+      '--silent',
+      '--accept-package-agreements',
+      '--accept-source-agreements'
+    )
+
+    $wingetProcess = Start-Process -FilePath $winget.Source -ArgumentList $wingetArgs -Wait -PassThru
+    if ($wingetProcess.ExitCode -ne 0) {
+      throw "winget failed to install CMake for current user (exit code $($wingetProcess.ExitCode))."
+    }
+
+    # Refresh PATH in the current session so cmake can be resolved immediately.
+    $processPath = [Environment]::GetEnvironmentVariable('Path', 'Process')
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $env:Path =
+    (
+      @($processPath, $userPath, $machinePath) |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        ForEach-Object { $_.TrimEnd(';') } |
+        Where-Object { $_ -ne '' }
+    ) -join ';'
+  }
+
+  $cmake = Get-Command cmake.exe -ErrorAction SilentlyContinue
+  if ($null -eq $cmake) {
+    throw 'CMake installation appears to have completed, but cmake.exe is still not found in PATH.'
+  }
+
+  Write-Host "CMake detected at '$($cmake.Source)'."
+  & $cmake.Source --version
+  if ($LASTEXITCODE -ne 0) {
+    throw 'CMake was found but failed to run.'
+  }
+
+  Write-Host ''
+
+  ##############################################################################
+  # Install VS 2022 Build Tools and Windows SDKs
+  ##############################################################################
+
   $buildToolsExe = Join-Path $PSScriptRoot '../src/cpp/vs_BuildTools.exe'
   $vsConfigPath = Join-Path $PSScriptRoot '../src/cpp/.vsconfig'
 
@@ -89,9 +141,9 @@ try {
     throw "vs_BuildTools.exe failed with exit code $($process.ExitCode)."
   }
 
-  ################################################################################
+  ##############################################################################
   # Validate toolchain
-  ################################################################################
+  ##############################################################################
 
   Confirm-VSToolchain
 }
