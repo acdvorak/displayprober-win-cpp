@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cwctype>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -149,6 +150,10 @@ bool ContainsAnySubstring(std::string_view haystack,
   }
 
   return false;
+}
+
+bool HasValue(std::optional<std::string_view> maybe) {
+  return !maybe.value_or("").empty();
 }
 
 std::string Base64Encode(const std::vector<std::uint8_t>& bytes) {

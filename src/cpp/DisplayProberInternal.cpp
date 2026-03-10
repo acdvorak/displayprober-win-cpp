@@ -39,7 +39,7 @@ std::string TryToExtractEdid7DigitIdentifier(std::string_view input) {
     return true;
   };
 
-  constexpr std::string_view kBackslashPrefix = "DISPLAY\\";
+  constexpr std::string_view kBackslashPrefix = R"(DISPLAY\)";
   if (input.starts_with(kBackslashPrefix)) {
     const std::size_t begin = kBackslashPrefix.size();
     const std::size_t end = input.find('\\', begin);

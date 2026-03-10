@@ -29,17 +29,17 @@ TEST_CASE("TryToExtractEdid7DigitIdentifier extracts valid IDs") {
 TEST_CASE("BuildPrimaryPortKey builds deterministic key") {
   gdi::GdiDisplayConfig config{};
   config.adapter_instance_id =
-      "PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008";
+      R"(PCI\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\4&2A5F5B12&0&0008)";
   config.target_path_id = 42;
 
   CHECK(dp::internal::BuildPrimaryPortKey(config) ==
-        "acd_ppk:gpu_id=PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&"
+        R"(acd_ppk:gpu_id=PCI\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\4&)"
         "2A5F5B12&0&0008;tp_id=0x0000002A");
 
   config.adapter_instance_id.clear();
-  config.adapter_device_path = "\\\\?\\pci#ven_10de#device-path";
+  config.adapter_device_path = R"(\\?\pci#ven_10de#device-path)";
   CHECK(dp::internal::BuildPrimaryPortKey(config) ==
-        "acd_ppk:gpu_id=\\\\?\\pci#ven_10de#device-path;tp_id=0x0000002A");
+        R"(acd_ppk:gpu_id=\\?\pci#ven_10de#device-path;tp_id=0x0000002A)");
 }
 
 TEST_CASE("BuildEdidKey requires all parts and normalizes VID") {

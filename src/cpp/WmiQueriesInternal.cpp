@@ -37,7 +37,7 @@ bool AsciiEqualsCaseInsensitive(const std::string& lhs,
 // `"DISPLAY\\SAM7346\\5&21e6c3e1&0&UID5243153"`
 WmiJoinKey NormalizeJoinKeyFromDevicePath(
     const DevicePath& monitor_device_path) {
-  constexpr const char* kPrefix = "\\\\?\\DISPLAY#";
+  constexpr const char* kPrefix = R"(\\?\DISPLAY#)";
   const std::size_t prefix_pos = monitor_device_path.find(kPrefix);
   if (prefix_pos == std::string::npos) {
     return {};
@@ -56,7 +56,7 @@ WmiJoinKey NormalizeJoinKeyFromDevicePath(
     }
   }
 
-  return "DISPLAY\\" + tail;
+  return R"(DISPLAY\)" + tail;
 }
 
 bool InstanceNameMatches(const WmiInstanceName& instance_name,

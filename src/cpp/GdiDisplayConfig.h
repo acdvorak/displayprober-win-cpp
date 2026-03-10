@@ -17,8 +17,17 @@
 
 #include "CommonTypes.h"
 #include "GdiPolyfills.h"
+#include "gencode/acd-json.hpp"
 
 namespace gdi {
+
+// Basically a UTF-8 version of `DISPLAY_DEVICEW`.
+struct GdiAdapterInfo {
+  ShortLivedIdentifier short_lived_identifier;
+  std::string adapter_friendly_name;
+  std::string adapter_hardware_id;
+  std::string adapter_registry_key;
+};
 
 // Simplified aggregation of values pulled from Windows GDI `DISPLAYCONFIG_*`,
 // DisplayID, and EDID.
@@ -98,7 +107,7 @@ struct GdiDisplayConfig {
   DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
   DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY outputTechnology;
 
-  // "Short Lived Identifier".
+  // GDI device name.
   //
   // Corresponds to: `DISPLAYCONFIG_SOURCE_DEVICE_NAME::viewGdiDeviceName`.
   //
@@ -123,18 +132,25 @@ struct GdiDisplayConfig {
   // - `"DELL ST2320L"`
   // - `"QCQ95S"` (Samsung S95C TV)
   // - `"SAMSUNG"` (some devices don't give us an actual model number)
-  std::string friendly_name;
+  std::string display_friendly_name;
 
   // Persistent across reboots in the common case (same GPU/driver instance).
   //
   // Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME::adapterDevicePath`
+  //
+  // Examples:
+  //
+  // `"\\\\?\\PCI#VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
   std::optional<std::string> adapter_device_path;
 
   // Adapter Plug and Play instance id.
   //
   // Example:
+  //
   // `"PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"`
   std::string adapter_instance_id;
+
+  std::optional<GdiAdapterInfo> adapter_info;
 
   // Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
   std::uint32_t target_path_id = 0;
@@ -153,6 +169,10 @@ struct GdiDisplayConfig {
   // `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
   // `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
   DevicePath monitor_device_path;
+
+  std::optional<std::string> monitor_driver_key;
+  std::optional<std::string> monitor_instance_id;
+  std::optional<std::string> monitor_registry_key;
 
   // Packed/encoded into 2 bytes.
   //

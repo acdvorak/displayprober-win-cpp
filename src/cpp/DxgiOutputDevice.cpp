@@ -36,29 +36,20 @@ void AppendDxgiOutputDevices(
       continue;
     }
 
-    // Represents an adapter output (such as a monitor).
-    // The IDXGIOutput6 interface exposes methods to provide specific
-    // monitor capabilities.
-    ComPtr<IDXGIOutput6> output6;
-    if (!SUCCEEDED(pIDXGIOutput.As(&output6)) || !output6) {
-      continue;
-    }
-
     // Describes an output or physical connection between the adapter
     // (video card) and a device, including additional information about
     // color capabilities and connection type.
-    DXGI_OUTPUT_DESC1 desc;
-    if (!SUCCEEDED(output6->GetDesc1(&desc))) {
+    //
+    // Available in Windows Vista RTM and later.
+    DXGI_OUTPUT_DESC desc0;
+    if (!SUCCEEDED(pIDXGIOutput->GetDesc(&desc0))) {
       continue;
     }
 
-    ShortLivedIdentifier deviceNameUtf8 = WideToUtf8(desc.DeviceName);
-
+    ShortLivedIdentifier deviceNameUtf8 = WideToUtf8(desc0.DeviceName);
     dxgi::DxgiOutputDevice& device = devices[deviceNameUtf8];
 
     device.short_lived_identifier = deviceNameUtf8;
-    device.process_local_monitor_handle_ptr =
-        reinterpret_cast<std::uintptr_t>(desc.Monitor);
 
     // This value MIGHT be `false` under the following conditions:
     //
@@ -72,20 +63,44 @@ void AppendDxgiOutputDevices(
     //   - Example: you have 2 monitors connected, but Windows is set to
     //     "Show only on 1" (or you've "Disconnect this display" for the other).
     //     That other output can still exist, but it is not attached, so false.
-    device.is_attached_to_desktop = desc.AttachedToDesktop;
+    device.is_attached_to_desktop = desc0.AttachedToDesktop;
 
-    device.desktop_coordinates = desc.DesktopCoordinates;
+    device.process_local_monitor_handle_ptr =
+        reinterpret_cast<std::uintptr_t>(desc0.Monitor);
 
-    device.rotation_type = desc.Rotation;
+    device.desktop_coordinates = desc0.DesktopCoordinates;
+    device.rotation_type = desc0.Rotation;
 
-    device.color_space = desc.ColorSpace;
-    device.bits_per_channel = desc.BitsPerColor;
+    // Represents an adapter output (such as a monitor).
+    // The `IDXGIOutput6` interface exposes methods to provide specific
+    // monitor capabilities.
+    //
+    // Windows 10 and newer.
+    //
+    // On Windows 8.1 and earlier, where `IDXGIOutput6` is not implemented,
+    // `pIDXGIOutput.As(&output6)` will return `E_NOINTERFACE` (a failed
+    // `HRESULT`); it will not crash.
+    ComPtr<IDXGIOutput6> output6;
+    if (!SUCCEEDED(pIDXGIOutput.As(&output6)) || !output6) {
+      continue;
+    }
 
-    if (desc.MinLuminance > 0 || desc.MaxLuminance > 0 ||
-        desc.MaxFullFrameLuminance > 0) {
-      device.min_luminance_nits = desc.MinLuminance;
-      device.max_luminance_nits = desc.MaxLuminance;
-      device.max_full_frame_luminance_nits = desc.MaxFullFrameLuminance;
+    // Describes an output or physical connection between the adapter
+    // (video card) and a device, including additional information about
+    // color capabilities and connection type.
+    DXGI_OUTPUT_DESC1 desc1;
+    if (!SUCCEEDED(output6->GetDesc1(&desc1))) {
+      continue;
+    }
+
+    device.color_space = desc1.ColorSpace;
+    device.bits_per_channel = desc1.BitsPerColor;
+
+    if (desc1.MinLuminance > 0 || desc1.MaxLuminance > 0 ||
+        desc1.MaxFullFrameLuminance > 0) {
+      device.min_luminance_nits = desc1.MinLuminance;
+      device.max_luminance_nits = desc1.MaxLuminance;
+      device.max_full_frame_luminance_nits = desc1.MaxFullFrameLuminance;
     }
   }
 }

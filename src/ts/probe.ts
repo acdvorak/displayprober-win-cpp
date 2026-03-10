@@ -33,30 +33,35 @@ const DISPLAY_KEYS: ReadonlyArray<keyof WinDisplay> = [
   'is_attached_to_desktop',
 
   'physical_connector_type',
+
+  'scan_line_ordering',
   'refresh_rate_hz',
   'refresh_rate_numerator',
   'refresh_rate_denominator',
 
   'rotation_deg',
-  'scan_line_ordering',
   'dpi_scaling_percent',
+  'bounds',
+  'working_area',
 
   'standard_color_info',
   'advanced_color_info',
   'edid_info',
 
-  'bounds',
-  'working_area',
-
   'stable_id',
   'stable_id_source',
   'stable_id_candidates',
-  'adapter_device_path',
+  'adapter_friendly_name',
+  'adapter_hardware_id',
   'adapter_instance_id',
+  'adapter_device_path',
+  'adapter_registry_key',
   'monitor_device_path',
-  'monitor_path_key',
-  'primary_port_key',
   'target_path_id',
+  'primary_port_key',
+  'monitor_path_key',
+  'monitor_driver_key',
+  'monitor_registry_key',
 ];
 
 const RECTANGLE_KEYS: ReadonlyArray<keyof WinScreenRectangle> = [

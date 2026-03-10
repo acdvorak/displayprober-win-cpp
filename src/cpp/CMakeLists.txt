@@ -141,9 +141,9 @@ add_executable(${PROJECT_NAME}
   DisplayProberInternal.cpp
   DisplayProberLib.cpp
   DxgiOutputDevice.cpp
-  EdidBytes.cpp
   GdiDisplayConfig.cpp
   JsonUtils.cpp
+  PnPSetupAPI.cpp
   StringUtils.cpp
   SysUtils.cpp
   WmiQueriesInternal.cpp

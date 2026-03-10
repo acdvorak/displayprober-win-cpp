@@ -30,18 +30,12 @@ export interface WinDisplayProberJson {
   is_virtual_machine: boolean;
 }
 
+/**
+ * An individual monitor or virtual display attached to a Windows PC.
+ */
 export interface WinDisplay {
   /**
    * Human-friendly name of the display.
-   *
-   * Value comes from one of the following sources, in descending order of
-   * quality (i.e., the "best" available value is returned):
-   *
-   * 1. EDID "monitor descriptor" name (e.g., `"DELL ST2320L"`)
-   * 2. `"Remote Desktop"` or `"Remote Desktop #N"` if RDP
-   * 3. `"Virtual Machine"` or `"Virtual Machine #N"` if a VM
-   * 4. 7-digit Windows EDID identifier (e.g., `"SAM73A5"` or `"DELF023"`)
-   * 5. Short-lived Windows display number (e.g., `"DISPLAY1"`)
    *
    * Examples:
    *
@@ -55,13 +49,26 @@ export interface WinDisplay {
    * - `"DISPLAY129"`  // RDP monitor
    * - `"DISPLAY"`     // Single monitor
    * - `"WinDisc"`     // Non-interactive remote SSH console session
+   *
+   * Value comes from one of the following sources, in descending order of
+   * quality (i.e., the "best" available value is returned):
+   *
+   * 1. EDID "monitor descriptor" name (e.g., `"DELL ST2320L"`)
+   * 2. `"Remote Desktop"` or `"Remote Desktop #N"` if RDP
+   * 3. `"Virtual Machine"` or `"Virtual Machine #N"` if a VM
+   * 4. 7-digit Windows EDID identifier (e.g., `"SAM73A5"` or `"DELF023"`)
+   * 5. Short-lived Windows display number (e.g., `"DISPLAY1"`)
    */
   friendly_name?: string | null;
 
   /**
-   * Windows "monitor device name" from `MONITORINFOEX.szDevice`.
+   * Windows "monitor device name".
    *
-   * ⚠️ NOT stable across device disconnects/reconnects.
+   * Source: `MONITORINFOEXW.szDevice` via `GetMonitorInfoW()` in `WinUser.h`.
+   *
+   * Characteristics:
+   *
+   * - ⚠️ NOT stable across device disconnects/reconnects.
    *
    * Examples:
    *
@@ -74,34 +81,172 @@ export interface WinDisplay {
   short_lived_identifier: WinMonitorDeviceName;
 
   /**
-   * Adapter Plug and Play instance ID (typically the GPU's unique ID).
+   * Human-friendly name of the adapter (typically the GPU).
    *
-   * For a single GPU with two ports (e.g., one DisplayPort and one DVI), where
-   * both ports are connected to an active monitor/TV, both displays will have
-   * the same `adapter_instance_id`.
+   * Source: `DISPLAY_DEVICEW.DeviceString` in `wingdi.h`.
    *
-   * TODO(acdvorak): Describe GPU vs Adapter vs Driver.
+   * Example:
    *
-   * More persistent than `adapter_device_path` across reboots and driver
-   * churn.
+   * - `"NVIDIA GeForce RTX 3050"`
+   */
+  adapter_friendly_name?: string | null;
+
+  /**
+   * Hardware identifier of the adapter (typically the GPU).
    *
-   * Examples:
+   * Source: `DISPLAY_DEVICEW.DeviceID` in `wingdi.h`.
+   *
+   * Example:
+   *
+   * - `"PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1"`
+   *
+   * Characteristics:
+   *
+   * - ✅ Static physical hardware identifier.
+   * - ✅ Stable and persistent across reboots and driver upgrades.
+   * - ⚠️ Shared by all PORTS on a physical discrete GPU.
+   * - ⚠️ Shared if you have multiple identical GPUs.
+   *
+   * For physical discrete GPUs, this value is the PCI ID. See:
+   *
+   * - https://learn.microsoft.com/en-us/windows-hardware/drivers/install/identifiers-for-pci-devices
+   * - https://pci-ids.ucw.cz/
+   *
+   * Format:
+   *
+   * ```
+   * PCI \ VEN_10DE & DEV_2584 & SUBSYS_184610DE & REV_A1
+   *       ┗━━━┳━━┛   ┗━━━┳━━┛   ┗━━━━━━┳━━━━━━┛   ┗━━┳━┛
+   *        Vendor     Device       Subsystem     Revision
+   * ```
+   *
+   * The above example is an NVIDIA GeForce RTX 3050 6GB PCIe graphics card:
+   *
+   * https://pcilookup.com/?ven=10DE&dev=2584&action=submit
+   */
+  adapter_hardware_id?: string | null;
+
+  /**
+   * Unique Plug-n-Play instance ID of the *individual GPU*, equal to
+   * {@link adapter_hardware_id} + serial/location (PCI slot number).
+   *
+   * Source: `SetupDiGetDeviceInstanceIdW()` in `SetupAPI.h`.
+   *
+   * Example:
    *
    * - `"PCI\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\4&2B1C6285&0&0010"`
+   *
+   * Characteristics:
+   *
+   * - ✅ Static physical hardware ID + serial + location (PCI slot number).
+   * - ✅ Stable and persistent across reboots and driver upgrades.
+   * - ⚠️ Shared by all PORTS on a physical discrete GPU.
+   * - ✅ Unique per physical GPU instance.
+   *
+   * If your PC has two identical GPUs, each one will have its own unique
+   * `adapter_instance_id` value.
+   *
+   * For a single GPU with multiple ports (e.g., one DisplayPort and one DVI),
+   * all connected displays will have the same `adapter_instance_id` value.
+   *
+   * ### References
+   *
+   * From
+   * [Windows Drivers > Device Instance ID](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-instance-ids):
+   *
+   * > A device instance ID is a system-supplied device identification string
+   * > that uniquely identifies a device in the system. The Plug and Play (PnP)
+   * > manager assigns a device instance ID to each device node (devnode) in a
+   * > system's device tree.
+   * >
+   * > The creation of the device instance ID for a device uses the bus driver
+   * > reported device ID value, instance ID value, and the UniqueID member of
+   * > the DEVICE_CAPABILITIES structure as input in order to create the unique
+   * > device instance ID for this device on the system.
+   * >
+   * > ```
+   * > PCI\VEN_1000&DEV_0001&SUBSYS_00000000&REV_02\1&08
+   * > ```
    */
   adapter_instance_id?: string | null;
 
   /**
-   * Persistent across reboots in the common case (same GPU/driver instance).
+   * Effectively a reformatted version of {@link adapter_instance_id}, plus a
+   * static, hard-coded device interface class GUID for adapters
+   * (`GUID_DEVINTERFACE_DISPLAY_ADAPTER`).
    *
-   * TODO(acdvorak): Describe GPU vs Adapter vs Driver.
+   * Source: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath` in `wingdi.h`.
    *
-   * Corresponds to: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath`
+   * Example:
+   *
+   * - `"\\\\?\\PCI#VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
+   *
+   * Characteristics:
+   *
+   * - ✅ Stable and persistent across reboots.
+   * - ❓ Unclear if persistent across driver upgrades.
+   *
+   * The GUID at the end is a fixed, Microsoft-defined class GUID (declared in
+   * `Ntddvdeo.h`), and Windows appends it as part of the device-interface
+   * symbolic link format when the display stack registers that interface.
+   *
+   * See:
+   *
+   * - [`GUID_DEVINTERFACE_DISPLAY_ADAPTER` constant (`Ntddvdeo.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/guid-devinterface-display-adapter)
+   * - [`DISPLAYCONFIG_ADAPTER_NAME` structure (`wingdi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-displayconfig_adapter_name)
+   * - [`SetupDiGetDeviceInterfaceDetailA()` function (`setupapi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetaila)
+   * - [`IoRegisterDeviceInterface()` function (`wdm.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface)
    */
   adapter_device_path?: string | null;
 
   /**
-   * Corresponds to `DISPLAYCONFIG_PATH_INFO.targetInfo.id`.
+   * Per-GPU-port registry key.
+   *
+   * Source: `DISPLAY_DEVICEW.DeviceKey` in `wingdi.h`.
+   *
+   * Examples:
+   *
+   * - `"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\0000"`
+   * - `"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\0001"`
+   *
+   * Characteristics:
+   *
+   * - ❓ TODO(acdvorak): Describe uniqueness, persistence, and stability across
+   *   reboots, device disconnects/reconnects, and port/dock changes.
+   *
+   * The GUID is a local, OS-generated adapter/video-stack identifier, likely
+   * the adapter `VideoID` created by the video port / display driver machinery.
+   *
+   * The numeric suffix is an auto-incrementing "child adapter index" for the
+   * physical port on the GPU (in the typical case).
+   *
+   * ### References
+   *
+   * According to
+   * [WebRTC `win/screen_capture_utils.cc`](https://webrtc.googlesource.com/src/+/c0fd2e0/modules/desktop_capture/win/screen_capture_utils.cc?pli=1#184):
+   *
+   * > `DeviceKey` is documented as reserved, but it actually contains the
+   * > registry key for the device and is unique for each monitor, while
+   * > `DeviceID` is not.
+   *
+   * According to
+   * [ReactOS Display Driver Loading](https://reactos.org/wiki/Techwiki:Win32k/display_driver_loading),
+   * the format of this key is:
+   *
+   * > Device configuration key:
+   * > `"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\<VideoId>\\0000"`
+   * > where `<VideoId>` is a local UUID, created by `videoprt` the first time
+   * > the device is started. The `VideoId` string is stored in the registry
+   * > under the device's hardware key
+   * > (`HKLM\System\CurrentControlSet\Enum\...`).
+   */
+  adapter_registry_key?: string | null;
+
+  /**
+   * Per-adapter identifier of the target display endpoint used by
+   * `DisplayConfig` APIs to address/query a specific path target.
+   *
+   * Source: `DISPLAYCONFIG_PATH_INFO.targetInfo.id` in `wingdi.h`.
    *
    * @uint32
    */
@@ -120,16 +265,19 @@ export interface WinDisplay {
 
   /**
    * Typically stable across reboots and uniquely identifies the monitor
-   * instance on that connection path.
+   * instance on that connection path. Useful for correlating to EDID retrieval.
    *
-   * It is also useful for correlating to EDID retrieval.
-   *
-   * Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.
+   * Source: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath` in `wingdi.h`.
    *
    * Examples:
    *
    * - `"\\\\?\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
    * - `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+   *
+   * Characteristics:
+   *
+   * - ❓ TODO(acdvorak): Describe stability/uniqueness
+   * - ❓ TODO(acdvorak): What is the GUID?
    */
   monitor_device_path?: string | null;
 
@@ -141,11 +289,103 @@ export interface WinDisplay {
   monitor_path_key?: string | null;
 
   /**
+   * Examples:
+   *
+   * - `"DISPLAY\\SAM73A5\\5&757FE5E&6&UID20737"`
+   * - `"DISPLAY\\VIZ1009\\5&757FE5E&6&UID20739"`
+   */
+  monitor_instance_id?: string | null;
+
+  /**
+   * Examples:
+   *
+   * - `"{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004"`
+   * - `"{4d36e96e-e325-11ce-bfc1-08002be10318}\\0005"`
+   *
+   * The GUID `{4d36e96e-e325-11ce-bfc1-08002be10318}` is
+   * `GUID_DEVCLASS_MONITOR`, which is the system-defined setup class for
+   * monitors.
+   *
+   * The last 4 numeric digits (like `0004` or `0005`) represent a zero-padded
+   * *instance identifier* (often called the *driver node index*) assigned
+   * sequentially by the Windows Plug and Play (PnP) manager.
+   *
+   * Specifically, this 4-digit number acts as a pointer to the *Driver Key*
+   * (also known as the *Software Key*) in the Windows Registry where the
+   * operating system stores the driver and configuration parameters for that
+   * exact monitor.
+   *
+   * When a monitor is connected, Windows looks at the Device Setup Class GUID
+   * (the `{4d36e96e-e325-11ce-bfc1-08002be10318}` part, which dictates that
+   * the device is a "Monitor") and assigns it the next available 4-digit number
+   * starting from `0000`.
+   *
+   * This means the `0004` in the first example above maps directly to this
+   * specific registry path, specified by {@link monitor_registry_key}:
+   *
+   * ```
+   * HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e96e-e325-11ce-bfc1-08002be10318}\0004
+   * ```
+   *
+   * If you navigate to that specific subkey in the Registry Editor, you will
+   * find software-level properties for that monitor instance.
+   */
+  monitor_driver_key?: string | null;
+
+  /**
+   * Examples:
+   *
+   * - `"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004"`
+   * - `"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0005"`
+   *
+   * Common values stored here include:
+   *
+   * - **DriverDesc**: The friendly, human-readable name of the monitor
+   *   (e.g., "Generic PnP Monitor", "Generic Non-PnP Monitor", or
+   *   "Samsung SyncMaster").
+   *
+   * - **MatchingDeviceId**: The PnP hardware ID used to match the driver to the
+   *   monitor (e.g., "*PNP09FF" or "MONITOR\Default_Monitor").
+   *
+   * - **ProviderName**: The author of the driver (usually "Microsoft" for
+   *   standard Plug and Play monitors).
+   *
+   * - **EDID Overrides**: Any manual software overrides applied to the
+   *   monitor's Extended Display Identification Data (EDID).
+   */
+  monitor_registry_key?: string | null;
+
+  /**
+   * Examples:
+   *
+   * - `"Generic PnP Monitor"`
+   * - `"Generic Non-PnP Monitor"`
+   *
+   * TODO(acdvorak): Get this value from the registry (`DriverDesc`).
+   * See {@link monitor_registry_key}.
+   */
+  monitor_string?: string | null;
+
+  /**
+   * Maybe EDID-derived?
+   *
+   * Example:
+   *
+   * - `"LAU8PSBP01000"` (Vizio TV)
+   *
+   * TODO(acdvorak): Figure out which Windows API returns this value.
+   * NirSoft MultiMonitorTool knows how to get it.
+   */
+  monitor_serial_string?: string | null;
+
+  /**
    * ✅ TERTIARY STABLE ID (when available)
    *
    * Deterministic monitor identity key based on EDID.
    *
    * Only emitted when manufacturer, product code, and serial are available.
+   *
+   * TODO(acdvorak): Append a hash of the full EDID bytes.
    */
   edid_key?: string | null;
 
@@ -198,9 +438,12 @@ export interface WinDisplay {
   is_attached_to_desktop?: boolean | null;
 
   /**
-   * The most common standard values are: `100 | 125 | 150 | 175 | 200`.
+   * Typical values allowed by the Windows Display Settings UI are:
    *
-   * The user can technically set any arbitrary value via registry hacks.
+   * `100 | 125 | 150 | 175 | 200 | 225 | 250 | 275 | 300 | ... | 500`
+   *
+   * Technically, the user can set any arbitrary value they want via registry
+   * hacks.
    *
    * @see https://superuser.com/questions/1328938/scale-100-on-windows-10/1328941#1328941
    * @see https://learn.microsoft.com/en-us/windows/win32/learnwin32/dpi-and-device-independent-pixels

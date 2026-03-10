@@ -210,7 +210,12 @@ function Get-OsNameAndVersion {
   # - Microsoft Windows Server 2012 R2 Standard Evaluation
   # - Microsoft Windows 10 Pro
   # - Microsoft Windows 11 Pro
-  $os_name = ($os_obj.Caption.Trim() -replace '^Microsoft ', '') -replace ' Professional', ' Pro'
+
+  $os_name = $os_obj.Caption.Trim()
+  $os_name = $os_name.Replace('Microsoft(R) ', '')
+  $os_name = $os_name.Replace('Microsoft ', '')
+  $os_name = $os_name.Replace('Windows(R) ', 'Windows ')
+  $os_name = $os_name.Replace(' Professional', ' Pro')
 
   # Service Pack. Windows 7 only.
   $sp = if ($os_obj.ServicePackMajorVersion) { 'SP{0}' -f $os_obj.ServicePackMajorVersion } else { '' }
@@ -231,7 +236,7 @@ function Get-OsNameAndVersion {
   # Replaced by `DisplayVersion` in Windows 10+ starting in the year 2020.
   #
   # Example values: 1507, 1607, 1809, 2004, 2009
-  $release = if ($nt_cv.ReleaseId -lt 2009) { 'release {0}' -f $nt_cv.ReleaseId } else { '' }
+  $release = if ($nt_cv.ReleaseId -and $nt_cv.ReleaseId -lt 2009) { 'release {0}' -f $nt_cv.ReleaseId } else { '' }
 
   # All versions of windows have an incrementing build number.
   $build = '(build {0})' -f $os_obj.BuildNumber
