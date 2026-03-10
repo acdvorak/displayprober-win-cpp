@@ -356,8 +356,7 @@ Primary API surface:
     returned last.
 - `IDXGIAdapter::EnumOutputs()`
 - `IDXGIOutput6::GetDesc1()` (populates `DXGI_OUTPUT_DESC1`)
-  - Windows 10 and newer.
-    - On older systems, fall back to `IDXGIOutput::GetDesc()`.
+  - Windows 10 and newer; on older systems, fall back to `IDXGIOutput::GetDesc()`.
   - Returns HDR information.
   - `DXGI_OUTPUT_DESC.DeviceName` matches the GDI `szDevice` (e.g.,
     `\\.\DISPLAY1`), linking DXGI outputs to GDI adapters and CCD sources.
