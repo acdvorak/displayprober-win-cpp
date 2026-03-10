@@ -1,0 +1,30 @@
+# Build and test untrusted pull requests with minimal permissions.
+
+name: PR Build
+
+on:
+  pull_request:
+    branches: ['main']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+
+      - name: Build and test
+        uses: ./.github/actions/build-and-test
+        with:
+          release-tag-input: ''
+          run-tests: 'true'
+
+      # This step is not strictly necessary for PRs, but it helps catch
+      # pipeline failures earlier, before an actual release.
+      - name: Collect artifacts and create ZIP bundles
+        shell: pwsh
+        run: ./.github/scripts/collect-artifacts-and-zip.ps1
