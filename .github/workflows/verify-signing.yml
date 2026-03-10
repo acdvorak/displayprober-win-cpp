@@ -16,6 +16,7 @@ jobs:
     outputs:
       version_tag: ${{ steps.meta.outputs.version_tag }}
     permissions:
+      actions: write # For actions/upload-artifact
       contents: read
     steps:
       - name: Checkout
@@ -42,8 +43,9 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: windows-latest
     permissions:
+      actions: read # For actions/download-artifact
       contents: read
-      id-token: write
+      id-token: write # For .github/actions/azure-sign
     environment: verify-signing
     env:
       VERSION_TAG: ${{ needs.build-and-test.outputs.version_tag }}
