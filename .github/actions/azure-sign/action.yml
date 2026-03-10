@@ -23,14 +23,14 @@ runs:
   using: composite
   steps:
     - name: Azure login
-      uses: azure/login@v1
+      uses: azure/login@33b121a1597278045654f321b0e9861297c5e9c0 # v1
       with:
         client-id: ${{ inputs.azure-client-id }}
         tenant-id: ${{ inputs.azure-tenant-id }}
         subscription-id: ${{ inputs.azure-subscription-id }}
 
     - name: Sign files with Artifact Signing
-      uses: azure/artifact-signing-action@v1
+      uses: azure/artifact-signing-action@5289deff81257f39600de2188534e17b633ba835 # v1
       with:
         endpoint: https://wus3.codesigning.azure.net/
         signing-account-name: ${{ inputs.signing-account-name }}

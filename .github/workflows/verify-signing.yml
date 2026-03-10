@@ -1,10 +1,11 @@
-# Build, test, code sign, and upload ZIP bundles for trusted releases.
+# Run code signing on merges to `main` to catch pipeline failures early, before a release.
 
-name: Release Build
+name: Verify Code Signing
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: ['main']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,13 +22,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          submodules: 'recursive'
+          submodules: recursive
 
       - name: Build and test
         id: meta
         uses: ./.github/actions/build-and-test
         with:
-          release-tag-input: ${{ github.event.release.tag_name }}
+          release-tag-input: ''
           run-tests: 'true'
 
       - name: Upload unsigned build artifacts
@@ -37,15 +38,15 @@ jobs:
           path: ${{ github.workspace }}/out
           if-no-files-found: error
 
-  sign-and-upload:
+  sign-and-zip:
     needs: build-and-test
     if: github.event_name != 'pull_request'
     runs-on: windows-latest
     permissions:
       actions: read # For actions/download-artifact
-      contents: write # For softprops/action-gh-release (uploading assets and updating release metadata)
+      contents: read
       id-token: write # For .github/actions/azure-sign
-    environment: release
+    environment: verify-signing
     env:
       VERSION_TAG: ${{ needs.build-and-test.outputs.version_tag }}
     steps:
@@ -70,13 +71,8 @@ jobs:
           certificate-profile-name:
             ${{ secrets.AZURE_SIGNING_CERT_PROFILE_NAME }}
 
+      # This step is not strictly necessary for signing, but it helps catch
+      # pipeline failures earlier, before an actual release.
       - name: Collect artifacts and create ZIP bundles
         shell: pwsh
         run: ./.github/scripts/collect-artifacts-and-zip.ps1
-
-      - name: Upload ZIP to GitHub Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
-        with:
-          files: |
-            ${{ github.workspace }}/zip/DisplayProber-${{ env.VERSION_TAG }}-debug.zip
-            ${{ github.workspace }}/zip/DisplayProber-${{ env.VERSION_TAG }}-release.zip
