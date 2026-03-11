@@ -137,17 +137,17 @@ option(STATIC_CRT "Static runtime" ON)
 
 add_executable(${PROJECT_NAME}
   CLI.cpp
-  BasicMonitorInfo.cpp
+  GdiMonitorEnum.cpp
   DisplayProberInternal.cpp
   DisplayProberLib.cpp
-  DxgiOutputDevice.cpp
-  GdiDisplayConfig.cpp
+  DxgiOutput.cpp
+  CcdDisplayConfig.cpp
   JsonUtils.cpp
-  PnPSetupAPI.cpp
+  SetupApiDevice.cpp
   StringUtils.cpp
   SysUtils.cpp
-  WmiQueriesInternal.cpp
-  WmiQueries.cpp
+  WmiMonitorInternal.cpp
+  WmiMonitor.cpp
 )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -226,7 +226,7 @@ if(BUILD_TESTING)
   endif()
 
   add_library(TestWmiQueriesInternal STATIC
-    WmiQueriesInternal.cpp
+    WmiMonitorInternal.cpp
   )
   target_compile_features(TestWmiQueriesInternal PUBLIC cxx_std_20)
   target_include_directories(TestWmiQueriesInternal PUBLIC

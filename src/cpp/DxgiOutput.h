@@ -19,7 +19,7 @@ namespace dxgi {
 // the Windows Display Driver Model (WDDM), handling hardware interfacing,
 // buffer management, and resource sharing, including screen capturing via the
 // Desktop Duplication API.
-struct DxgiOutputDevice {
+struct DxgiOutputInfo {
   // Windows "monitor device name".
   //
   // Corresponds to `BasicMonitorInfo.short_lived_identifier`.
@@ -102,6 +102,6 @@ struct DxgiOutputDevice {
   std::optional<FLOAT> max_full_frame_luminance_nits;
 };
 
-std::map<ShortLivedIdentifier, DxgiOutputDevice> GetDxgiOutputDevices();
+std::map<ShortLivedIdentifier, DxgiOutputInfo> GetDxgiOutputInfos();
 
 }  // namespace dxgi

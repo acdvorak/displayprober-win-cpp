@@ -4,7 +4,7 @@
 // connection-related fields (e.g., physical connection type: HDMI, DisplayPort,
 // DVI, VGA, etc.).
 
-#include "WmiQueries.h"
+#include "WmiMonitor.h"
 
 // This header needs to be imported first.
 #include <windows.h>
@@ -18,10 +18,10 @@
 #include <optional>
 #include <string>
 
-#include "GdiDisplayConfig.h"
-#include "PnPSetupAPI.h"
+#include "CcdDisplayConfig.h"
+#include "SetupApiDevice.h"
 #include "StringUtils.h"
-#include "WmiQueriesInternal.h"
+#include "WmiMonitorInternal.h"
 
 namespace {
 
@@ -452,7 +452,7 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
         }
       });
 
-  auto bytes = pnp::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
+  auto bytes = setupapi::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
   if (bytes.has_value() && !bytes.value().empty()) {
     std::string base64 = Base64Encode(bytes.value());
     info.edid_bytes_base64 = base64;

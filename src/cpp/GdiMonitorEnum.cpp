@@ -3,7 +3,7 @@
 // Enumerates "display monitors" in the Windows desktop/virtual-screen
 // coordinate space, including pseudo-monitors (e.g. mirroring drivers).
 
-#include "BasicMonitorInfo.h"
+#include "GdiMonitorEnum.h"
 
 #include <windows.h>
 
@@ -36,8 +36,7 @@ GetDpiForMonitorFn ResolveGetDpiForMonitor() {
   return cached;
 }
 
-static std::map<ShortLivedIdentifier, basic::BasicMonitorInfo>
-    basic_monitor_infos;
+static std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo> gdi_monitor_infos;
 
 // To continue the enumeration, return TRUE.
 // To stop the enumeration, return FALSE.
@@ -60,7 +59,7 @@ BOOL CALLBACK EnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM) {
 
   ShortLivedIdentifier monitorNameUtf8 = WideToUtf8(monitorInfoEx.szDevice);
 
-  basic::BasicMonitorInfo& monitor = basic_monitor_infos[monitorNameUtf8];
+  gdi::GdiMonitorInfo& monitor = gdi_monitor_infos[monitorNameUtf8];
   monitor.short_lived_identifier = monitorNameUtf8;
   monitor.process_local_monitor_handle_ptr =
       reinterpret_cast<std::uintptr_t>(hMonitor);
@@ -84,10 +83,10 @@ BOOL CALLBACK EnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM) {
 
 }  // namespace
 
-namespace basic {
+namespace gdi {
 
-std::map<ShortLivedIdentifier, basic::BasicMonitorInfo> GetBasicMonitorInfos() {
-  basic_monitor_infos.clear();
+std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo> GetGdiMonitorInfos() {
+  gdi_monitor_infos.clear();
 
   if (sys::is_win_10_v16070_or_newer()) {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -97,7 +96,7 @@ std::map<ShortLivedIdentifier, basic::BasicMonitorInfo> GetBasicMonitorInfos() {
 
   EnumDisplayMonitors(nullptr, nullptr, EnumProc, 0);
 
-  return basic_monitor_infos;
+  return gdi_monitor_infos;
 }
 
-}  // namespace basic
+}  // namespace gdi

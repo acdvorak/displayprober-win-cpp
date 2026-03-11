@@ -10,14 +10,14 @@
 #include <string_view>
 #include <vector>
 
-#include "BasicMonitorInfo.h"
+#include "CcdDisplayConfig.h"
 #include "DisplayProberInternal.h"
-#include "DxgiOutputDevice.h"
-#include "GdiDisplayConfig.h"
+#include "DxgiOutput.h"
+#include "GdiMonitorEnum.h"
 #include "JsonUtils.h"
 #include "StringUtils.h"
 #include "SysUtils.h"
-#include "WmiQueries.h"
+#include "WmiMonitor.h"
 #include "gencode/acd-json.hpp"
 
 using Microsoft::WRL::ComPtr;
@@ -27,9 +27,9 @@ namespace {
 std::string GetFriendlyName(
     const size_t index, const size_t count,
     const ShortLivedIdentifier& short_lived_identifier,
-    const basic::BasicMonitorInfo& basic_info,
-    const std::optional<gdi::GdiDisplayConfig>& display_config,
-    const std::optional<dxgi::DxgiOutputDevice>& output_device) {
+    const gdi::GdiMonitorInfo& basic_info,
+    const std::optional<ccd::CcdDisplayConfig>& display_config,
+    const std::optional<dxgi::DxgiOutputInfo>& output_device) {
   std::vector<std::string> names;
   std::vector<std::string> backups;
 
@@ -119,9 +119,9 @@ const std::optional<typename TMap::mapped_type> TryGetOptionalValue(
 json::WinDisplay MergeDisplayDataToJson(
     const size_t index, const size_t count,
     const ShortLivedIdentifier& short_lived_identifier,
-    const basic::BasicMonitorInfo& basic_info,
-    const std::optional<gdi::GdiDisplayConfig>& gdi_display_config,
-    const std::optional<dxgi::DxgiOutputDevice>& dxgi_output_device) {
+    const gdi::GdiMonitorInfo& basic_info,
+    const std::optional<ccd::CcdDisplayConfig>& gdi_display_config,
+    const std::optional<dxgi::DxgiOutputInfo>& dxgi_output_device) {
   // Initialize all primitive fields to their default values.
   json::WinDisplay json_obj{};
 
@@ -198,12 +198,12 @@ json::WinDisplay MergeDisplayDataToJson(
 
     if (json_obj.bounds.width != gdi.width ||
         json_obj.bounds.height != gdi.height) {
-      std::cerr << "WARNING: BasicMonitorInfo.bounds size does NOT match "
-                   "GdiDisplayConfig size!"
+      std::cerr << "WARNING: GdiMonitorInfo.bounds size does NOT match "
+                   "CcdDisplayConfig size!"
                 << std::endl;
     }
 
-    if (gdi::IsValidRefreshRate(gdi.refreshRate)) {
+    if (ccd::IsValidRefreshRate(gdi.refreshRate)) {
       json_obj.refresh_rate_hz =
           static_cast<double>(gdi.refreshRate.Numerator) /
           static_cast<double>(gdi.refreshRate.Denominator);
@@ -326,8 +326,8 @@ json::WinDisplay MergeDisplayDataToJson(
         static_cast<std::uint8_t>(device.bits_per_channel.value_or(0));
 
     if (json_bpc > 0 && json_bpc != dxgi_bpc) {
-      std::cerr << "WARNING: DxgiOutputDevice.bits_per_channel=" << dxgi_bpc
-                << " differs from GdiDisplayConfig.bits_per_channel="
+      std::cerr << "WARNING: DxgiOutputInfo.bits_per_channel=" << dxgi_bpc
+                << " differs from CcdDisplayConfig.bits_per_channel="
                 << json_bpc << std::endl;
     }
   }
@@ -343,18 +343,18 @@ std::string GetDisplayProberJson() {
   // Source of truth for enumeration. This map will always contain at least one
   // value, even over remote SSH console sessions. For compatibility purposes,
   // Windows returns a "fake" virtual display named "WinDisc" over SSH.
-  const std::map<ShortLivedIdentifier, basic::BasicMonitorInfo>
-      basic_monitor_infos = basic::GetBasicMonitorInfos();
+  const std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo>
+      basic_monitor_infos = gdi::GetGdiMonitorInfos();
 
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
-  const std::map<ShortLivedIdentifier, gdi::GdiDisplayConfig>
-      gdi_display_configs = gdi::GetGdiDisplayConfigs();
+  const std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig>
+      gdi_display_configs = ccd::GetCcdDisplayConfigs();
 
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
-  const std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice>
-      dxgi_output_devices = dxgi::GetDxgiOutputDevices();
+  const std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>
+      dxgi_output_devices = dxgi::GetDxgiOutputInfos();
 
-  std::map<std::uintptr_t, dxgi::DxgiOutputDevice>
+  std::map<std::uintptr_t, dxgi::DxgiOutputInfo>
       dxgi_output_devices_by_hmonitor;
   for (const auto& [_, device] : dxgi_output_devices) {
     if (device.process_local_monitor_handle_ptr != 0) {
@@ -412,7 +412,7 @@ std::string GetDisplayProberJson() {
     const auto gdi_display_config =
         TryGetOptionalValue(gdi_display_configs, short_lived_identifier);
 
-    std::optional<dxgi::DxgiOutputDevice> dxgi_output_device;
+    std::optional<dxgi::DxgiOutputInfo> dxgi_output_device;
 
     if (basicMonitorInfo.process_local_monitor_handle_ptr != 0) {
       dxgi_output_device = TryGetOptionalValue(

@@ -8,7 +8,7 @@
 
 #include <cstdint>
 
-#include "GdiPolyfills.h"
+#include "CcdPolyfills.h"
 #include "gencode/acd-json.hpp"
 
 namespace json_utils {

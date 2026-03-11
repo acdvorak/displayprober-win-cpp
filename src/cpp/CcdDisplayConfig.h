@@ -15,11 +15,11 @@
 #include <optional>
 #include <string>
 
+#include "CcdPolyfills.h"
 #include "CommonTypes.h"
-#include "GdiPolyfills.h"
 #include "gencode/acd-json.hpp"
 
-namespace gdi {
+namespace ccd {
 
 // Basically a UTF-8 version of `DISPLAY_DEVICEW`.
 struct GdiAdapterInfo {
@@ -61,10 +61,10 @@ struct GdiAdapterInfo {
 // - `wideColorSupported`
 // - `wideColorUserEnabled`
 //
-// The `GdiDisplayConfig` struct also has convenience methods
+// The `CcdDisplayConfig` struct also has convenience methods
 // `IsHdrSupported()` and `IsHdrEnabled()` that interrogate the properties of
 // `advancedColor`.
-struct GdiDisplayConfig {
+struct CcdDisplayConfig {
   union {
     struct {
       /** A type of advanced color is supported */
@@ -194,6 +194,6 @@ struct GdiDisplayConfig {
 
 bool IsValidRefreshRate(const DISPLAYCONFIG_RATIONAL& rr);
 
-std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs();
+std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs();
 
-}  // namespace gdi
+}  // namespace ccd

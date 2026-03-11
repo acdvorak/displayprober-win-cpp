@@ -27,7 +27,7 @@ TEST_CASE("TryToExtractEdid7DigitIdentifier extracts valid IDs") {
 }
 
 TEST_CASE("BuildPrimaryPortKey builds deterministic key") {
-  gdi::GdiDisplayConfig config{};
+  ccd::CcdDisplayConfig config{};
   config.adapter_instance_id =
       R"(PCI\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\4&2A5F5B12&0&0008)";
   config.target_path_id = 42;

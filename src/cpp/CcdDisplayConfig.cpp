@@ -3,7 +3,7 @@
 // Gives you per-target details like EDID-derived identifiers (not raw EDID
 // bytes), friendly names, and device paths.
 
-#include "GdiDisplayConfig.h"
+#include "CcdDisplayConfig.h"
 
 // This header needs to be imported first.
 #include <Windows.h>
@@ -11,12 +11,12 @@
 #include <map>
 #include <vector>
 
-#include "GdiPolyfills.h"
-#include "PnPSetupAPI.h"
+#include "CcdPolyfills.h"
+#include "SetupApiDevice.h"
 #include "StringUtils.h"
 #include "SysUtils.h"
 
-namespace gdi {
+namespace ccd {
 
 namespace {
 
@@ -62,7 +62,7 @@ bool IsValidRefreshRate(const DISPLAYCONFIG_RATIONAL& rr) {
   return rr.Denominator != 0 && rr.Numerator / rr.Denominator > 1;
 }
 
-bool GdiDisplayConfig::IsHdrSupported() const {
+bool CcdDisplayConfig::IsHdrSupported() const {
   if (sys::is_win_11_v24H2_or_newer()) {
     return windows1124H2Colors.highDynamicRangeSupported;
   }
@@ -72,7 +72,7 @@ bool GdiDisplayConfig::IsHdrSupported() const {
          !advancedColor.advancedColorForceDisabled;
 }
 
-bool GdiDisplayConfig::IsHdrEnabled() const {
+bool CcdDisplayConfig::IsHdrEnabled() const {
   if (sys::is_win_11_v24H2_or_newer()) {
     return windows1124H2Colors.highDynamicRangeSupported &&
            windows1124H2Colors.activeColorMode ==
@@ -85,8 +85,8 @@ bool GdiDisplayConfig::IsHdrEnabled() const {
          !advancedColor.advancedColorForceDisabled;
 }
 
-std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
-  std::map<ShortLivedIdentifier, GdiDisplayConfig> displayConfigs;
+std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs() {
+  std::map<ShortLivedIdentifier, CcdDisplayConfig> displayConfigs;
 
   UINT32 num_paths;
   UINT32 num_modes;
@@ -140,7 +140,7 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
     ShortLivedIdentifier short_lived_identifier =
         WideToUtf8(source.viewGdiDeviceName);
 
-    GdiDisplayConfig& dc = displayConfigs[short_lived_identifier];
+    CcdDisplayConfig& dc = displayConfigs[short_lived_identifier];
 
     dc.short_lived_identifier = short_lived_identifier;
     dc.target_path_id = path.targetInfo.id;
@@ -227,7 +227,8 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
       dc.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
 
       const auto adapter_instance_id =
-          pnp::TryGetAdapterInstanceIdFromAdapterPath(dc.adapter_device_path);
+          setupapi::TryGetAdapterInstanceIdFromAdapterPath(
+              dc.adapter_device_path);
       if (adapter_instance_id.has_value()) {
         dc.adapter_instance_id = *adapter_instance_id;
       }
@@ -240,13 +241,14 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
     }
 
     if (HasValue(dc.monitor_device_path)) {
-      dc.monitor_instance_id =
-          pnp::TryGetMonitorInstanceIdFromMonitorPath(dc.monitor_device_path);
+      dc.monitor_instance_id = setupapi::TryGetMonitorInstanceIdFromMonitorPath(
+          dc.monitor_device_path);
     }
 
     if (HasValue(dc.monitor_instance_id)) {
-      dc.monitor_driver_key = pnp::TryGetMonitorDriverKeyFromDeviceInstanceId(
-          *dc.monitor_instance_id);
+      dc.monitor_driver_key =
+          setupapi::TryGetMonitorDriverKeyFromDeviceInstanceId(
+              *dc.monitor_instance_id);
       if (HasValue(dc.monitor_driver_key)) {
         dc.monitor_registry_key =
             R"(HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\)" +
@@ -258,4 +260,4 @@ std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs() {
   return displayConfigs;
 }
 
-}  // namespace gdi
+}  // namespace ccd

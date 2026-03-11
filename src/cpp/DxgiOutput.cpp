@@ -2,7 +2,7 @@
 //
 // Provides advanced color and luminance characteristics.
 
-#include "DxgiOutputDevice.h"
+#include "DxgiOutput.h"
 
 #include <dxgi.h>
 #include <dxgi1_6.h>
@@ -19,9 +19,9 @@ using Microsoft::WRL::ComPtr;
 
 namespace {
 
-void AppendDxgiOutputDevices(
+void AppendDxgiOutputInfos(
     ComPtr<IDXGIAdapter> pIDXGIAdapter,
-    std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice>& devices) {
+    std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>& devices) {
   ComPtr<IDXGIOutput> pIDXGIOutput;
 
   for (UINT output = 0;; ++output) {
@@ -47,7 +47,7 @@ void AppendDxgiOutputDevices(
     }
 
     ShortLivedIdentifier deviceNameUtf8 = WideToUtf8(desc0.DeviceName);
-    dxgi::DxgiOutputDevice& device = devices[deviceNameUtf8];
+    dxgi::DxgiOutputInfo& device = devices[deviceNameUtf8];
 
     device.short_lived_identifier = deviceNameUtf8;
 
@@ -109,8 +109,8 @@ void AppendDxgiOutputDevices(
 
 namespace dxgi {
 
-std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice> GetDxgiOutputDevices() {
-  std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice> devices;
+std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo> GetDxgiOutputInfos() {
+  std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo> devices;
 
   // DXGI APIs will crash or hang if we try to call them in a non-interactive
   // session.
@@ -142,7 +142,7 @@ std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice> GetDxgiOutputDevices() {
       continue;
     }
 
-    AppendDxgiOutputDevices(pIDXGIAdapter, devices);
+    AppendDxgiOutputInfos(pIDXGIAdapter, devices);
   }
 
   return devices;
