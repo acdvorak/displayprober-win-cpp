@@ -143,7 +143,7 @@ struct CcdDisplayConfig {
   // Example:
   //
   // `"PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"`
-  std::string adapter_instance_id;
+  std::optional<std::string> adapter_instance_id;
 
   std::optional<GdiAdapterInfo> adapter_info;
 

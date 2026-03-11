@@ -68,8 +68,8 @@ std::string TryToExtractEdid7DigitIdentifier(std::string_view input) {
 
 std::string BuildPrimaryPortKey(const ccd::CcdDisplayConfig& config) {
   const std::string gpu_identity =
-      !config.adapter_instance_id.empty()
-          ? config.adapter_instance_id
+      HasValue(config.adapter_instance_id)
+          ? *config.adapter_instance_id
           : config.adapter_device_path.value_or("");
   if (gpu_identity.empty()) {
     return {};
