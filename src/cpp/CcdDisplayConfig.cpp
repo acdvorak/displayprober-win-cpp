@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "CcdPolyfills.h"
-#include "SetupApiDevice.h"
 #include "StringUtils.h"
 #include "SysUtils.h"
 
@@ -191,35 +190,11 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
     res = DisplayConfigGetDeviceInfo(&adapter_name.header);
     if (res == ERROR_SUCCESS) {
       dc.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
-
-      const auto adapter_instance_id =
-          setupapi::TryGetAdapterInstanceIdFromAdapterPath(
-              dc.adapter_device_path);
-      if (adapter_instance_id.has_value()) {
-        dc.adapter_instance_id = *adapter_instance_id;
-      }
     }
 
-    const auto adapter_name_it =
-        adapter_info_map.find(short_lived_identifier);
+    const auto adapter_name_it = adapter_info_map.find(short_lived_identifier);
     if (adapter_name_it != adapter_info_map.end()) {
       dc.adapter_info = adapter_name_it->second;
-    }
-
-    if (HasValue(dc.monitor_device_path)) {
-      dc.monitor_instance_id = setupapi::TryGetMonitorInstanceIdFromMonitorPath(
-          dc.monitor_device_path);
-    }
-
-    if (HasValue(dc.monitor_instance_id)) {
-      dc.monitor_driver_key =
-          setupapi::TryGetMonitorDriverKeyFromDeviceInstanceId(
-              *dc.monitor_instance_id);
-      if (HasValue(dc.monitor_driver_key)) {
-        dc.monitor_registry_key =
-            R"(HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\)" +
-            *dc.monitor_driver_key;
-      }
     }
   }
 

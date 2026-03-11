@@ -15,6 +15,7 @@
 #include "DxgiOutput.h"
 #include "GdiMonitorEnum.h"
 #include "JsonUtils.h"
+#include "SetupApiDevice.h"
 #include "StringUtils.h"
 #include "SysUtils.h"
 #include "WmiMonitor.h"
@@ -339,6 +340,27 @@ json::WinDisplay MergeDisplayDataToJson(
 
 }  // namespace
 
+static void EnrichWithSetupApiData(ccd::CcdDisplayConfig& config) {
+  if (config.adapter_device_path.has_value()) {
+    config.adapter_instance_id =
+        setupapi::TryGetAdapterInstanceIdFromAdapterPath(
+            config.adapter_device_path)
+            .value_or("");
+  }
+  if (config.monitor_device_path.empty()) return;
+  config.monitor_instance_id =
+      setupapi::TryGetMonitorInstanceIdFromMonitorPath(
+          config.monitor_device_path);
+  if (!config.monitor_instance_id.has_value()) return;
+  config.monitor_driver_key =
+      setupapi::TryGetMonitorDriverKeyFromDeviceInstanceId(
+          *config.monitor_instance_id);
+  if (!config.monitor_driver_key.has_value()) return;
+  config.monitor_registry_key =
+      R"(HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\)" +
+      *config.monitor_driver_key;
+}
+
 std::string GetDisplayProberJson() {
   // Source of truth for enumeration. This map will always contain at least one
   // value, even over remote SSH console sessions. For compatibility purposes,
@@ -346,12 +368,17 @@ std::string GetDisplayProberJson() {
   const std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo>
       basic_monitor_infos = gdi::GetGdiMonitorInfos();
 
-  const std::map<ShortLivedIdentifier, gdi::GdiAdapterInfo>
-      gdi_adapter_infos = gdi::GetGdiAdapterInfoMap();
+  const std::map<ShortLivedIdentifier, gdi::GdiAdapterInfo> gdi_adapter_infos =
+      gdi::GetGdiAdapterInfoMap();
 
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
-  const std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig>
+  std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig>
       gdi_display_configs = ccd::GetCcdDisplayConfigs(gdi_adapter_infos);
+
+  // Enrich CCD data with SetupAPI device info
+  for (auto& [id, config] : gdi_display_configs) {
+    EnrichWithSetupApiData(config);
+  }
 
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
   const std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>
