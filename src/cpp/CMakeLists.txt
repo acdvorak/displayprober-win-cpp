@@ -129,6 +129,11 @@ endif()
 # SOURCE FILES
 ################################################################################
 
+# Suppress warning about missing DOWNLOAD_EXTRACT_TIMESTAMP option in FetchContent_Declare
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 # Build-integrated dependency retrieval for YY-Thunks.
 # FetchContent downloads and extracts the NuGet package during configure.
 include(FetchContent)
@@ -138,10 +143,7 @@ FetchContent_Declare(
   yy_thunks
   URL "https://www.nuget.org/api/v2/package/YY-Thunks/${DP4W_YY_THUNKS_VERSION}"
 )
-FetchContent_GetProperties(yy_thunks)
-if(NOT yy_thunks_POPULATED)
-  FetchContent_Populate(yy_thunks)
-endif()
+FetchContent_MakeAvailable(yy_thunks)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
