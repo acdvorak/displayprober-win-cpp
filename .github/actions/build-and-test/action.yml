@@ -6,6 +6,11 @@ inputs:
     description: Architectures to build (comma separated, e.g. x86,x64)
     required: false
     default: 'x86,x64'
+  build-types:
+    description:
+      Build types/configurations (comma separated, e.g. Debug,Release)
+    required: false
+    default: 'Debug,Release'
   release-tag-input:
     description:
       Release tag value (for release events); leave empty to derive from
@@ -32,10 +37,11 @@ runs:
         RELEASE_TAG_INPUT: ${{ inputs.release-tag-input }}
       run: ./.github/scripts/determine-version-tag.ps1
 
-    - name: Configure and build (Debug and Release)
+    - name: Configure and build
       shell: pwsh
       env:
         ARCHITECTURES: ${{ inputs.architectures }}
+        BUILD_TYPES: ${{ inputs.build-types }}
       run: ./.github/scripts/configure-and-build.ps1
 
     - name: Test

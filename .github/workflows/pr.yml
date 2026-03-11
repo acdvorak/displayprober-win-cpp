@@ -21,6 +21,7 @@ jobs:
         uses: ./.github/actions/build-and-test
         with:
           architectures: 'x86'
+          build-types: 'Debug'
           release-tag-input: ''
           run-tests: 'true'
 
@@ -30,4 +31,5 @@ jobs:
         shell: pwsh
         env:
           ARCHITECTURES: 'x86'
+          BUILD_TYPES: 'Debug'
         run: ./.github/scripts/collect-artifacts-and-zip.ps1
