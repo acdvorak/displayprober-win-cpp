@@ -12,19 +12,19 @@ if (-not (Test-Path $CMakePresetsPath)) {
 
 Push-Location $CppSourceDir
 try {
-  cmake --preset x64-tests
+  cmake --preset Win32-Tests
   if ($LASTEXITCODE -ne 0) {
-    throw "CMake configure failed for preset 'x64-tests' with exit code $LASTEXITCODE."
+    throw "CMake configure failed for preset 'Win32-Tests' with exit code $LASTEXITCODE."
   }
 
-  cmake --build --preset x64-Debug-Tests
+  cmake --build --preset Win32-Debug-Tests
   if ($LASTEXITCODE -ne 0) {
-    throw "CMake build failed for preset 'x64-Debug-Tests' with exit code $LASTEXITCODE."
+    throw "CMake build failed for preset 'Win32-Debug-Tests' with exit code $LASTEXITCODE."
   }
 
-  ctest --preset x64-Debug-Tests
+  ctest --preset Win32-Debug-Tests
   if ($LASTEXITCODE -ne 0) {
-    throw "CTest failed for preset 'x64-Debug-Tests' with exit code $LASTEXITCODE."
+    throw "CTest failed for preset 'Win32-Debug-Tests' with exit code $LASTEXITCODE."
   }
 }
 finally {

@@ -1,0 +1,49 @@
+# Build and test untrusted commits and pull requests with minimal permissions.
+
+name: CI Build
+
+on:
+  push:
+    # Trigger on every commit and branch push.
+    # NOTE: GitHub ties status checks to commit SHA, so it will automatically
+    # skip the `pull_request` trigger if a status check already exists
+    # for the head commit.
+    branches: ['**']
+  pull_request:
+    # This trigger is kept only to handle PRs coming from external forks,
+    # since those do not trigger the `push` event on this repository.
+    branches: ['main']
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    # Run on push events, but only run on PR events if the PR is from a fork.
+    # This prevents duplicate runs when pushing to a branch with an open PR in
+    # the same repo.
+    if:
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+
+      - name: Build and test
+        uses: ./.github/actions/build-and-test
+        with:
+          architectures: 'x86'
+          build-types: 'Debug'
+          release-tag-input: ''
+          run-tests: 'true'
+
+      # This step is not strictly necessary for PRs, but it helps catch
+      # pipeline failures earlier, before an actual release.
+      - name: Collect artifacts and create ZIP bundles
+        shell: pwsh
+        env:
+          ARCHITECTURES: 'x86'
+          BUILD_TYPES: 'Debug'
+        run: ./.github/scripts/collect-artifacts-and-zip.ps1

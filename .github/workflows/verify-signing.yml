@@ -28,6 +28,7 @@ jobs:
         id: meta
         uses: ./.github/actions/build-and-test
         with:
+          build-types: 'Debug'
           release-tag-input: ''
           run-tests: 'true'
 
@@ -37,9 +38,7 @@ jobs:
           name: unsigned-build-output
           path: |
             ${{ github.workspace }}/out/x86/Debug/
-            ${{ github.workspace }}/out/x86/Release/
             ${{ github.workspace }}/out/x64/Debug/
-            ${{ github.workspace }}/out/x64/Release/
           if-no-files-found: error
           retention-days: 1
 
@@ -80,4 +79,6 @@ jobs:
       # pipeline failures earlier, before an actual release.
       - name: Collect artifacts and create ZIP bundles
         shell: pwsh
+        env:
+          BUILD_TYPES: 'Debug'
         run: ./.github/scripts/collect-artifacts-and-zip.ps1

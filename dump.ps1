@@ -44,8 +44,8 @@ function Get-DumpDir {
 
 $DumpDir = Get-DumpDir
 
-& (Resolve-ScriptPath -Path bin/DisplayProber-x64.exe) |
-  Write-Utf8File -Path $DumpDir/DisplayProber-x64-dev.json
+& (Resolve-ScriptPath -Path bin/DisplayProber-x86.exe) |
+  Write-Utf8File -Path $DumpDir/DisplayProber-x86-dev.json
 
 # No output over RDP or SSH. Requires a physical in-person session.
 # Fails in a Windows 7 SP1 guest VM.
