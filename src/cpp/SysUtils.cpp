@@ -61,6 +61,8 @@ bool IsRdpSessionUncached() {
 // to communicate detailed hardware information (such as manufacturer, model,
 // serial numbers, BIOS version, and memory configuration) to operating systems.
 const std::vector<std::string> GetSmBiosStringsUncached() {
+  if (!sys::is_win_vista_or_newer()) return {};
+
   constexpr DWORD kRawSmbiosTableId = 'RSMB';
 
   const UINT size = GetSystemFirmwareTable(kRawSmbiosTableId, 0, nullptr, 0);
@@ -256,6 +258,29 @@ bool IsVirtualMachine() {
 
 bool HasInteractiveDesktop() {
   static const bool cached = HasInteractiveDesktopUncached();
+  return cached;
+}
+
+// Windows Vista (build 6000) or newer.
+//
+// Released January 30, 2007.
+bool is_win_vista_or_newer() {
+  static const bool cached = [] {
+    const auto& osInfo = GetWindowsVersionCached();
+    return osInfo.dwMajorVersion >= 6;
+  }();
+  return cached;
+}
+
+// Windows 7 (build 7600) or newer.
+//
+// Released October 22, 2009.
+bool is_win_7_or_newer() {
+  static const bool cached = [] {
+    const auto& osInfo = GetWindowsVersionCached();
+    return osInfo.dwMajorVersion > 6 ||
+           (osInfo.dwMajorVersion == 6 && osInfo.dwMinorVersion >= 1);
+  }();
   return cached;
 }
 

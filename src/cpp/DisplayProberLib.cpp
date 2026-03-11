@@ -2,7 +2,6 @@
 
 #include <wrl/client.h>
 
-#include <format>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -69,7 +68,7 @@ std::string GetFriendlyName(
 
   if (sys::IsRdpSession()) {
     if (count > 1) {
-      names.push_back(std::format("Remote Desktop #{}", (index + 1)));
+      names.push_back("Remote Desktop #" + std::to_string(index + 1));
     } else {
       names.push_back("Remote Desktop");
     }
@@ -77,7 +76,7 @@ std::string GetFriendlyName(
 
   if (sys::IsVirtualMachine()) {
     if (count > 1) {
-      names.push_back(std::format("Virtual Machine #{}", (index + 1)));
+      names.push_back("Virtual Machine #" + std::to_string(index + 1));
     } else {
       names.push_back("Virtual Machine");
     }
@@ -381,17 +380,21 @@ std::string GetDisplayProberJson() {
   // ═══════════════════════════════════════════════════════════
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
   const std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo> dxgi_output_infos =
-      dxgi::GetDxgiOutputInfos();  // DXGI: CreateDXGIFactory,
-                                   // IDXGIAdapter::EnumOutputs
+      sys::is_win_vista_or_newer()
+          ? dxgi::GetDxgiOutputInfos()  // DXGI: CreateDXGIFactory,
+                                        // IDXGIAdapter::EnumOutputs
+          : std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>{};
 
   // ═══════════════════════════════════════════════════════════
   // Tier 2 — Windows 7+
   // ═══════════════════════════════════════════════════════════
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
   std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig> ccd_display_configs =
-      ccd::GetCcdDisplayConfigs(
-          gdi_adapter_infos);  // User32: QueryDisplayConfig,
-                               // DisplayConfigGetDeviceInfo
+      sys::is_win_7_or_newer()
+          ? ccd::GetCcdDisplayConfigs(
+                gdi_adapter_infos)  // User32: QueryDisplayConfig,
+                                    // DisplayConfigGetDeviceInfo
+          : std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig>{};
 
   // Tier 2b: Enrich CCD data with SetupAPI device info (XP+ API, but depends on
   // CCD device paths)

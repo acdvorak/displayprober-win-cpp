@@ -204,18 +204,18 @@ std::string Base64Encode(const std::vector<std::uint8_t>& bytes) {
   return encoded;
 }
 
-std::string BytesToHexUpper(std::span<const std::uint8_t> bytes) {
-  if (bytes.empty()) {
+std::string BytesToHexUpper(const std::uint8_t* data, std::size_t size) {
+  if (size == 0) {
     return {};
   }
 
   static constexpr char kHexDigits[] = "0123456789ABCDEF";
 
   std::string hex;
-  hex.resize(bytes.size() * 2);
+  hex.resize(size * 2);
 
-  for (std::size_t i = 0; i < bytes.size(); ++i) {
-    const std::uint8_t b = bytes[i];
+  for (std::size_t i = 0; i < size; ++i) {
+    const std::uint8_t b = data[i];
     hex[(i * 2)] = kHexDigits[(b >> 4u) & 0x0fu];
     hex[(i * 2) + 1] = kHexDigits[b & 0x0fu];
   }

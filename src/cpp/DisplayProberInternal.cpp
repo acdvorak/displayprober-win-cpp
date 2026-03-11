@@ -1,7 +1,6 @@
 #include "DisplayProberInternal.h"
 
 #include <cstdint>
-#include <format>
 #include <vector>
 
 #include "StringUtils.h"
@@ -10,11 +9,11 @@ namespace dp::internal {
 
 std::string TryToExtractShortLivedIdentifier(std::string_view input) {
   constexpr std::string_view kPrefix = R"(\\.\)";
-  if (input.starts_with(kPrefix)) {
+  if (StartsWith(input, kPrefix)) {
     input.remove_prefix(kPrefix.size());
   }
 
-  if (input == "WinDisc" || input.starts_with("DISPLAY")) {
+  if (input == "WinDisc" || StartsWith(input, "DISPLAY")) {
     return std::string(input);
   }
 
@@ -40,7 +39,7 @@ std::string TryToExtractEdid7DigitIdentifier(std::string_view input) {
   };
 
   constexpr std::string_view kBackslashPrefix = R"(DISPLAY\)";
-  if (input.starts_with(kBackslashPrefix)) {
+  if (StartsWith(input, kBackslashPrefix)) {
     const std::size_t begin = kBackslashPrefix.size();
     const std::size_t end = input.find('\\', begin);
     if (end != std::string_view::npos) {
@@ -52,7 +51,7 @@ std::string TryToExtractEdid7DigitIdentifier(std::string_view input) {
   }
 
   constexpr std::string_view kHashPrefix = R"(\\?\DISPLAY#)";
-  if (input.starts_with(kHashPrefix)) {
+  if (StartsWith(input, kHashPrefix)) {
     const std::size_t begin = kHashPrefix.size();
     const std::size_t end = input.find('#', begin);
     if (end != std::string_view::npos) {
@@ -77,7 +76,7 @@ std::string BuildPrimaryPortKey(const ccd::CcdDisplayConfig& display) {
 
   auto tp_id = "0x" + IntsToHex(display.target_path_id);
 
-  return std::format("acd_ppk:gpu_id={};tp_id={}", gpu_identity, tp_id);
+  return "acd_ppk:gpu_id=" + gpu_identity + ";tp_id=" + tp_id;
 }
 
 std::string BuildMonitorPathKey(const DevicePath& monitor_device_path) {
@@ -85,7 +84,7 @@ std::string BuildMonitorPathKey(const DevicePath& monitor_device_path) {
     return {};
   }
 
-  return std::format("acd_mpk:mdp={}", monitor_device_path);
+  return "acd_mpk:mdp=" + monitor_device_path;
 }
 
 std::string BuildEdidKey(const std::optional<json::WinEdidInfo>& edid_info) {
@@ -103,7 +102,7 @@ std::string BuildEdidKey(const std::optional<json::WinEdidInfo>& edid_info) {
   auto pid = "0x" + IntsToHex(u16(edid.product_code_id));
   auto sn = "0x" + IntsToHex(u32(edid.serial_number_id));
 
-  return std::format("acd_edid:vid={};pid={};sn={}", vid, pid, sn);
+  return "acd_edid:vid=" + vid + ";pid=" + pid + ";sn=" + sn;
 }
 
 void PopulateStableKeyFields(json::WinDisplay& json_obj) {

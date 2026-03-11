@@ -3,8 +3,13 @@
 CLI that outputs a list of all connected displays (monitors and TV screens) as
 [JSON](./src/ts/schemas/displayprober-win-cpp.schema.json).
 
-- Supports Windows 7 SP1 and newer, both 32-bit and 64-bit.
-- Tested in Windows 7 SP1, Windows 10, and Windows 11.
+- Supports Windows XP and newer, both 32-bit and 64-bit.
+- Tested in:
+  - Windows XP x86 SP3
+  - Windows XP x64 SP2
+  - Windows 7 x64 SP1
+  - Windows 10 x64 22H2
+  - Windows 11 x64 25H2
 
 This tool returns:
 
@@ -167,9 +172,12 @@ DisplayProber.exe
 
 # Windows version support
 
+- Windows XP+:
+  - Monitor/display name
+  - Resolution and working area
+  - Primary vs. extended
+
 - Windows 7 SP1+:
-  - Monitor/display names
-  - Resolution
   - Refresh rate
   - Physical connector type (HDMI/DVI/VGA/etc.)
 
@@ -356,7 +364,8 @@ Primary API surface:
     returned last.
 - `IDXGIAdapter::EnumOutputs()`
 - `IDXGIOutput6::GetDesc1()` (populates `DXGI_OUTPUT_DESC1`)
-  - Windows 10 and newer; on older systems, fall back to `IDXGIOutput::GetDesc()`.
+  - Windows 10 and newer; on older systems, fall back to
+    `IDXGIOutput::GetDesc()`.
   - Returns HDR information.
   - `DXGI_OUTPUT_DESC.DeviceName` matches the GDI `szDevice` (e.g.,
     `\\.\DISPLAY1`), linking DXGI outputs to GDI adapters and CCD sources.
@@ -484,7 +493,9 @@ Microsoft Windows Classic Samples:
 
 ## Prerequisites
 
-- Windows 10 or newer
+To build this project, you need:
+
+- Windows 10 x64 or newer
 - PowerShell v5.1 or newer
 
 Run:
@@ -497,6 +508,7 @@ This will install all necessary dependencies:
 
 - [`winget`](https://aka.ms/winget)
 - [CMake](https://cmake.org/)
+- [NuGet](https://www.nuget.org/)
 - [VS 2022 Build Tools installer](https://learn.microsoft.com/en-us/visualstudio/releases/2022/release-history#fixed-version-bootstrappers)
   - MSVC v143 - VS 2022 C++ x64/86 build tools
   - C++ CMake tools for Windows
@@ -536,3 +548,25 @@ NirSoft utilities, PowerShell scripts), and write their stdout to disk:
 ```ps1
 ./dump.ps1
 ```
+
+## XP support
+
+DP4Win is built with a modern C++ toolchain and runtime: MSVC v143 (VS 2022).
+
+All Windows APIs that are called _directly_ by this project are either supported
+in Windows 2000 and newer, _OR_ are delay-loaded (e.g., via `/DELAYLOAD:mi.dll`
+or `LoadLibraryW`) and gated behind runtime OS version checks. So, at least in
+principle, all code in this repo should be XP-compatible.
+
+However, the CRT (C runtime library) transitively imports/links a few functions
+and DLLs that are _not_ available in Windows XP.
+
+As a result, the DP4Win CLI process can fail before `main()` is even called.
+
+`/DELAYLOAD` linker flags and runtime OS version checks only guard APIs that are
+called _after_ `main()` starts; they cannot fix missing OS features that are
+required by the C runtime itself.
+
+[YY-Thunks](https://github.com/Chuyu-Team/YY-Thunks) provides compatibility
+stubs for those gaps, which lets a single binary run in XP (x86/x64) all the way
+up through modern Windows 11 and newer without downgrading the build toolchain.
