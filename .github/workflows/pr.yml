@@ -3,7 +3,15 @@
 name: PR Build
 
 on:
+  push:
+    # Trigger on every commit and branch push.
+    # NOTE: GitHub ties status checks to commit SHA, so it will automatically
+    # skip the `pull_request` trigger if a status check already exists
+    # for the head commit.
+    branches: ['**']
   pull_request:
+    # This trigger is kept only to handle PRs coming from external forks,
+    # since those do not trigger the `push` event on this repository.
     branches: ['main']
 
 permissions:
@@ -11,6 +19,12 @@ permissions:
 
 jobs:
   build-and-test:
+    # Run on push events, but only run on PR events if the PR is from a fork.
+    # This prevents duplicate runs when pushing to a branch with an open PR in
+    # the same repo.
+    if:
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
