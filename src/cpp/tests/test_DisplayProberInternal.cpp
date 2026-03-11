@@ -45,8 +45,8 @@ TEST_CASE("BuildPrimaryPortKey builds deterministic key") {
 TEST_CASE("BuildEdidKey requires all parts and normalizes VID") {
   json::WinEdidInfo edid{};
   edid.manufacturer_vid = "sam";
-  edid.product_code_id = static_cast<std::uint16_t>(0x23);
-  edid.serial_number_id = static_cast<std::uint32_t>(1);
+  edid.product_code_id = 0x23;
+  edid.serial_number_id = 1;
 
   CHECK(dp::internal::BuildEdidKey(edid) ==
         "acd_edid:vid=SAM;pid=0x0023;sn=0x00000001");

@@ -12,6 +12,8 @@
 #include <string>
 #include <string_view>
 
+#include "CommonTypes.h"
+
 std::string WideToUtf8(const wchar_t* value) {
   if (!value || !*value) {
     return {};
@@ -172,9 +174,8 @@ std::string Base64Encode(const std::vector<std::uint8_t>& bytes) {
 
   const std::size_t fullTripletCount = size / 3;
   for (std::size_t i = 0; i < fullTripletCount; ++i) {
-    const std::uint32_t chunk = (static_cast<std::uint32_t>(src[0]) << 16u) |
-                                (static_cast<std::uint32_t>(src[1]) << 8u) |
-                                static_cast<std::uint32_t>(src[2]);
+    const std::uint32_t chunk =
+        (u32(src[0]) << 16u) | (u32(src[1]) << 8u) | u32(src[2]);
 
     dst[0] = kBase64Table[(chunk >> 18u) & 0x3fu];
     dst[1] = kBase64Table[(chunk >> 12u) & 0x3fu];
@@ -187,14 +188,13 @@ std::string Base64Encode(const std::vector<std::uint8_t>& bytes) {
 
   const std::size_t remaining = size - (fullTripletCount * 3);
   if (remaining == 1) {
-    const std::uint32_t chunk = static_cast<std::uint32_t>(src[0]) << 16u;
+    const std::uint32_t chunk = u32(src[0]) << 16u;
     dst[0] = kBase64Table[(chunk >> 18u) & 0x3fu];
     dst[1] = kBase64Table[(chunk >> 12u) & 0x3fu];
     dst[2] = '=';
     dst[3] = '=';
   } else if (remaining == 2) {
-    const std::uint32_t chunk = (static_cast<std::uint32_t>(src[0]) << 16u) |
-                                (static_cast<std::uint32_t>(src[1]) << 8u);
+    const std::uint32_t chunk = (u32(src[0]) << 16u) | (u32(src[1]) << 8u);
     dst[0] = kBase64Table[(chunk >> 18u) & 0x3fu];
     dst[1] = kBase64Table[(chunk >> 12u) & 0x3fu];
     dst[2] = kBase64Table[(chunk >> 6u) & 0x3fu];

@@ -149,29 +149,29 @@ std::optional<std::uint32_t> GetUint32Property(const MI_Instance* inst,
       return value.uint32;
     case MI_UINT64:
       if (value.uint64 <= (std::numeric_limits<std::uint32_t>::max)()) {
-        return static_cast<std::uint32_t>(value.uint64);
+        return u32(value.uint64);
       }
       return std::nullopt;
     case MI_SINT8:
       if (value.sint8 >= 0) {
-        return static_cast<std::uint32_t>(value.sint8);
+        return u32(value.sint8);
       }
       return std::nullopt;
     case MI_SINT16:
       if (value.sint16 >= 0) {
-        return static_cast<std::uint32_t>(value.sint16);
+        return u32(value.sint16);
       }
       return std::nullopt;
     case MI_SINT32:
       if (value.sint32 >= 0) {
-        return static_cast<std::uint32_t>(value.sint32);
+        return u32(value.sint32);
       }
       return std::nullopt;
     case MI_SINT64:
       if (value.sint64 >= 0 &&
           static_cast<MI_Uint64>(value.sint64) <=
               (std::numeric_limits<std::uint32_t>::max)()) {
-        return static_cast<std::uint32_t>(value.sint64);
+        return u32(value.sint64);
       }
       return std::nullopt;
     default:
@@ -325,13 +325,13 @@ std::optional<std::uint32_t> Uint16ArrayToU32Decimal(const MI_Instance* inst,
     if (!std::isdigit(static_cast<unsigned char>(ch))) {
       return std::nullopt;
     }
-    parsed = parsed * 10ULL + static_cast<std::uint64_t>(ch - '0');
+    parsed = parsed * 10ULL + u64(ch - '0');
     if (parsed > (std::numeric_limits<std::uint32_t>::max)()) {
       return std::nullopt;
     }
   }
 
-  return static_cast<std::uint32_t>(parsed);
+  return u32(parsed);
 }
 
 }  // namespace

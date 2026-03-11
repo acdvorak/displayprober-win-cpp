@@ -131,7 +131,7 @@ json::WinDisplay MergeDisplayDataToJson(
 
   if (const auto pct = gdi_monitor_info.dpi_scale_percent.value_or(0);
       pct > 0) {
-    json_obj.dpi_scaling_percent = static_cast<uint32_t>(pct);
+    json_obj.dpi_scaling_percent = u32(pct);
   }
 
   // Initialize all primitive fields to their default values.
@@ -218,10 +218,8 @@ json::WinDisplay MergeDisplayDataToJson(
 
     if (ccd.hasAdvancedColorInfo) {
       json_obj.standard_color_info.bits_per_channel =
-          // TODO(acdvorak): Rename fields to lower_snake_case.
           static_cast<json::WinBitsPerColorChannel>(ccd.bitsPerColorChannel);
       json_obj.standard_color_info.color_encoding =
-          // TODO(acdvorak): Rename fields to lower_snake_case.
           json_utils::ColorEncodingToJson(ccd.colorEncoding);
 
       // Initialize all primitive fields to their default values.
@@ -315,16 +313,10 @@ json::WinDisplay MergeDisplayDataToJson(
     json_obj.standard_color_info.dxgi_color_space =
         json_utils::DxgiColorSpaceToJson(dxgi.color_space);
 
-    // TODO(acdvorak): Make these values the same type (a uint8_t) and only
-    // convert them to an enum when inserting into JSON.
-    const std::uint8_t json_bpc = static_cast<std::uint8_t>(
-        json_obj.standard_color_info.bits_per_channel.value_or(
-            json::WinBitsPerColorChannel::VALUE_0));
+    const std::uint8_t json_bpc =
+        u8(json_obj.standard_color_info.bits_per_channel);
 
-    // TODO(acdvorak): Make these values the same type (a uint8_t) and only
-    // convert them to an enum when inserting into JSON.
-    const std::uint8_t dxgi_bpc =
-        static_cast<std::uint8_t>(dxgi.bits_per_channel.value_or(0));
+    const std::uint8_t dxgi_bpc = u8(dxgi.bits_per_channel);
 
     if (json_bpc > 0 && json_bpc != dxgi_bpc) {
       std::cerr << "WARNING: DxgiOutputInfo.bits_per_channel=" << dxgi_bpc

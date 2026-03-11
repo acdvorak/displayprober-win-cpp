@@ -51,7 +51,7 @@ inline void AppendRawBytes(std::vector<std::uint8_t>& out, const T& value) {
     UnsignedT normalized = static_cast<UnsignedT>(value);
     for (std::size_t i = sizeof(UnsignedT); i > 0; --i) {
       const std::size_t shift = (i - 1) * 8;
-      out.push_back(static_cast<std::uint8_t>(normalized >> shift));
+      out.push_back(u8(normalized >> shift));
     }
     return;
   }
@@ -62,7 +62,7 @@ inline void AppendRawBytes(std::vector<std::uint8_t>& out, const T& value) {
     UnsignedT normalized = static_cast<UnsignedT>(value);
     for (std::size_t i = sizeof(UnsignedT); i > 0; --i) {
       const std::size_t shift = (i - 1) * 8;
-      out.push_back(static_cast<std::uint8_t>(normalized >> shift));
+      out.push_back(u8(normalized >> shift));
     }
     return;
   }

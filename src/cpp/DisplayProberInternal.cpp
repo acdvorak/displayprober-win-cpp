@@ -100,8 +100,8 @@ std::string BuildEdidKey(const std::optional<json::WinEdidInfo>& edid_info) {
   }
 
   auto vid = ToUpperAscii(*edid.manufacturer_vid);
-  auto pid = "0x" + IntsToHex(static_cast<uint16_t>(*edid.product_code_id));
-  auto sn = "0x" + IntsToHex(static_cast<uint32_t>(*edid.serial_number_id));
+  auto pid = "0x" + IntsToHex(u16(edid.product_code_id));
+  auto sn = "0x" + IntsToHex(u32(edid.serial_number_id));
 
   return std::format("acd_edid:vid={};pid={};sn={}", vid, pid, sn);
 }
