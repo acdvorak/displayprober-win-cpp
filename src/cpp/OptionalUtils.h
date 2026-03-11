@@ -1,3 +1,5 @@
+#pragma once
+
 #include <optional>
 
 template <typename TMap, typename TKey>
