@@ -46,7 +46,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 ################################################################################
-# Install NuGet (currenet user)
+# Install NuGet (current user)
 ################################################################################
 
 winget install -e --id Microsoft.NuGet --scope user
