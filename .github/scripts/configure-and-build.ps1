@@ -1,10 +1,10 @@
 #Requires -Version 7
 
-$InformationPreference = 'Continue'
-
 param(
   [string]$Architectures = $env:ARCHITECTURES
 )
+
+$InformationPreference = 'Continue'
 
 if ([string]::IsNullOrWhiteSpace($Architectures)) {
   $Architectures = 'x86,x64'
