@@ -18,8 +18,6 @@
 #include <optional>
 #include <string>
 
-#include "CcdDisplayConfig.h"
-#include "SetupApiDevice.h"
 #include "StringUtils.h"
 #include "WmiMonitorInternal.h"
 
@@ -451,12 +449,6 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
           has_populated_data = true;
         }
       });
-
-  auto bytes = setupapi::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
-  if (bytes.has_value() && !bytes.value().empty()) {
-    std::string base64 = Base64Encode(bytes.value());
-    info.edid_bytes_base64 = base64;
-  }
 
   if (!has_populated_data) {
     return std::nullopt;

@@ -184,6 +184,13 @@ json::WinDisplay MergeDisplayDataToJson(
           dp::internal::BuildMonitorPathKey(monitor_device_path);
       json_obj.edid_info =
           wmi::GetWinEdidInfoFromDevicePath(monitor_device_path);
+      if (json_obj.edid_info) {
+        auto bytes =
+            setupapi::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
+        if (bytes.has_value() && !bytes->empty()) {
+          json_obj.edid_info->edid_bytes_base64 = Base64Encode(*bytes);
+        }
+      }
       if (const std::string edid_key =
               dp::internal::BuildEdidKey(json_obj.edid_info);
           !edid_key.empty()) {
@@ -348,9 +355,8 @@ static void EnrichWithSetupApiData(ccd::CcdDisplayConfig& config) {
             .value_or("");
   }
   if (config.monitor_device_path.empty()) return;
-  config.monitor_instance_id =
-      setupapi::TryGetMonitorInstanceIdFromMonitorPath(
-          config.monitor_device_path);
+  config.monitor_instance_id = setupapi::TryGetMonitorInstanceIdFromMonitorPath(
+      config.monitor_device_path);
   if (!config.monitor_instance_id.has_value()) return;
   config.monitor_driver_key =
       setupapi::TryGetMonitorDriverKeyFromDeviceInstanceId(
@@ -372,8 +378,8 @@ std::string GetDisplayProberJson() {
       gdi::GetGdiAdapterInfoMap();
 
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
-  std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig>
-      gdi_display_configs = ccd::GetCcdDisplayConfigs(gdi_adapter_infos);
+  std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig> gdi_display_configs =
+      ccd::GetCcdDisplayConfigs(gdi_adapter_infos);
 
   // Enrich CCD data with SetupAPI device info
   for (auto& [id, config] : gdi_display_configs) {
