@@ -10,8 +10,21 @@ if ([string]::IsNullOrWhiteSpace($Architectures)) {
   $Architectures = 'x86,x64'
 }
 
-$archList = $Architectures -split ',' | ForEach-Object { $_.Trim() }
+$archList = $Architectures -split ',' |
+  ForEach-Object { $_.Trim() } |
+  Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
+if (-not $archList -or $archList.Count -eq 0) {
+  throw "No valid architectures specified. Input value: '$Architectures'"
+}
+
+$supportedArchitectures = @('x86', 'x64', 'arm64')
+$invalidArchitectures = $archList | Where-Object { $supportedArchitectures -notcontains $_ }
+if ($invalidArchitectures -and $invalidArchitectures.Count -gt 0) {
+  $invalidList = ($invalidArchitectures | Sort-Object -Unique) -join ', '
+  $supportedList = $supportedArchitectures -join ', '
+  throw "Unsupported architecture(s) specified: $invalidList. Supported architectures are: $supportedList."
+}
 $binRoot = Join-Path $env:GITHUB_WORKSPACE 'bin'
 $debugDir = Join-Path $binRoot 'Debug'
 $releaseDir = Join-Path $binRoot 'Release'
