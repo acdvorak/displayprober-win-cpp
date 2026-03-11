@@ -18,39 +18,6 @@
 
 namespace ccd {
 
-namespace {
-
-std::map<ShortLivedIdentifier, GdiAdapterInfo>
-GetShortLivedIdToAdapterInfoMap() {
-  std::map<ShortLivedIdentifier, GdiAdapterInfo> adapters;
-
-  for (DWORD idx = 0;; ++idx) {
-    DISPLAY_DEVICEW dd = {};
-    dd.cb = sizeof(dd);
-
-    if (!EnumDisplayDevicesW(nullptr, idx, &dd, 0)) {
-      break;
-    }
-
-    if (dd.DeviceName[0] == L'\0' || dd.DeviceString[0] == L'\0') {
-      continue;
-    }
-
-    GdiAdapterInfo info{};
-
-    info.short_lived_identifier = WideToUtf8(dd.DeviceName);
-    info.adapter_friendly_name = WideToUtf8(dd.DeviceString);
-    info.adapter_hardware_id = WideToUtf8(dd.DeviceID);
-    info.adapter_registry_key = WideToUtf8(dd.DeviceKey);
-
-    adapters.emplace(info.short_lived_identifier, info);
-  }
-
-  return adapters;
-}
-
-}  // namespace
-
 static bool IsValidModeIndex(
     UINT32 modeInfoIdx, const std::vector<DISPLAYCONFIG_MODE_INFO>& modes) {
   return modeInfoIdx != DISPLAYCONFIG_PATH_MODE_IDX_INVALID &&
@@ -85,7 +52,8 @@ bool CcdDisplayConfig::IsHdrEnabled() const {
          !advancedColor.advancedColorForceDisabled;
 }
 
-std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs() {
+std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
+    const std::map<ShortLivedIdentifier, GdiAdapterInfo>& adapter_info_map) {
   std::map<ShortLivedIdentifier, CcdDisplayConfig> displayConfigs;
 
   UINT32 num_paths;
@@ -121,8 +89,6 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs() {
   // num_paths and num_modes could decrease in a loop
   paths.resize(num_paths);
   modes.resize(num_modes);
-
-  const auto id_to_adapter_info_map = GetShortLivedIdToAdapterInfoMap();
 
   for (const auto& path : paths) {
     // Send a GET_SOURCE_NAME request
@@ -235,8 +201,8 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs() {
     }
 
     const auto adapter_name_it =
-        id_to_adapter_info_map.find(short_lived_identifier);
-    if (adapter_name_it != id_to_adapter_info_map.end()) {
+        adapter_info_map.find(short_lived_identifier);
+    if (adapter_name_it != adapter_info_map.end()) {
       dc.adapter_info = adapter_name_it->second;
     }
 

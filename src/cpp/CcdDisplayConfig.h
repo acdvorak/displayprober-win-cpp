@@ -17,17 +17,12 @@
 
 #include "CcdPolyfills.h"
 #include "CommonTypes.h"
+#include "GdiMonitorEnum.h"
 #include "gencode/acd-json.hpp"
 
 namespace ccd {
 
-// Basically a UTF-8 version of `DISPLAY_DEVICEW`.
-struct GdiAdapterInfo {
-  ShortLivedIdentifier short_lived_identifier;
-  std::string adapter_friendly_name;
-  std::string adapter_hardware_id;
-  std::string adapter_registry_key;
-};
+using gdi::GdiAdapterInfo;
 
 // Simplified aggregation of values pulled from Windows GDI `DISPLAYCONFIG_*`,
 // DisplayID, and EDID.
@@ -194,6 +189,7 @@ struct CcdDisplayConfig {
 
 bool IsValidRefreshRate(const DISPLAYCONFIG_RATIONAL& rr);
 
-std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs();
+std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
+    const std::map<ShortLivedIdentifier, GdiAdapterInfo>& adapter_info_map);
 
 }  // namespace ccd

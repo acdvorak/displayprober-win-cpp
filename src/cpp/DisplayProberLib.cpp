@@ -346,9 +346,12 @@ std::string GetDisplayProberJson() {
   const std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo>
       basic_monitor_infos = gdi::GetGdiMonitorInfos();
 
+  const std::map<ShortLivedIdentifier, gdi::GdiAdapterInfo>
+      gdi_adapter_infos = gdi::GetGdiAdapterInfoMap();
+
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
   const std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig>
-      gdi_display_configs = ccd::GetCcdDisplayConfigs();
+      gdi_display_configs = ccd::GetCcdDisplayConfigs(gdi_adapter_infos);
 
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
   const std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>

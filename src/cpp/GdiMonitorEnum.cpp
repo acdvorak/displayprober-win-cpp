@@ -99,4 +99,32 @@ std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo> GetGdiMonitorInfos() {
   return gdi_monitor_infos;
 }
 
+std::map<ShortLivedIdentifier, GdiAdapterInfo> GetGdiAdapterInfoMap() {
+  std::map<ShortLivedIdentifier, GdiAdapterInfo> adapters;
+
+  for (DWORD idx = 0;; ++idx) {
+    DISPLAY_DEVICEW dd = {};
+    dd.cb = sizeof(dd);
+
+    if (!EnumDisplayDevicesW(nullptr, idx, &dd, 0)) {
+      break;
+    }
+
+    if (dd.DeviceName[0] == L'\0' || dd.DeviceString[0] == L'\0') {
+      continue;
+    }
+
+    GdiAdapterInfo info{};
+
+    info.short_lived_identifier = WideToUtf8(dd.DeviceName);
+    info.adapter_friendly_name = WideToUtf8(dd.DeviceString);
+    info.adapter_hardware_id = WideToUtf8(dd.DeviceID);
+    info.adapter_registry_key = WideToUtf8(dd.DeviceKey);
+
+    adapters.emplace(info.short_lived_identifier, info);
+  }
+
+  return adapters;
+}
+
 }  // namespace gdi
