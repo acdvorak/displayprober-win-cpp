@@ -368,27 +368,43 @@ static void EnrichWithSetupApiData(ccd::CcdDisplayConfig& config) {
 }
 
 std::string GetDisplayProberJson() {
+  // ═══════════════════════════════════════════════════════════
+  // Tier 0 — Windows XP+ baseline
+  // ═══════════════════════════════════════════════════════════
   // Source of truth for enumeration. This map will always contain at least one
   // value, even over remote SSH console sessions. For compatibility purposes,
   // Windows returns a "fake" virtual display named "WinDisc" over SSH.
   const std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo>
-      basic_monitor_infos = gdi::GetGdiMonitorInfos();
+      basic_monitor_infos =
+          gdi::GetGdiMonitorInfos();  // User32: EnumDisplayMonitors,
+                                      // GetMonitorInfoW
 
   const std::map<ShortLivedIdentifier, gdi::GdiAdapterInfo> gdi_adapter_infos =
-      gdi::GetGdiAdapterInfoMap();
+      gdi::GetGdiAdapterInfoMap();  // User32: EnumDisplayDevicesW
 
+  // ═══════════════════════════════════════════════════════════
+  // Tier 1 — Windows Vista+
+  // ═══════════════════════════════════════════════════════════
+  // Physical displays and RDP only. Will be empty on remote SSH consoles.
+  const std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>
+      dxgi_output_devices =
+          dxgi::GetDxgiOutputInfos();  // DXGI: CreateDXGIFactory,
+                                       // IDXGIAdapter::EnumOutputs
+
+  // ═══════════════════════════════════════════════════════════
+  // Tier 2 — Windows 7+
+  // ═══════════════════════════════════════════════════════════
   // Physical displays and RDP only. Will be empty on remote SSH consoles.
   std::map<ShortLivedIdentifier, ccd::CcdDisplayConfig> gdi_display_configs =
-      ccd::GetCcdDisplayConfigs(gdi_adapter_infos);
+      ccd::GetCcdDisplayConfigs(
+          gdi_adapter_infos);  // User32: QueryDisplayConfig,
+                               // DisplayConfigGetDeviceInfo
 
-  // Enrich CCD data with SetupAPI device info
+  // Tier 2b: Enrich CCD data with SetupAPI device info (XP+ API, but depends on
+  // CCD device paths)
   for (auto& [id, config] : gdi_display_configs) {
     EnrichWithSetupApiData(config);
   }
-
-  // Physical displays and RDP only. Will be empty on remote SSH consoles.
-  const std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>
-      dxgi_output_devices = dxgi::GetDxgiOutputInfos();
 
   std::map<std::uintptr_t, dxgi::DxgiOutputInfo>
       dxgi_output_devices_by_hmonitor;
