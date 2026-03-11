@@ -8,7 +8,6 @@
 #include <initializer_list>
 #include <limits>
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -33,7 +32,7 @@ bool HasValue(std::optional<std::string_view> maybe);
 
 std::string Base64Encode(const std::vector<std::uint8_t>& bytes);
 
-std::string BytesToHexUpper(std::span<const std::uint8_t> bytes);
+std::string BytesToHexUpper(const std::uint8_t* data, std::size_t size);
 
 template <typename T>
 inline constexpr bool kHexByteConcatenable =
@@ -81,7 +80,7 @@ std::string IntsToHex(const T& value) {
   bytes.reserve(sizeof(T));
   AppendRawBytes(bytes, value);
 
-  return BytesToHexUpper(bytes);
+  return BytesToHexUpper(bytes.data(), bytes.size());
 }
 
 template <typename... Ts>
@@ -94,21 +93,25 @@ std::string IntsToHex(const Ts&... values) {
   bytes.reserve((sizeof(Ts) + ... + 0));
   (AppendRawBytes(bytes, values), ...);
 
-  return BytesToHexUpper(bytes);
+  return BytesToHexUpper(bytes.data(), bytes.size());
 }
 
 template <typename T>
-std::string IntsToHex(std::span<const T> values) {
+std::string IntsToHex(const T* data, std::size_t count) {
   static_assert(kHexByteConcatenable<T>,
                 "IntsToHex only accepts integral, enum, or trivially copyable "
                 "types");
 
   std::vector<std::uint8_t> bytes;
-  bytes.reserve(values.size() * sizeof(T));
+  bytes.reserve(count * sizeof(T));
 
-  for (const auto& value : values) {
-    AppendRawBytes(bytes, value);
+  for (std::size_t i = 0; i < count; ++i) {
+    AppendRawBytes(bytes, data[i]);
   }
 
-  return BytesToHexUpper(bytes);
+  return BytesToHexUpper(bytes.data(), bytes.size());
+}
+
+inline bool StartsWith(std::string_view s, std::string_view prefix) {
+  return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
 }

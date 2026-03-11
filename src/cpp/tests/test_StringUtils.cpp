@@ -2,7 +2,6 @@
 
 #include <array>
 #include <cstdint>
-#include <span>
 #include <string>
 #include <vector>
 
@@ -75,12 +74,11 @@ TEST_CASE("Base64Encode encodes known vectors") {
 }
 
 TEST_CASE("BytesToHexUpper and IntsToHex produce uppercase hex") {
-  CHECK(BytesToHexUpper({}) == "");
+  CHECK(BytesToHexUpper(nullptr, 0) == "");
 
   const std::array<std::uint8_t, 4> bytes = {0x00, 0x12, 0xAB, 0xFF};
-  CHECK(BytesToHexUpper(bytes) == "0012ABFF");
-  CHECK(IntsToHex<std::uint8_t>(std::span<const std::uint8_t>(bytes)) ==
-        "0012ABFF");
+  CHECK(BytesToHexUpper(bytes.data(), bytes.size()) == "0012ABFF");
+  CHECK(IntsToHex<std::uint8_t>(bytes.data(), bytes.size()) == "0012ABFF");
 
   CHECK(IntsToHex(std::uint16_t{0x1234}) == "1234");
 }

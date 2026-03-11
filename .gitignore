@@ -12,6 +12,8 @@ cmake-*
 *.dll
 *.pdb
 
+src/cpp/third_party/YY-Thunks*/
+
 # Manually-created shortcuts
 *.lnk
 

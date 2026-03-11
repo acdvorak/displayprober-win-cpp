@@ -26,6 +26,12 @@ bool IsVirtualMachine();
 // of headless sessions.
 bool HasInteractiveDesktop();
 
+// At least: Windows Vista (workstation) or Windows Server 2008.
+bool is_win_vista_or_newer();
+
+// At least: Windows 7 (workstation) or Windows Server 2008 R2.
+bool is_win_7_or_newer();
+
 // At least: Windows 8.1 (workstation) or Windows Server 2012 R2.
 bool is_win_8dot1_or_newer();
 

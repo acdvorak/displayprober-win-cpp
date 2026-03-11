@@ -129,7 +129,18 @@ endif()
 # SOURCE FILES
 ################################################################################
 
-set(CMAKE_CXX_STANDARD 20)
+# Ensure YY-Thunks is downloaded via NuGet before building
+execute_process(
+  COMMAND nuget install YY-Thunks -Version 1.1.9 -OutputDirectory "${CMAKE_CURRENT_SOURCE_DIR}/third_party"
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  RESULT_VARIABLE DP4W_NUGET_RESULT
+)
+
+if(NOT DP4W_NUGET_RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to download YY-Thunks via NuGet")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -149,7 +160,7 @@ add_executable(${PROJECT_NAME}
   WmiMonitorInternal.cpp
   WmiMonitor.cpp
 )
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${PROJECT_NAME} PRIVATE
   dxgi
   mi
@@ -181,8 +192,19 @@ if(MSVC)
 
   target_link_libraries(${PROJECT_NAME} PRIVATE delayimp)
 
+  # YY-Thunks: XP-compatible CRT stubs (must link before CRT libs)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}/third_party/YY-Thunks.1.1.9/build/native/objs/x86/YY_Thunks_for_WinXP.obj")
+    set(DP4W_SUBSYSTEM_VERSION "5.01")
+  else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+      "${CMAKE_CURRENT_SOURCE_DIR}/third_party/YY-Thunks.1.1.9/build/native/objs/x64/YY_Thunks_for_WinXP.obj")
+    set(DP4W_SUBSYSTEM_VERSION "5.02")
+  endif()
+
   set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINK_FLAGS "/DELAYLOAD:api-ms-win-shcore-scaling-l1-1-1.dll /DELAYLOAD:user32.dll /DELAYLOAD:mi.dll /SUBSYSTEM:CONSOLE,6.01 /MANIFEST:EMBED /MANIFESTINPUT:\"${CMAKE_CURRENT_SOURCE_DIR}/DisplayProber.manifest\""
+    LINK_FLAGS "/DELAYLOAD:user32.dll /DELAYLOAD:mi.dll /SUBSYSTEM:CONSOLE,${DP4W_SUBSYSTEM_VERSION} /MANIFEST:EMBED /MANIFESTINPUT:\"${CMAKE_CURRENT_SOURCE_DIR}/DisplayProber.manifest\""
     RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}/Debug"
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${PROJECT_BINARY_DIR}/Release"
     PDB_OUTPUT_DIRECTORY_DEBUG "${PROJECT_BINARY_DIR}/Debug"
@@ -200,7 +222,7 @@ if(BUILD_TESTING)
   add_library(TestStringUtils STATIC
     StringUtils.cpp
   )
-  target_compile_features(TestStringUtils PUBLIC cxx_std_20)
+  target_compile_features(TestStringUtils PUBLIC cxx_std_17)
   target_include_directories(TestStringUtils PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
   )
@@ -214,7 +236,7 @@ if(BUILD_TESTING)
     DisplayProberInternal.cpp
     StringUtils.cpp
   )
-  target_compile_features(TestDisplayProberInternal PUBLIC cxx_std_20)
+  target_compile_features(TestDisplayProberInternal PUBLIC cxx_std_17)
   target_include_directories(TestDisplayProberInternal PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann/json/include
@@ -228,7 +250,7 @@ if(BUILD_TESTING)
   add_library(TestWmiMonitorInternal STATIC
     WmiMonitorInternal.cpp
   )
-  target_compile_features(TestWmiMonitorInternal PUBLIC cxx_std_20)
+  target_compile_features(TestWmiMonitorInternal PUBLIC cxx_std_17)
   target_include_directories(TestWmiMonitorInternal PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
   )
@@ -242,7 +264,7 @@ if(BUILD_TESTING)
     JsonUtils.cpp
     tests/stub_SysUtils.cpp
   )
-  target_compile_features(TestJsonUtils PUBLIC cxx_std_20)
+  target_compile_features(TestJsonUtils PUBLIC cxx_std_17)
   target_include_directories(TestJsonUtils PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann/json/include
