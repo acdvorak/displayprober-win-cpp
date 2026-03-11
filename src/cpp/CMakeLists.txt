@@ -225,15 +225,15 @@ if(BUILD_TESTING)
     )
   endif()
 
-  add_library(TestWmiQueriesInternal STATIC
+  add_library(TestWmiMonitorInternal STATIC
     WmiMonitorInternal.cpp
   )
-  target_compile_features(TestWmiQueriesInternal PUBLIC cxx_std_20)
-  target_include_directories(TestWmiQueriesInternal PUBLIC
+  target_compile_features(TestWmiMonitorInternal PUBLIC cxx_std_20)
+  target_include_directories(TestWmiMonitorInternal PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
   )
   if(MSVC AND STATIC_CRT)
-    set_target_properties(TestWmiQueriesInternal PROPERTIES
+    set_target_properties(TestWmiMonitorInternal PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
   endif()
