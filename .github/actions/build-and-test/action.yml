@@ -32,7 +32,7 @@ runs:
         RELEASE_TAG_INPUT: ${{ inputs.release-tag-input }}
       run: ./.github/scripts/determine-version-tag.ps1
 
-    - name: Configure and build x86/x64 for Debug and Release
+    - name: Configure and build (Debug and Release)
       shell: pwsh
       env:
         ARCHITECTURES: ${{ inputs.architectures }}
