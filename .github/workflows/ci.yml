@@ -1,6 +1,6 @@
-# Build and test untrusted pull requests with minimal permissions.
+# Build and test untrusted commits and pull requests with minimal permissions.
 
-name: PR Build
+name: CI Build
 
 on:
   push:
