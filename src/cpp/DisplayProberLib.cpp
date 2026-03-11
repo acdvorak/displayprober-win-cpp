@@ -219,7 +219,7 @@ json::WinDisplay MergeDisplayDataToJson(
     if (ccd.hasAdvancedColorInfo) {
       json_obj.standard_color_info.bits_per_channel =
           // TODO(acdvorak): Rename fields to lower_snake_case.
-          static_cast<json::WinBitsPerColorChannel>(ccd.bitsPerChannel);
+          static_cast<json::WinBitsPerColorChannel>(ccd.bitsPerColorChannel);
       json_obj.standard_color_info.color_encoding =
           // TODO(acdvorak): Rename fields to lower_snake_case.
           json_utils::ColorEncodingToJson(ccd.colorEncoding);

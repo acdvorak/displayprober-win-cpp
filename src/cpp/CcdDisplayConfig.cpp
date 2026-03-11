@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "CcdPolyfills.h"
+#include "OptionalUtils.h"
 #include "StringUtils.h"
 #include "SysUtils.h"
 
@@ -139,7 +140,7 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
         res = DisplayConfigGetDeviceInfo(&color_info.header);
         if (res == ERROR_SUCCESS) {
           display.colorEncoding = color_info.colorEncoding;
-          display.bitsPerChannel = color_info.bitsPerColorChannel;
+          display.bitsPerColorChannel = color_info.bitsPerColorChannel;
           display.windows1124H2Colors.value = color_info.value;
           display.windows1124H2Colors.activeColorMode =
               color_info.activeColorMode;
@@ -153,7 +154,7 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
         res = DisplayConfigGetDeviceInfo(&color_info.header);
         if (res == ERROR_SUCCESS) {
           display.colorEncoding = color_info.colorEncoding;
-          display.bitsPerChannel = color_info.bitsPerColorChannel;
+          display.bitsPerColorChannel = color_info.bitsPerColorChannel;
           display.advancedColor.value = color_info.value;
           display.hasAdvancedColorInfo = true;
         }
@@ -194,12 +195,8 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
       display.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
     }
 
-    // TODO(acdvorak): Replace all `.end()` iterator finds with
-    // `TryGetOptionalValue()`.
-    const auto adapter_name_it = adapter_info_map.find(short_lived_identifier);
-    if (adapter_name_it != adapter_info_map.end()) {
-      display.adapter_info = adapter_name_it->second;
-    }
+    display.adapter_info =
+        TryGetOptionalValue(adapter_info_map, short_lived_identifier);
   }
 
   return ccd_display_configs;

@@ -96,7 +96,7 @@ struct CcdDisplayConfig {
 
   UINT32 width = 0;
   UINT32 height = 0;
-  UINT32 bitsPerChannel = 0;
+  UINT32 bitsPerColorChannel = 0;
   DISPLAYCONFIG_COLOR_ENCODING colorEncoding;
   DISPLAYCONFIG_RATIONAL refreshRate;
   DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
