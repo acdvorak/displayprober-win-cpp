@@ -10,8 +10,13 @@ if ([string]::IsNullOrWhiteSpace($Architectures)) {
   $Architectures = 'x86,x64'
 }
 
-$archList = $Architectures -split ',' | ForEach-Object { $_.Trim() }
+$archList = $Architectures -split ',' |
+  ForEach-Object { $_.Trim() } |
+  Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
+if (-not ($archList -contains 'x86' -or $archList -contains 'x64')) {
+  throw "No valid architectures were selected. Supported architectures are: x86, x64. Received: '$Architectures'."
+}
 $targets = @()
 if ($archList -contains 'x86') {
   $targets += @{ Arch = 'x86'; CMakeArch = 'Win32' }
