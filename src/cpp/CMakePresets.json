@@ -22,9 +22,9 @@
       "binaryDir": "${sourceDir}/../../out/x64"
     },
     {
-      "name": "x64-tests",
-      "inherits": "x64",
-      "binaryDir": "${sourceDir}/../../out/x64-tests",
+      "name": "Win32-Tests",
+      "inherits": "Win32",
+      "binaryDir": "${sourceDir}/../../out/Win32-Tests",
       "cacheVariables": {
         "BUILD_TESTING": true
       }
@@ -52,15 +52,15 @@
       "configuration": "Release"
     },
     {
-      "name": "x64-Debug-Tests",
-      "configurePreset": "x64-tests",
+      "name": "Win32-Debug-Tests",
+      "configurePreset": "Win32-Tests",
       "configuration": "Debug"
     }
   ],
   "testPresets": [
     {
-      "name": "x64-Debug-Tests",
-      "configurePreset": "x64-tests",
+      "name": "Win32-Debug-Tests",
+      "configurePreset": "Win32-Tests",
       "configuration": "Debug",
       "output": {
         "outputOnFailure": true

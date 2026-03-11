@@ -20,6 +20,7 @@ jobs:
       - name: Build and test
         uses: ./.github/actions/build-and-test
         with:
+          architectures: 'x86'
           release-tag-input: ''
           run-tests: 'true'
 
@@ -27,4 +28,6 @@ jobs:
       # pipeline failures earlier, before an actual release.
       - name: Collect artifacts and create ZIP bundles
         shell: pwsh
+        env:
+          ARCHITECTURES: 'x86'
         run: ./.github/scripts/collect-artifacts-and-zip.ps1

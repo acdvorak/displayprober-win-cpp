@@ -2,6 +2,16 @@
 
 $InformationPreference = 'Continue'
 
+param(
+  [string]$Architectures = $env:ARCHITECTURES
+)
+
+if ([string]::IsNullOrWhiteSpace($Architectures)) {
+  $Architectures = 'x86,x64'
+}
+
+$archList = $Architectures -split ',' | ForEach-Object { $_.Trim() }
+
 $binRoot = Join-Path $env:GITHUB_WORKSPACE 'bin'
 $debugDir = Join-Path $binRoot 'Debug'
 $releaseDir = Join-Path $binRoot 'Release'
@@ -11,7 +21,7 @@ New-Item -ItemType Directory -Path $debugDir -Force | Out-Null
 New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
 New-Item -ItemType Directory -Path $zipRoot -Force | Out-Null
 
-foreach ($arch in @('x86', 'x64')) {
+foreach ($arch in $archList) {
   $buildRoot = Join-Path $env:GITHUB_WORKSPACE "out/$arch"
   $buildDebugDir = Join-Path $buildRoot 'Debug'
   $buildReleaseDir = Join-Path $buildRoot 'Release'

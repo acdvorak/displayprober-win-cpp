@@ -2,6 +2,10 @@ name: Version, Build, and Test
 description: Determines version tag, builds artifacts, and optionally runs tests
 
 inputs:
+  architectures:
+    description: Architectures to build (comma separated, e.g. x86,x64)
+    required: false
+    default: 'x86,x64'
   release-tag-input:
     description:
       Release tag value (for release events); leave empty to derive from
@@ -30,6 +34,8 @@ runs:
 
     - name: Configure and build x86/x64 for Debug and Release
       shell: pwsh
+      env:
+        ARCHITECTURES: ${{ inputs.architectures }}
       run: ./.github/scripts/configure-and-build.ps1
 
     - name: Test

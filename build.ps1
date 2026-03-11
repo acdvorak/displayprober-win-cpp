@@ -18,7 +18,7 @@ if ($Both -and ($x64 -or $x86)) {
 }
 
 if (-not ($x64 -or $x86 -or $Both)) {
-  $x64 = $true
+  $x86 = $true
 }
 
 $Configuration = if ($Release) { 'Release' } else { 'Debug' }

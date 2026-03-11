@@ -2,10 +2,23 @@
 
 $InformationPreference = 'Continue'
 
-$targets = @(
-  @{ Arch = 'x86'; CMakeArch = 'Win32' },
-  @{ Arch = 'x64'; CMakeArch = 'x64' }
+param(
+  [string]$Architectures = $env:ARCHITECTURES
 )
+
+if ([string]::IsNullOrWhiteSpace($Architectures)) {
+  $Architectures = 'x86,x64'
+}
+
+$archList = $Architectures -split ',' | ForEach-Object { $_.Trim() }
+
+$targets = @()
+if ($archList -contains 'x86') {
+  $targets += @{ Arch = 'x86'; CMakeArch = 'Win32' }
+}
+if ($archList -contains 'x64') {
+  $targets += @{ Arch = 'x64'; CMakeArch = 'x64' }
+}
 
 $sourceDir = Join-Path $env:GITHUB_WORKSPACE 'src/cpp'
 

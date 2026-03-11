@@ -15,7 +15,7 @@ import type {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(__dirname, '../../');
-const EXE_PATH = resolve(ROOT_DIR, 'bin/DisplayProber-x64.exe');
+const EXE_PATH = resolve(ROOT_DIR, 'bin/DisplayProber-x86.exe');
 
 type Key =
   | keyof WinDisplayProberJson

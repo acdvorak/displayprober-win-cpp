@@ -27,6 +27,7 @@ jobs:
         id: meta
         uses: ./.github/actions/build-and-test
         with:
+          architectures: 'x86'
           release-tag-input: ${{ github.event.release.tag_name }}
           run-tests: 'true'
 
@@ -37,8 +38,6 @@ jobs:
           path: |
             ${{ github.workspace }}/out/x86/Debug/
             ${{ github.workspace }}/out/x86/Release/
-            ${{ github.workspace }}/out/x64/Debug/
-            ${{ github.workspace }}/out/x64/Release/
           if-no-files-found: error
           retention-days: 1
 
@@ -77,6 +76,8 @@ jobs:
 
       - name: Collect artifacts and create ZIP bundles
         shell: pwsh
+        env:
+          ARCHITECTURES: 'x86'
         run: ./.github/scripts/collect-artifacts-and-zip.ps1
 
       - name: Upload ZIP to GitHub Release
