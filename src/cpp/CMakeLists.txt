@@ -129,15 +129,18 @@ endif()
 # SOURCE FILES
 ################################################################################
 
-# Ensure YY-Thunks is downloaded via NuGet before building
-execute_process(
-  COMMAND nuget install YY-Thunks -Version 1.1.9 -OutputDirectory "${CMAKE_CURRENT_SOURCE_DIR}/third_party"
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  RESULT_VARIABLE DP4W_NUGET_RESULT
-)
+# Build-integrated dependency retrieval for YY-Thunks.
+# FetchContent downloads and extracts the NuGet package during configure.
+include(FetchContent)
 
-if(NOT DP4W_NUGET_RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to download YY-Thunks via NuGet")
+set(DP4W_YY_THUNKS_VERSION "1.1.9")
+FetchContent_Declare(
+  yy_thunks
+  URL "https://www.nuget.org/api/v2/package/YY-Thunks/${DP4W_YY_THUNKS_VERSION}"
+)
+FetchContent_GetProperties(yy_thunks)
+if(NOT yy_thunks_POPULATED)
+  FetchContent_Populate(yy_thunks)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -195,11 +198,11 @@ if(MSVC)
   # YY-Thunks: XP-compatible CRT stubs (must link before CRT libs)
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-      "${CMAKE_CURRENT_SOURCE_DIR}/third_party/YY-Thunks.1.1.9/build/native/objs/x86/YY_Thunks_for_WinXP.obj")
+      "${yy_thunks_SOURCE_DIR}/build/native/objs/x86/YY_Thunks_for_WinXP.obj")
     set(DP4W_SUBSYSTEM_VERSION "5.01")
   else()
     target_link_libraries(${PROJECT_NAME} PRIVATE
-      "${CMAKE_CURRENT_SOURCE_DIR}/third_party/YY-Thunks.1.1.9/build/native/objs/x64/YY_Thunks_for_WinXP.obj")
+      "${yy_thunks_SOURCE_DIR}/build/native/objs/x64/YY_Thunks_for_WinXP.obj")
     set(DP4W_SUBSYSTEM_VERSION "5.02")
   endif()
 
