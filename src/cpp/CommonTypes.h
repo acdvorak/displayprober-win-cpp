@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 using Bytes = std::vector<std::uint8_t>;
@@ -52,13 +54,68 @@ using WmiJoinKey = std::string;
 // `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
 using DevicePath = std::string;
 
-// clang-format off
-constexpr std::uint8_t  u8 (unsigned long long v) { return static_cast<std::uint8_t>(v); }
-constexpr std::int8_t   i8 (long long v)          { return static_cast<std::int8_t>(v); }
-constexpr std::uint16_t u16(unsigned long long v) { return static_cast<std::uint16_t>(v); }
-constexpr std::int16_t  i16(long long v)          { return static_cast<std::int16_t>(v); }
-constexpr std::uint32_t u32(unsigned long long v) { return static_cast<std::uint32_t>(v); }
-constexpr std::int32_t  i32(long long v)          { return static_cast<std::int32_t>(v); }
-constexpr std::uint64_t u64(unsigned long long v) { return static_cast<std::uint64_t>(v); }
-constexpr std::int64_t  i64(long long v)          { return static_cast<std::int64_t>(v); }
-// clang-format on
+constexpr std::uint8_t u8(std::optional<unsigned long long> v) {
+  return static_cast<std::uint8_t>(v.value_or(0));
+}
+constexpr std::int8_t i8(std::optional<long long> v) {
+  return static_cast<std::int8_t>(v.value_or(0));
+}
+constexpr std::uint16_t u16(std::optional<unsigned long long> v) {
+  return static_cast<std::uint16_t>(v.value_or(0));
+}
+constexpr std::int16_t i16(std::optional<long long> v) {
+  return static_cast<std::int16_t>(v.value_or(0));
+}
+constexpr std::uint32_t u32(std::optional<unsigned long long> v) {
+  return static_cast<std::uint32_t>(v.value_or(0));
+}
+constexpr std::int32_t i32(std::optional<long long> v) {
+  return static_cast<std::int32_t>(v.value_or(0));
+}
+constexpr std::uint64_t u64(std::optional<unsigned long long> v) {
+  return static_cast<std::uint64_t>(v.value_or(0));
+}
+constexpr std::int64_t i64(std::optional<long long> v) {
+  return static_cast<std::int64_t>(v.value_or(0));
+}
+
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::uint8_t> u8(
+    std::optional<E> v) {
+  return static_cast<std::uint8_t>(v.value_or(static_cast<E>(0)));
+}
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::int8_t> i8(
+    std::optional<E> v) {
+  return static_cast<std::int8_t>(v.value_or(static_cast<E>(0)));
+}
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::uint16_t> u16(
+    std::optional<E> v) {
+  return static_cast<std::uint16_t>(v.value_or(static_cast<E>(0)));
+}
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::int16_t> i16(
+    std::optional<E> v) {
+  return static_cast<std::int16_t>(v.value_or(static_cast<E>(0)));
+}
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::uint32_t> u32(
+    std::optional<E> v) {
+  return static_cast<std::uint32_t>(v.value_or(static_cast<E>(0)));
+}
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::int32_t> i32(
+    std::optional<E> v) {
+  return static_cast<std::int32_t>(v.value_or(static_cast<E>(0)));
+}
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::uint64_t> u64(
+    std::optional<E> v) {
+  return static_cast<std::uint64_t>(v.value_or(static_cast<E>(0)));
+}
+template <typename E>
+constexpr std::enable_if_t<std::is_enum_v<E>, std::int64_t> i64(
+    std::optional<E> v) {
+  return static_cast<std::int64_t>(v.value_or(static_cast<E>(0)));
+}

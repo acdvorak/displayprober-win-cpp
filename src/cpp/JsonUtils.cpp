@@ -8,7 +8,8 @@
 
 #include <cstdint>
 
-#include "GdiPolyfills.h"
+#include "CcdPolyfills.h"
+#include "CommonTypes.h"
 #include "SysUtils.h"
 #include "gencode/acd-json.hpp"
 
@@ -16,28 +17,28 @@ namespace json_utils {
 
 void PopulateRectangleIfZero(json::WinScreenRectangle& bounds, RECT& rect) {
   if (bounds.x == 0) {
-    bounds.x = static_cast<int32_t>(rect.left);
+    bounds.x = i32(rect.left);
   }
   if (bounds.y == 0) {
-    bounds.y = static_cast<int32_t>(rect.top);
+    bounds.y = i32(rect.top);
   }
   if (bounds.width == 0) {
-    bounds.width = static_cast<uint32_t>(rect.right - rect.left);
+    bounds.width = u32(rect.right - rect.left);
   }
   if (bounds.height == 0) {
-    bounds.height = static_cast<uint32_t>(rect.bottom - rect.top);
+    bounds.height = u32(rect.bottom - rect.top);
   }
   if (bounds.left == 0) {
-    bounds.left = static_cast<int32_t>(rect.left);
+    bounds.left = i32(rect.left);
   }
   if (bounds.top == 0) {
-    bounds.top = static_cast<int32_t>(rect.top);
+    bounds.top = i32(rect.top);
   }
   if (bounds.right == 0) {
-    bounds.right = static_cast<int32_t>(rect.right);
+    bounds.right = i32(rect.right);
   }
   if (bounds.bottom == 0) {
-    bounds.bottom = static_cast<int32_t>(rect.bottom);
+    bounds.bottom = i32(rect.bottom);
   }
 }
 

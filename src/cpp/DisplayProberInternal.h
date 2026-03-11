@@ -7,8 +7,8 @@
 #include <string>
 #include <string_view>
 
+#include "CcdDisplayConfig.h"
 #include "CommonTypes.h"
-#include "GdiDisplayConfig.h"
 #include "gencode/acd-json.hpp"
 
 namespace dp::internal {
@@ -17,7 +17,7 @@ std::string TryToExtractShortLivedIdentifier(std::string_view input);
 
 std::string TryToExtractEdid7DigitIdentifier(std::string_view input);
 
-std::string BuildPrimaryPortKey(const gdi::GdiDisplayConfig& config);
+std::string BuildPrimaryPortKey(const ccd::CcdDisplayConfig& display);
 
 std::string BuildMonitorPathKey(const DevicePath& monitor_device_path);
 

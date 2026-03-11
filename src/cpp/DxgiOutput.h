@@ -19,10 +19,10 @@ namespace dxgi {
 // the Windows Display Driver Model (WDDM), handling hardware interfacing,
 // buffer management, and resource sharing, including screen capturing via the
 // Desktop Duplication API.
-struct DxgiOutputDevice {
+struct DxgiOutputInfo {
   // Windows "monitor device name".
   //
-  // Corresponds to `BasicMonitorInfo.short_lived_identifier`.
+  // Corresponds to `GdiMonitorInfo.short_lived_identifier`.
   //
   // Value comes from `DXGI_OUTPUT_DESC1.DeviceName[32]`,
   // populated by `(ComPtr<IDXGIOutput6> output6)->GetDesc1(&desc)`.
@@ -43,7 +43,7 @@ struct DxgiOutputDevice {
   // Raw `HMONITOR` handle (pointer value) from `DXGI_OUTPUT_DESC1.Monitor`,
   // populated by `(ComPtr<IDXGIOutput6> output6)->GetDesc1(&desc)`.
   //
-  // Corresponds to `BasicMonitorInfo.process_local_monitor_handle_ptr`.
+  // Corresponds to `GdiMonitorInfo.process_local_monitor_handle_ptr`.
   //
   // Value is process-local and NOT stable across topology changes
   // (device connects/disconnects).
@@ -102,6 +102,6 @@ struct DxgiOutputDevice {
   std::optional<FLOAT> max_full_frame_luminance_nits;
 };
 
-std::map<ShortLivedIdentifier, DxgiOutputDevice> GetDxgiOutputDevices();
+std::map<ShortLivedIdentifier, DxgiOutputInfo> GetDxgiOutputInfos();
 
 }  // namespace dxgi

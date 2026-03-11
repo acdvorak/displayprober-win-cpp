@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 
-#include "WmiQueriesInternal.h"
+#include "WmiMonitorInternal.h"
 
 TEST_CASE("NormalizeJoinKeyFromDevicePath handles valid and invalid values") {
   CHECK(

@@ -3,7 +3,7 @@
 // Enumerates "display monitors" in the Windows desktop/virtual-screen
 // coordinate space, including pseudo-monitors (e.g. mirroring drivers).
 
-#include "BasicMonitorInfo.h"
+#include "GdiMonitorEnum.h"
 
 #include <windows.h>
 
@@ -36,8 +36,7 @@ GetDpiForMonitorFn ResolveGetDpiForMonitor() {
   return cached;
 }
 
-static std::map<ShortLivedIdentifier, basic::BasicMonitorInfo>
-    basic_monitor_infos;
+static std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo> gdi_monitor_infos;
 
 // To continue the enumeration, return TRUE.
 // To stop the enumeration, return FALSE.
@@ -58,36 +57,36 @@ BOOL CALLBACK EnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM) {
     return TRUE;  // Continue enumerating other monitors
   }
 
-  ShortLivedIdentifier monitorNameUtf8 = WideToUtf8(monitorInfoEx.szDevice);
+  ShortLivedIdentifier short_lived_identifier =
+      WideToUtf8(monitorInfoEx.szDevice);
 
-  basic::BasicMonitorInfo& monitor = basic_monitor_infos[monitorNameUtf8];
-  monitor.short_lived_identifier = monitorNameUtf8;
-  monitor.process_local_monitor_handle_ptr =
+  gdi::GdiMonitorInfo& gdi = gdi_monitor_infos[short_lived_identifier];
+  gdi.short_lived_identifier = short_lived_identifier;
+  gdi.process_local_monitor_handle_ptr =
       reinterpret_cast<std::uintptr_t>(hMonitor);
 
-  monitor.is_primary = ((monitorInfoEx.dwFlags & MONITORINFOF_PRIMARY) != 0);
+  gdi.is_primary = ((monitorInfoEx.dwFlags & MONITORINFOF_PRIMARY) != 0);
 
   if (const auto get_dpi_for_monitor = ResolveGetDpiForMonitor()) {
     UINT dpiX, dpiY;
     if (S_OK ==
         get_dpi_for_monitor(hMonitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY)) {
-      monitor.dpi_scale_percent = std::lround(dpiY * 100. / 96.);
+      gdi.dpi_scale_percent = std::lround(dpiY * 100. / 96.);
     }
   }
 
-  json_utils::PopulateRectangleIfZero(monitor.bounds, monitorInfoEx.rcMonitor);
-  json_utils::PopulateRectangleIfZero(monitor.working_area,
-                                      monitorInfoEx.rcWork);
+  json_utils::PopulateRectangleIfZero(gdi.bounds, monitorInfoEx.rcMonitor);
+  json_utils::PopulateRectangleIfZero(gdi.working_area, monitorInfoEx.rcWork);
 
   return TRUE;  // Continue enumerating other monitors
 }
 
 }  // namespace
 
-namespace basic {
+namespace gdi {
 
-std::map<ShortLivedIdentifier, basic::BasicMonitorInfo> GetBasicMonitorInfos() {
-  basic_monitor_infos.clear();
+std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo> GetGdiMonitorInfos() {
+  gdi_monitor_infos.clear();
 
   if (sys::is_win_10_v16070_or_newer()) {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -97,7 +96,35 @@ std::map<ShortLivedIdentifier, basic::BasicMonitorInfo> GetBasicMonitorInfos() {
 
   EnumDisplayMonitors(nullptr, nullptr, EnumProc, 0);
 
-  return basic_monitor_infos;
+  return gdi_monitor_infos;
 }
 
-}  // namespace basic
+std::map<ShortLivedIdentifier, GdiAdapterInfo> GetGdiAdapterInfoMap() {
+  std::map<ShortLivedIdentifier, GdiAdapterInfo> gdi_adapter_infos;
+
+  for (DWORD idx = 0;; ++idx) {
+    DISPLAY_DEVICEW device = {};
+    device.cb = sizeof(device);
+
+    if (!EnumDisplayDevicesW(nullptr, idx, &device, 0)) {
+      break;
+    }
+
+    if (device.DeviceName[0] == L'\0' || device.DeviceString[0] == L'\0') {
+      continue;
+    }
+
+    GdiAdapterInfo gdi{};
+
+    gdi.short_lived_identifier = WideToUtf8(device.DeviceName);
+    gdi.adapter_friendly_name = WideToUtf8(device.DeviceString);
+    gdi.adapter_hardware_id = WideToUtf8(device.DeviceID);
+    gdi.adapter_registry_key = WideToUtf8(device.DeviceKey);
+
+    gdi_adapter_infos.emplace(gdi.short_lived_identifier, gdi);
+  }
+
+  return gdi_adapter_infos;
+}
+
+}  // namespace gdi

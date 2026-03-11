@@ -2,7 +2,7 @@
 //
 // Provides advanced color and luminance characteristics.
 
-#include "DxgiOutputDevice.h"
+#include "DxgiOutput.h"
 
 #include <dxgi.h>
 #include <dxgi1_6.h>
@@ -19,9 +19,9 @@ using Microsoft::WRL::ComPtr;
 
 namespace {
 
-void AppendDxgiOutputDevices(
+void AppendDxgiOutputInfos(
     ComPtr<IDXGIAdapter> pIDXGIAdapter,
-    std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice>& devices) {
+    std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo>& dxgi_output_infos) {
   ComPtr<IDXGIOutput> pIDXGIOutput;
 
   for (UINT output = 0;; ++output) {
@@ -46,10 +46,10 @@ void AppendDxgiOutputDevices(
       continue;
     }
 
-    ShortLivedIdentifier deviceNameUtf8 = WideToUtf8(desc0.DeviceName);
-    dxgi::DxgiOutputDevice& device = devices[deviceNameUtf8];
+    ShortLivedIdentifier short_lived_identifier = WideToUtf8(desc0.DeviceName);
+    dxgi::DxgiOutputInfo& dxgi = dxgi_output_infos[short_lived_identifier];
 
-    device.short_lived_identifier = deviceNameUtf8;
+    dxgi.short_lived_identifier = short_lived_identifier;
 
     // This value MIGHT be `false` under the following conditions:
     //
@@ -63,13 +63,13 @@ void AppendDxgiOutputDevices(
     //   - Example: you have 2 monitors connected, but Windows is set to
     //     "Show only on 1" (or you've "Disconnect this display" for the other).
     //     That other output can still exist, but it is not attached, so false.
-    device.is_attached_to_desktop = desc0.AttachedToDesktop;
+    dxgi.is_attached_to_desktop = desc0.AttachedToDesktop;
 
-    device.process_local_monitor_handle_ptr =
+    dxgi.process_local_monitor_handle_ptr =
         reinterpret_cast<std::uintptr_t>(desc0.Monitor);
 
-    device.desktop_coordinates = desc0.DesktopCoordinates;
-    device.rotation_type = desc0.Rotation;
+    dxgi.desktop_coordinates = desc0.DesktopCoordinates;
+    dxgi.rotation_type = desc0.Rotation;
 
     // Represents an adapter output (such as a monitor).
     // The `IDXGIOutput6` interface exposes methods to provide specific
@@ -93,14 +93,14 @@ void AppendDxgiOutputDevices(
       continue;
     }
 
-    device.color_space = desc1.ColorSpace;
-    device.bits_per_channel = desc1.BitsPerColor;
+    dxgi.color_space = desc1.ColorSpace;
+    dxgi.bits_per_channel = desc1.BitsPerColor;
 
     if (desc1.MinLuminance > 0 || desc1.MaxLuminance > 0 ||
         desc1.MaxFullFrameLuminance > 0) {
-      device.min_luminance_nits = desc1.MinLuminance;
-      device.max_luminance_nits = desc1.MaxLuminance;
-      device.max_full_frame_luminance_nits = desc1.MaxFullFrameLuminance;
+      dxgi.min_luminance_nits = desc1.MinLuminance;
+      dxgi.max_luminance_nits = desc1.MaxLuminance;
+      dxgi.max_full_frame_luminance_nits = desc1.MaxFullFrameLuminance;
     }
   }
 }
@@ -109,13 +109,13 @@ void AppendDxgiOutputDevices(
 
 namespace dxgi {
 
-std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice> GetDxgiOutputDevices() {
-  std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice> devices;
+std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo> GetDxgiOutputInfos() {
+  std::map<ShortLivedIdentifier, dxgi::DxgiOutputInfo> dxgi_output_infos;
 
   // DXGI APIs will crash or hang if we try to call them in a non-interactive
   // session.
   if (!sys::HasInteractiveDesktop()) {
-    return devices;
+    return dxgi_output_infos;
   }
 
   ComPtr<IDXGIFactory> pIDXGIFactory;
@@ -125,7 +125,7 @@ std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice> GetDxgiOutputDevices() {
       SUCCEEDED(CreateDXGIFactory(__uuidof(IDXGIFactory), ppFactory));
 
   if (!isFactoryCreated || !pIDXGIFactory) {
-    return devices;
+    return dxgi_output_infos;
   }
 
   ComPtr<IDXGIAdapter> pIDXGIAdapter;
@@ -142,10 +142,10 @@ std::map<ShortLivedIdentifier, dxgi::DxgiOutputDevice> GetDxgiOutputDevices() {
       continue;
     }
 
-    AppendDxgiOutputDevices(pIDXGIAdapter, devices);
+    AppendDxgiOutputInfos(pIDXGIAdapter, dxgi_output_infos);
   }
 
-  return devices;
+  return dxgi_output_infos;
 }
 
 }  // namespace dxgi

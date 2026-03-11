@@ -15,19 +15,14 @@
 #include <optional>
 #include <string>
 
+#include "CcdPolyfills.h"
 #include "CommonTypes.h"
-#include "GdiPolyfills.h"
+#include "GdiMonitorEnum.h"
 #include "gencode/acd-json.hpp"
 
-namespace gdi {
+namespace ccd {
 
-// Basically a UTF-8 version of `DISPLAY_DEVICEW`.
-struct GdiAdapterInfo {
-  ShortLivedIdentifier short_lived_identifier;
-  std::string adapter_friendly_name;
-  std::string adapter_hardware_id;
-  std::string adapter_registry_key;
-};
+using gdi::GdiAdapterInfo;
 
 // Simplified aggregation of values pulled from Windows GDI `DISPLAYCONFIG_*`,
 // DisplayID, and EDID.
@@ -61,10 +56,10 @@ struct GdiAdapterInfo {
 // - `wideColorSupported`
 // - `wideColorUserEnabled`
 //
-// The `GdiDisplayConfig` struct also has convenience methods
+// The `CcdDisplayConfig` struct also has convenience methods
 // `IsHdrSupported()` and `IsHdrEnabled()` that interrogate the properties of
 // `advancedColor`.
-struct GdiDisplayConfig {
+struct CcdDisplayConfig {
   union {
     struct {
       /** A type of advanced color is supported */
@@ -101,7 +96,7 @@ struct GdiDisplayConfig {
 
   UINT32 width = 0;
   UINT32 height = 0;
-  UINT32 bitsPerChannel = 0;
+  UINT32 bitsPerColorChannel = 0;
   DISPLAYCONFIG_COLOR_ENCODING colorEncoding;
   DISPLAYCONFIG_RATIONAL refreshRate;
   DISPLAYCONFIG_SCANLINE_ORDERING scanLineOrdering;
@@ -148,7 +143,7 @@ struct GdiDisplayConfig {
   // Example:
   //
   // `"PCI\\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\\4&2A5F5B12&0&0008"`
-  std::string adapter_instance_id;
+  std::optional<std::string> adapter_instance_id;
 
   std::optional<GdiAdapterInfo> adapter_info;
 
@@ -194,6 +189,7 @@ struct GdiDisplayConfig {
 
 bool IsValidRefreshRate(const DISPLAYCONFIG_RATIONAL& rr);
 
-std::map<ShortLivedIdentifier, GdiDisplayConfig> GetGdiDisplayConfigs();
+std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
+    const std::map<ShortLivedIdentifier, GdiAdapterInfo>& adapter_info_map);
 
-}  // namespace gdi
+}  // namespace ccd

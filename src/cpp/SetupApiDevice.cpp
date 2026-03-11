@@ -1,4 +1,4 @@
-#include "PnPSetupAPI.h"
+#include "SetupApiDevice.h"
 
 // This header needs to be imported first.
 #include <Windows.h>
@@ -139,7 +139,7 @@ std::optional<std::string> TryGetInstanceIdFromDevicePath(
 
 }  // namespace
 
-namespace pnp {
+namespace setupapi {
 
 std::optional<Bytes> GetEdidBytesFromMonitorDevicePath(
     std::string_view monitor_device_path) {
@@ -249,8 +249,8 @@ std::optional<std::string> TryGetMonitorDriverKeyFromDeviceInstanceId(
 
   // First call to get the required buffer size for SPDRP_DRIVER.
   if (!SetupDiGetDeviceRegistryPropertyW(dev_info.get(), &dev_info_data,
-                                         SPDRP_DRIVER, &property_type,
-                                         nullptr, 0, &required_size)) {
+                                         SPDRP_DRIVER, &property_type, nullptr,
+                                         0, &required_size)) {
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER || required_size == 0) {
       return std::nullopt;
     }
@@ -268,9 +268,8 @@ std::optional<std::string> TryGetMonitorDriverKeyFromDeviceInstanceId(
     return std::nullopt;
   }
 
-  const WCHAR* driver_property =
-      reinterpret_cast<const WCHAR*>(buffer.data());
+  const WCHAR* driver_property = reinterpret_cast<const WCHAR*>(buffer.data());
   return WideToUtf8(driver_property);
 }
 
-}  // namespace pnp
+}  // namespace setupapi

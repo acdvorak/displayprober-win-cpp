@@ -1,4 +1,4 @@
-#include "WmiQueriesInternal.h"
+#include "WmiMonitorInternal.h"
 
 #include <cctype>
 

@@ -6,7 +6,7 @@
 
 #include "CommonTypes.h"
 
-namespace pnp {
+namespace setupapi {
 
 std::optional<Bytes> GetEdidBytesFromMonitorDevicePath(
     std::string_view monitor_device_path);
@@ -20,4 +20,4 @@ std::optional<std::string> TryGetMonitorInstanceIdFromMonitorPath(
 std::optional<std::string> TryGetMonitorDriverKeyFromDeviceInstanceId(
     const std::string& device_instance_id);
 
-}  // namespace pnp
+}  // namespace setupapi

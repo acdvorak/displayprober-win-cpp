@@ -8,7 +8,7 @@
 #include "CommonTypes.h"
 #include "gencode/acd-json.hpp"
 
-namespace basic {
+namespace gdi {
 
 // This is the simplest, most basic, most well-supported monitor information
 // object available in Windows. The underlying APIs are old - they've been
@@ -21,7 +21,7 @@ namespace basic {
 //
 // Populated by `EnumDisplayMonitors()` and `GetMonitorInfoW()` from
 // `WinUser.h`.
-struct BasicMonitorInfo {
+struct GdiMonitorInfo {
   // Windows "monitor device name" from `MONITORINFOEX.szDevice`, populated by
   // `GetMonitorInfoW()`.
   //
@@ -90,8 +90,19 @@ struct BasicMonitorInfo {
   json::WinScreenRectangle working_area;
 };
 
+// Basically a UTF-8 version of `DISPLAY_DEVICEW`.
+struct GdiAdapterInfo {
+  ShortLivedIdentifier short_lived_identifier;
+  std::string adapter_friendly_name;
+  std::string adapter_hardware_id;
+  std::string adapter_registry_key;
+};
+
 // Gets all Windows display monitors, including invisible pseudo-monitors
 // associated with the mirroring drivers.
-std::map<ShortLivedIdentifier, basic::BasicMonitorInfo> GetBasicMonitorInfos();
+std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo> GetGdiMonitorInfos();
 
-}  // namespace basic
+// Enumerates display adapter (GPU) info via `EnumDisplayDevicesW()`.
+std::map<ShortLivedIdentifier, GdiAdapterInfo> GetGdiAdapterInfoMap();
+
+}  // namespace gdi
