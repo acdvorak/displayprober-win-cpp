@@ -27,32 +27,32 @@ TEST_CASE("TryToExtractEdid7DigitIdentifier extracts valid IDs") {
 }
 
 TEST_CASE("BuildPrimaryPortKey builds deterministic key") {
-  ccd::CcdDisplayConfig config{};
-  config.adapter_instance_id =
+  ccd::CcdDisplayConfig ccd{};
+  ccd.adapter_instance_id =
       R"(PCI\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\4&2A5F5B12&0&0008)";
-  config.target_path_id = 42;
+  ccd.target_path_id = 42;
 
-  CHECK(dp::internal::BuildPrimaryPortKey(config) ==
+  CHECK(dp::internal::BuildPrimaryPortKey(ccd) ==
         R"(acd_ppk:gpu_id=PCI\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\4&)"
         "2A5F5B12&0&0008;tp_id=0x0000002A");
 
-  config.adapter_instance_id.clear();
-  config.adapter_device_path = R"(\\?\pci#ven_10de#device-path)";
-  CHECK(dp::internal::BuildPrimaryPortKey(config) ==
+  ccd.adapter_instance_id.reset();
+  ccd.adapter_device_path = R"(\\?\pci#ven_10de#device-path)";
+  CHECK(dp::internal::BuildPrimaryPortKey(ccd) ==
         R"(acd_ppk:gpu_id=\\?\pci#ven_10de#device-path;tp_id=0x0000002A)");
 }
 
 TEST_CASE("BuildEdidKey requires all parts and normalizes VID") {
-  json::WinEdidInfo info{};
-  info.manufacturer_vid = "sam";
-  info.product_code_id = static_cast<std::uint16_t>(0x23);
-  info.serial_number_id = static_cast<std::uint32_t>(1);
+  json::WinEdidInfo edid{};
+  edid.manufacturer_vid = "sam";
+  edid.product_code_id = static_cast<std::uint16_t>(0x23);
+  edid.serial_number_id = static_cast<std::uint32_t>(1);
 
-  CHECK(dp::internal::BuildEdidKey(info) ==
+  CHECK(dp::internal::BuildEdidKey(edid) ==
         "acd_edid:vid=SAM;pid=0x0023;sn=0x00000001");
 
-  info.serial_number_id = std::nullopt;
-  CHECK(dp::internal::BuildEdidKey(info).empty());
+  edid.serial_number_id = std::nullopt;
+  CHECK(dp::internal::BuildEdidKey(edid).empty());
 }
 
 TEST_CASE("PopulateStableKeyFields applies priority and dedupes") {

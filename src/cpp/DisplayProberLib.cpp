@@ -36,25 +36,25 @@ std::string GetFriendlyName(
   std::vector<std::string> backups;
 
   if (ccd_display_config) {
-    auto& dc = *ccd_display_config;
+    auto& ccd = *ccd_display_config;
 
     // Example values:
     //
     // - `"DELL ST2320L"`
     // - `"QCQ95S"` (Samsung S95C TV)
     // - `"SAMSUNG"` (some devices don't give us an actual model number)
-    names.push_back(dc.display_friendly_name);
+    names.push_back(ccd.display_friendly_name);
 
     // Example values:
     //
     // - `"SAM73A5"` (Samsung S95C TV)
     // - `"DELF023"` (Dell ST2320L monitor)
-    backups.push_back(
-        dp::internal::TryToExtractEdid7DigitIdentifier(dc.monitor_device_path));
+    backups.push_back(dp::internal::TryToExtractEdid7DigitIdentifier(
+        ccd.monitor_device_path));
   }
 
   if (dxgi_output_info) {
-    auto& dev = *dxgi_output_info;
+    auto& dxgi = *dxgi_output_info;
 
     // Example values:
     //
@@ -64,7 +64,7 @@ std::string GetFriendlyName(
     // - `"DISPLAY"` (single monitor)
     // - `"WinDisc"` (non-interactive remote SSH console session)
     backups.push_back(dp::internal::TryToExtractShortLivedIdentifier(
-        dev.short_lived_identifier));
+        dxgi.short_lived_identifier));
   }
 
   if (sys::IsRdpSession()) {
@@ -138,37 +138,37 @@ json::WinDisplay MergeDisplayDataToJson(
   json_obj.standard_color_info = {};
 
   if (ccd_display_config) {
-    const auto& gdi = *ccd_display_config;
+    const auto& ccd = *ccd_display_config;
 
-    if (HasValue(gdi.adapter_instance_id)) {
-      json_obj.adapter_instance_id = gdi.adapter_instance_id;
+    if (HasValue(ccd.adapter_instance_id)) {
+      json_obj.adapter_instance_id = ccd.adapter_instance_id;
     }
 
-    if (HasValue(gdi.adapter_device_path)) {
-      json_obj.adapter_device_path = *gdi.adapter_device_path;
+    if (HasValue(ccd.adapter_device_path)) {
+      json_obj.adapter_device_path = *ccd.adapter_device_path;
     }
 
-    if (gdi.adapter_info.has_value()) {
-      const auto& info = *gdi.adapter_info;
+    if (ccd.adapter_info.has_value()) {
+      const auto& info = *ccd.adapter_info;
       json_obj.adapter_friendly_name = info.adapter_friendly_name;
       json_obj.adapter_hardware_id = info.adapter_hardware_id;
       json_obj.adapter_registry_key = info.adapter_registry_key;
     }
 
-    json_obj.target_path_id = gdi.target_path_id;
+    json_obj.target_path_id = ccd.target_path_id;
 
     if (const std::string primary_port_key =
-            dp::internal::BuildPrimaryPortKey(gdi);
+            dp::internal::BuildPrimaryPortKey(ccd);
         !primary_port_key.empty()) {
       json_obj.primary_port_key = primary_port_key;
     }
 
-    json_obj.monitor_instance_id = gdi.monitor_instance_id;
-    json_obj.monitor_driver_key = gdi.monitor_driver_key;
-    json_obj.monitor_registry_key = gdi.monitor_registry_key;
+    json_obj.monitor_instance_id = ccd.monitor_instance_id;
+    json_obj.monitor_driver_key = ccd.monitor_driver_key;
+    json_obj.monitor_registry_key = ccd.monitor_registry_key;
 
     // ✅ SECONDARY STABLE ID INPUT
-    DevicePath monitor_device_path = gdi.monitor_device_path;
+    DevicePath monitor_device_path = ccd.monitor_device_path;
 
     if (!monitor_device_path.empty()) {
       json_obj.monitor_device_path = monitor_device_path;
@@ -193,41 +193,41 @@ json::WinDisplay MergeDisplayDataToJson(
     }
 
     json_obj.scan_line_ordering =
-        json_utils::ScanLineOrderingToJson(gdi.scanLineOrdering);
+        json_utils::ScanLineOrderingToJson(ccd.scanLineOrdering);
 
-    json_obj.standard_color_info.is_hdr_supported = gdi.IsHdrSupported();
-    json_obj.standard_color_info.is_hdr_enabled = gdi.IsHdrEnabled();
+    json_obj.standard_color_info.is_hdr_supported = ccd.IsHdrSupported();
+    json_obj.standard_color_info.is_hdr_enabled = ccd.IsHdrEnabled();
 
-    if (json_obj.bounds.width != gdi.width ||
-        json_obj.bounds.height != gdi.height) {
+    if (json_obj.bounds.width != ccd.width ||
+        json_obj.bounds.height != ccd.height) {
       std::cerr << "WARNING: GdiMonitorInfo.bounds size does NOT match "
                    "CcdDisplayConfig size!"
                 << std::endl;
     }
 
-    if (ccd::IsValidRefreshRate(gdi.refreshRate)) {
+    if (ccd::IsValidRefreshRate(ccd.refreshRate)) {
       json_obj.refresh_rate_hz =
-          static_cast<double>(gdi.refreshRate.Numerator) /
-          static_cast<double>(gdi.refreshRate.Denominator);
-      json_obj.refresh_rate_numerator = gdi.refreshRate.Numerator;
-      json_obj.refresh_rate_denominator = gdi.refreshRate.Denominator;
+          static_cast<double>(ccd.refreshRate.Numerator) /
+          static_cast<double>(ccd.refreshRate.Denominator);
+      json_obj.refresh_rate_numerator = ccd.refreshRate.Numerator;
+      json_obj.refresh_rate_denominator = ccd.refreshRate.Denominator;
     }
 
     json_obj.physical_connector_type =
-        json_utils::OutputTechnologyToJson(gdi.outputTechnology);
+        json_utils::OutputTechnologyToJson(ccd.outputTechnology);
 
-    if (gdi.hasAdvancedColorInfo) {
+    if (ccd.hasAdvancedColorInfo) {
       json_obj.standard_color_info.bits_per_channel =
           // TODO(acdvorak): Rename fields to lower_snake_case.
-          static_cast<json::WinBitsPerColorChannel>(gdi.bitsPerChannel);
+          static_cast<json::WinBitsPerColorChannel>(ccd.bitsPerChannel);
       json_obj.standard_color_info.color_encoding =
           // TODO(acdvorak): Rename fields to lower_snake_case.
-          json_utils::ColorEncodingToJson(gdi.colorEncoding);
+          json_utils::ColorEncodingToJson(ccd.colorEncoding);
 
       // Initialize all primitive fields to their default values.
       json::WinAdvancedColorInfo advancedColorInfo{};
       if (sys::is_win_11_v24H2_or_newer()) {
-        auto& colors = gdi.windows1124H2Colors;
+        auto& colors = ccd.windows1124H2Colors;
         advancedColorInfo.is_advanced_color_supported =
             colors.advancedColorSupported != 0;
         advancedColorInfo.is_advanced_color_enabled =
@@ -251,7 +251,7 @@ json::WinDisplay MergeDisplayDataToJson(
         advancedColorInfo.active_color_mode =
             json_utils::ActiveColorModeToJson(colors.activeColorMode);
       } else {
-        auto& colors = gdi.advancedColor;
+        auto& colors = ccd.advancedColor;
         advancedColorInfo.is_advanced_color_supported =
             colors.advancedColorSupported != 0;
         advancedColorInfo.is_advanced_color_enabled =
@@ -265,9 +265,9 @@ json::WinDisplay MergeDisplayDataToJson(
         advancedColorInfo.is_advanced_color_limited_by_policy =
             colors.advancedColorForceDisabled != 0;
         advancedColorInfo.is_high_dynamic_range_supported =
-            gdi.IsHdrSupported();
+            ccd.IsHdrSupported();
         advancedColorInfo.is_high_dynamic_range_user_enabled =
-            gdi.IsHdrEnabled();
+            ccd.IsHdrEnabled();
         advancedColorInfo.is_wide_color_supported =
             colors.wideColorEnforced != 0;
         advancedColorInfo.is_wide_color_user_enabled =
@@ -279,7 +279,7 @@ json::WinDisplay MergeDisplayDataToJson(
   }
 
   if (dxgi_output_info) {
-    auto& device = *dxgi_output_info;
+    auto& dxgi = *dxgi_output_info;
 
     // This value MIGHT be `false` under the following conditions:
     //
@@ -293,28 +293,27 @@ json::WinDisplay MergeDisplayDataToJson(
     //   - Example: you have 2 monitors connected, but Windows is set to
     //     "Show only on 1" (or you've "Disconnect this display" for the other).
     //     That other output can still exist, but it is not attached, so false.
-    if (!device.is_attached_to_desktop) {
-      std::cerr << "WARNING: DXGI device \"" << device.short_lived_identifier
+    if (!dxgi.is_attached_to_desktop) {
+      std::cerr << "WARNING: DXGI device \"" << dxgi.short_lived_identifier
                 << "\" is not attached to a desktop." << std::endl;
     }
 
-    if (dp::internal::RectHasZeroWidthOrHeight(device.desktop_coordinates)) {
-      std::cerr << "WARNING: DXGI device \"" << device.short_lived_identifier
+    if (dp::internal::RectHasZeroWidthOrHeight(dxgi.desktop_coordinates)) {
+      std::cerr << "WARNING: DXGI device \"" << dxgi.short_lived_identifier
                 << "\" has zero width or height." << std::endl;
     }
 
-    json_obj.is_attached_to_desktop = device.is_attached_to_desktop;
+    json_obj.is_attached_to_desktop = dxgi.is_attached_to_desktop;
 
-    json_obj.rotation_deg =
-        json_utils::DxgiRotationToJson(device.rotation_type);
+    json_obj.rotation_deg = json_utils::DxgiRotationToJson(dxgi.rotation_type);
 
-    json_obj.standard_color_info.min_luminance_nits = device.min_luminance_nits;
-    json_obj.standard_color_info.max_luminance_nits = device.max_luminance_nits;
+    json_obj.standard_color_info.min_luminance_nits = dxgi.min_luminance_nits;
+    json_obj.standard_color_info.max_luminance_nits = dxgi.max_luminance_nits;
     json_obj.standard_color_info.max_full_frame_luminance_nits =
-        device.max_full_frame_luminance_nits;
+        dxgi.max_full_frame_luminance_nits;
 
     json_obj.standard_color_info.dxgi_color_space =
-        json_utils::DxgiColorSpaceToJson(device.color_space);
+        json_utils::DxgiColorSpaceToJson(dxgi.color_space);
 
     // TODO(acdvorak): Make these values the same type (a uint8_t) and only
     // convert them to an enum when inserting into JSON.
@@ -325,7 +324,7 @@ json::WinDisplay MergeDisplayDataToJson(
     // TODO(acdvorak): Make these values the same type (a uint8_t) and only
     // convert them to an enum when inserting into JSON.
     const std::uint8_t dxgi_bpc =
-        static_cast<std::uint8_t>(device.bits_per_channel.value_or(0));
+        static_cast<std::uint8_t>(dxgi.bits_per_channel.value_or(0));
 
     if (json_bpc > 0 && json_bpc != dxgi_bpc) {
       std::cerr << "WARNING: DxgiOutputInfo.bits_per_channel=" << dxgi_bpc
@@ -341,34 +340,34 @@ json::WinDisplay MergeDisplayDataToJson(
 
 }  // namespace
 
-static void EnrichWithSetupApiData(ccd::CcdDisplayConfig& config) {
-  if (HasValue(config.adapter_device_path)) {
-    config.adapter_instance_id =
+static void EnrichWithSetupApiData(ccd::CcdDisplayConfig& display) {
+  if (HasValue(display.adapter_device_path)) {
+    display.adapter_instance_id =
         setupapi::TryGetAdapterInstanceIdFromAdapterPath(
-            config.adapter_device_path)
-            .value_or("");
+            display.adapter_device_path);
   }
 
-  if (config.monitor_device_path.empty()) {
+  if (display.monitor_device_path.empty()) {
     return;
   }
 
-  config.monitor_instance_id = setupapi::TryGetMonitorInstanceIdFromMonitorPath(
-      config.monitor_device_path);
-  if (!config.monitor_instance_id.has_value()) {
+  display.monitor_instance_id =
+      setupapi::TryGetMonitorInstanceIdFromMonitorPath(
+          display.monitor_device_path);
+  if (!HasValue(display.monitor_instance_id)) {
     return;
   }
 
-  config.monitor_driver_key =
+  display.monitor_driver_key =
       setupapi::TryGetMonitorDriverKeyFromDeviceInstanceId(
-          *config.monitor_instance_id);
-  if (!config.monitor_driver_key.has_value()) {
+          *display.monitor_instance_id);
+  if (!HasValue(display.monitor_driver_key)) {
     return;
   }
 
-  config.monitor_registry_key =
+  display.monitor_registry_key =
       R"(HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\)" +
-      *config.monitor_driver_key;
+      *display.monitor_driver_key;
 }
 
 std::string GetDisplayProberJson() {
@@ -404,16 +403,15 @@ std::string GetDisplayProberJson() {
 
   // Tier 2b: Enrich CCD data with SetupAPI device info (XP+ API, but depends on
   // CCD device paths)
-  for (auto& [id, config] : ccd_display_configs) {
-    EnrichWithSetupApiData(config);
+  for (auto& [id, display] : ccd_display_configs) {
+    EnrichWithSetupApiData(display);
   }
 
-  std::map<std::uintptr_t, dxgi::DxgiOutputInfo>
-      dxgi_output_devices_by_hmonitor;
-  for (const auto& [_, device] : dxgi_output_infos) {
-    if (device.process_local_monitor_handle_ptr != 0) {
-      dxgi_output_devices_by_hmonitor[device.process_local_monitor_handle_ptr] =
-          device;
+  std::map<std::uintptr_t, dxgi::DxgiOutputInfo> dxgi_output_infos_by_hmonitor;
+  for (const auto& [_, dxgi] : dxgi_output_infos) {
+    if (dxgi.process_local_monitor_handle_ptr != 0) {
+      dxgi_output_infos_by_hmonitor[dxgi.process_local_monitor_handle_ptr] =
+          dxgi;
     }
   }
 
@@ -424,25 +422,23 @@ std::string GetDisplayProberJson() {
   json_payload.is_virtual_machine = sys::IsVirtualMachine();
 
   size_t i = 0;
-  for (const auto& [id, gdiMonitorInfo] : gdi_monitor_infos) {
-    const auto gdi_display_config =
+  for (const auto& [id, gdi] : gdi_monitor_infos) {
+    const auto ccd_display_config =
         TryGetOptionalValue(ccd_display_configs, id);
 
-    std::optional<dxgi::DxgiOutputInfo> dxgiOutputInfo;
+    std::optional<dxgi::DxgiOutputInfo> dxgi;
 
-    if (gdiMonitorInfo.process_local_monitor_handle_ptr != 0) {
-      dxgiOutputInfo =
-          TryGetOptionalValue(dxgi_output_devices_by_hmonitor,
-                              gdiMonitorInfo.process_local_monitor_handle_ptr);
+    if (gdi.process_local_monitor_handle_ptr != 0) {
+      dxgi = TryGetOptionalValue(dxgi_output_infos_by_hmonitor,
+                                 gdi.process_local_monitor_handle_ptr);
     }
 
-    if (!dxgiOutputInfo) {
-      dxgiOutputInfo = TryGetOptionalValue(dxgi_output_infos, id);
+    if (!dxgi) {
+      dxgi = TryGetOptionalValue(dxgi_output_infos, id);
     }
 
     json_payload.displays.push_back(MergeDisplayDataToJson(
-        i++, gdi_monitor_infos.size(), id, gdiMonitorInfo, gdi_display_config,
-        dxgiOutputInfo));
+        i++, gdi_monitor_infos.size(), id, gdi, ccd_display_config, dxgi));
   }
 
   return json::json(json_payload).dump(2);

@@ -66,16 +66,16 @@ std::string TryToExtractEdid7DigitIdentifier(std::string_view input) {
   return "";
 }
 
-std::string BuildPrimaryPortKey(const ccd::CcdDisplayConfig& config) {
+std::string BuildPrimaryPortKey(const ccd::CcdDisplayConfig& display) {
   const std::string gpu_identity =
-      HasValue(config.adapter_instance_id)
-          ? *config.adapter_instance_id
-          : config.adapter_device_path.value_or("");
+      HasValue(display.adapter_instance_id)
+          ? *display.adapter_instance_id
+          : display.adapter_device_path.value_or("");
   if (gpu_identity.empty()) {
     return {};
   }
 
-  auto tp_id = "0x" + IntsToHex(config.target_path_id);
+  auto tp_id = "0x" + IntsToHex(display.target_path_id);
 
   return std::format("acd_ppk:gpu_id={};tp_id={}", gpu_identity, tp_id);
 }
@@ -93,15 +93,15 @@ std::string BuildEdidKey(const std::optional<json::WinEdidInfo>& edid_info) {
     return {};
   }
 
-  const auto& info = *edid_info;
-  if (!info.manufacturer_vid || !info.product_code_id ||
-      !info.serial_number_id) {
+  const auto& edid = *edid_info;
+  if (!edid.manufacturer_vid || !edid.product_code_id ||
+      !edid.serial_number_id) {
     return {};
   }
 
-  auto vid = ToUpperAscii(*info.manufacturer_vid);
-  auto pid = "0x" + IntsToHex(static_cast<uint16_t>(*info.product_code_id));
-  auto sn = "0x" + IntsToHex(static_cast<uint32_t>(*info.serial_number_id));
+  auto vid = ToUpperAscii(*edid.manufacturer_vid);
+  auto pid = "0x" + IntsToHex(static_cast<uint16_t>(*edid.product_code_id));
+  auto sn = "0x" + IntsToHex(static_cast<uint32_t>(*edid.serial_number_id));
 
   return std::format("acd_edid:vid={};pid={};sn={}", vid, pid, sn);
 }

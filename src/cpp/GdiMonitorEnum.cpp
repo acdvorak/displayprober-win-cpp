@@ -57,26 +57,26 @@ BOOL CALLBACK EnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM) {
     return TRUE;  // Continue enumerating other monitors
   }
 
-  ShortLivedIdentifier monitorNameUtf8 = WideToUtf8(monitorInfoEx.szDevice);
+  ShortLivedIdentifier short_lived_identifier =
+      WideToUtf8(monitorInfoEx.szDevice);
 
-  gdi::GdiMonitorInfo& monitor = gdi_monitor_infos[monitorNameUtf8];
-  monitor.short_lived_identifier = monitorNameUtf8;
-  monitor.process_local_monitor_handle_ptr =
+  gdi::GdiMonitorInfo& gdi = gdi_monitor_infos[short_lived_identifier];
+  gdi.short_lived_identifier = short_lived_identifier;
+  gdi.process_local_monitor_handle_ptr =
       reinterpret_cast<std::uintptr_t>(hMonitor);
 
-  monitor.is_primary = ((monitorInfoEx.dwFlags & MONITORINFOF_PRIMARY) != 0);
+  gdi.is_primary = ((monitorInfoEx.dwFlags & MONITORINFOF_PRIMARY) != 0);
 
   if (const auto get_dpi_for_monitor = ResolveGetDpiForMonitor()) {
     UINT dpiX, dpiY;
     if (S_OK ==
         get_dpi_for_monitor(hMonitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY)) {
-      monitor.dpi_scale_percent = std::lround(dpiY * 100. / 96.);
+      gdi.dpi_scale_percent = std::lround(dpiY * 100. / 96.);
     }
   }
 
-  json_utils::PopulateRectangleIfZero(monitor.bounds, monitorInfoEx.rcMonitor);
-  json_utils::PopulateRectangleIfZero(monitor.working_area,
-                                      monitorInfoEx.rcWork);
+  json_utils::PopulateRectangleIfZero(gdi.bounds, monitorInfoEx.rcMonitor);
+  json_utils::PopulateRectangleIfZero(gdi.working_area, monitorInfoEx.rcWork);
 
   return TRUE;  // Continue enumerating other monitors
 }
@@ -100,31 +100,31 @@ std::map<ShortLivedIdentifier, gdi::GdiMonitorInfo> GetGdiMonitorInfos() {
 }
 
 std::map<ShortLivedIdentifier, GdiAdapterInfo> GetGdiAdapterInfoMap() {
-  std::map<ShortLivedIdentifier, GdiAdapterInfo> adapters;
+  std::map<ShortLivedIdentifier, GdiAdapterInfo> gdi_adapter_infos;
 
   for (DWORD idx = 0;; ++idx) {
-    DISPLAY_DEVICEW dd = {};
-    dd.cb = sizeof(dd);
+    DISPLAY_DEVICEW device = {};
+    device.cb = sizeof(device);
 
-    if (!EnumDisplayDevicesW(nullptr, idx, &dd, 0)) {
+    if (!EnumDisplayDevicesW(nullptr, idx, &device, 0)) {
       break;
     }
 
-    if (dd.DeviceName[0] == L'\0' || dd.DeviceString[0] == L'\0') {
+    if (device.DeviceName[0] == L'\0' || device.DeviceString[0] == L'\0') {
       continue;
     }
 
-    GdiAdapterInfo info{};
+    GdiAdapterInfo gdi{};
 
-    info.short_lived_identifier = WideToUtf8(dd.DeviceName);
-    info.adapter_friendly_name = WideToUtf8(dd.DeviceString);
-    info.adapter_hardware_id = WideToUtf8(dd.DeviceID);
-    info.adapter_registry_key = WideToUtf8(dd.DeviceKey);
+    gdi.short_lived_identifier = WideToUtf8(device.DeviceName);
+    gdi.adapter_friendly_name = WideToUtf8(device.DeviceString);
+    gdi.adapter_hardware_id = WideToUtf8(device.DeviceID);
+    gdi.adapter_registry_key = WideToUtf8(device.DeviceKey);
 
-    adapters.emplace(info.short_lived_identifier, info);
+    gdi_adapter_infos.emplace(gdi.short_lived_identifier, gdi);
   }
 
-  return adapters;
+  return gdi_adapter_infos;
 }
 
 }  // namespace gdi

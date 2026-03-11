@@ -17,7 +17,7 @@ std::string TryToExtractShortLivedIdentifier(std::string_view input);
 
 std::string TryToExtractEdid7DigitIdentifier(std::string_view input);
 
-std::string BuildPrimaryPortKey(const ccd::CcdDisplayConfig& config);
+std::string BuildPrimaryPortKey(const ccd::CcdDisplayConfig& display);
 
 std::string BuildMonitorPathKey(const DevicePath& monitor_device_path);
 

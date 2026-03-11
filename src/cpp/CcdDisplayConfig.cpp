@@ -53,7 +53,7 @@ bool CcdDisplayConfig::IsHdrEnabled() const {
 
 std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
     const std::map<ShortLivedIdentifier, GdiAdapterInfo>& adapter_info_map) {
-  std::map<ShortLivedIdentifier, CcdDisplayConfig> displayConfigs;
+  std::map<ShortLivedIdentifier, CcdDisplayConfig> ccd_display_configs;
 
   UINT32 num_paths;
   UINT32 num_modes;
@@ -70,7 +70,7 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
     res = GetDisplayConfigBufferSizes(flags, &num_paths, &num_modes);
     if (res == ERROR_SUCCESS) {
       if (num_paths == 0 || num_modes == 0) {
-        return displayConfigs;
+        return ccd_display_configs;
       }
 
       paths.resize(num_paths);
@@ -82,7 +82,7 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
   } while (res == ERROR_INSUFFICIENT_BUFFER);
 
   if (res != ERROR_SUCCESS) {
-    return displayConfigs;
+    return ccd_display_configs;
   }
 
   // num_paths and num_modes could decrease in a loop
@@ -105,28 +105,28 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
     ShortLivedIdentifier short_lived_identifier =
         WideToUtf8(source.viewGdiDeviceName);
 
-    CcdDisplayConfig& dc = displayConfigs[short_lived_identifier];
+    CcdDisplayConfig& display = ccd_display_configs[short_lived_identifier];
 
-    dc.short_lived_identifier = short_lived_identifier;
-    dc.target_path_id = path.targetInfo.id;
-    dc.outputTechnology = path.targetInfo.outputTechnology;
+    display.short_lived_identifier = short_lived_identifier;
+    display.target_path_id = path.targetInfo.id;
+    display.outputTechnology = path.targetInfo.outputTechnology;
 
     if (IsValidModeIndex(path.sourceInfo.modeInfoIdx, modes)) {
       const auto& mode = modes[path.sourceInfo.modeInfoIdx];
       if (mode.infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE) {
-        dc.width = mode.sourceMode.width;
-        dc.height = mode.sourceMode.height;
+        display.width = mode.sourceMode.width;
+        display.height = mode.sourceMode.height;
       }
     }
 
     if (IsValidModeIndex(path.targetInfo.modeInfoIdx, modes)) {
       const auto& mode = modes[path.targetInfo.modeInfoIdx];
 
-      dc.modeTarget = mode;
+      display.modeTarget = mode;
 
       if (mode.infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET) {
-        dc.refreshRate = mode.targetMode.targetVideoSignalInfo.vSyncFreq;
-        dc.scanLineOrdering =
+        display.refreshRate = mode.targetMode.targetVideoSignalInfo.vSyncFreq;
+        display.scanLineOrdering =
             mode.targetMode.targetVideoSignalInfo.scanLineOrdering;
       }
 
@@ -138,11 +138,12 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
             {}};
         res = DisplayConfigGetDeviceInfo(&color_info.header);
         if (res == ERROR_SUCCESS) {
-          dc.colorEncoding = color_info.colorEncoding;
-          dc.bitsPerChannel = color_info.bitsPerColorChannel;
-          dc.windows1124H2Colors.value = color_info.value;
-          dc.windows1124H2Colors.activeColorMode = color_info.activeColorMode;
-          dc.hasAdvancedColorInfo = true;
+          display.colorEncoding = color_info.colorEncoding;
+          display.bitsPerChannel = color_info.bitsPerColorChannel;
+          display.windows1124H2Colors.value = color_info.value;
+          display.windows1124H2Colors.activeColorMode =
+              color_info.activeColorMode;
+          display.hasAdvancedColorInfo = true;
         }
       } else {
         DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO color_info = {
@@ -151,20 +152,20 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
             {}};
         res = DisplayConfigGetDeviceInfo(&color_info.header);
         if (res == ERROR_SUCCESS) {
-          dc.colorEncoding = color_info.colorEncoding;
-          dc.bitsPerChannel = color_info.bitsPerColorChannel;
-          dc.advancedColor.value = color_info.value;
-          dc.hasAdvancedColorInfo = true;
+          display.colorEncoding = color_info.colorEncoding;
+          display.bitsPerChannel = color_info.bitsPerColorChannel;
+          display.advancedColor.value = color_info.value;
+          display.hasAdvancedColorInfo = true;
         }
       }
     }
 
-    if (!IsValidRefreshRate(dc.refreshRate)) {
-      dc.refreshRate = path.targetInfo.refreshRate;
-      dc.scanLineOrdering = path.targetInfo.scanLineOrdering;
+    if (!IsValidRefreshRate(display.refreshRate)) {
+      display.refreshRate = path.targetInfo.refreshRate;
+      display.scanLineOrdering = path.targetInfo.scanLineOrdering;
 
-      if (!IsValidRefreshRate(dc.refreshRate)) {
-        dc.refreshRate = {0, 1};
+      if (!IsValidRefreshRate(display.refreshRate)) {
+        display.refreshRate = {0, 1};
       }
     }
 
@@ -175,11 +176,12 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
     };
     res = DisplayConfigGetDeviceInfo(&target_dev_name.header);
     if (res == ERROR_SUCCESS) {
-      dc.display_friendly_name =
+      display.display_friendly_name =
           WideToUtf8(target_dev_name.monitorFriendlyDeviceName);
-      dc.monitor_device_path = WideToUtf8(target_dev_name.monitorDevicePath);
-      dc.edidManufactureId = target_dev_name.edidManufactureId;
-      dc.edidProductCodeId = target_dev_name.edidProductCodeId;
+      display.monitor_device_path =
+          WideToUtf8(target_dev_name.monitorDevicePath);
+      display.edidManufactureId = target_dev_name.edidManufactureId;
+      display.edidProductCodeId = target_dev_name.edidProductCodeId;
     }
 
     DISPLAYCONFIG_ADAPTER_NAME adapter_name = {
@@ -189,16 +191,18 @@ std::map<ShortLivedIdentifier, CcdDisplayConfig> GetCcdDisplayConfigs(
     };
     res = DisplayConfigGetDeviceInfo(&adapter_name.header);
     if (res == ERROR_SUCCESS) {
-      dc.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
+      display.adapter_device_path = WideToUtf8(adapter_name.adapterDevicePath);
     }
 
+    // TODO(acdvorak): Replace all `.end()` iterator finds with
+    // `TryGetOptionalValue()`.
     const auto adapter_name_it = adapter_info_map.find(short_lived_identifier);
     if (adapter_name_it != adapter_info_map.end()) {
-      dc.adapter_info = adapter_name_it->second;
+      display.adapter_info = adapter_name_it->second;
     }
   }
 
-  return displayConfigs;
+  return ccd_display_configs;
 }
 
 }  // namespace ccd
