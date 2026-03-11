@@ -40,7 +40,9 @@ if ($null -eq $winget) {
 }
 
 Write-Host "winget detected at '$($winget.Source)'."
+
 & $winget.Source --version
+
 if ($LASTEXITCODE -ne 0) {
   throw 'winget was found but failed to run.'
 }
@@ -49,7 +51,11 @@ if ($LASTEXITCODE -ne 0) {
 # Install NuGet (current user)
 ################################################################################
 
-winget install -e --id Microsoft.NuGet --scope user
+$winget.Source install -e --id Microsoft.NuGet --scope user
+
+if ($LASTEXITCODE -ne 0) {
+  throw "Failed to install NuGet (Microsoft.NuGet) for current user via winget. Exit code: $LASTEXITCODE"
+}
 
 ################################################################################
 # Finish
