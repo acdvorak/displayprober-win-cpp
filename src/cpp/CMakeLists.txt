@@ -19,7 +19,7 @@ cmake_policy(SET CMP0091 NEW)
 # VERSION NUMBER
 ################################################################################
 
-project("DisplayProber" VERSION "1.2.0" LANGUAGES CXX)
+project("DisplayProber" VERSION "1.3.0" LANGUAGES CXX)
 
 option(BUILD_TESTING "Build tests" OFF)
 include(CTest)
