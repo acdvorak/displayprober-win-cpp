@@ -28,6 +28,12 @@ include(CTest)
 # EXE FILE PROPERTIES
 ################################################################################
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(DP4W_ARCH_NAME "x86")
+else()
+  set(DP4W_ARCH_NAME "x64")
+endif()
+
 # `DP4W_RELEASE_TAG` is passed by GitHub CI from the git release tag.
 # `DP4W_VERSION_TAG` is a C++ macro.
 set(DP4W_VERSION_TAG "")
@@ -73,17 +79,17 @@ set(DP4W_PRODUCT_VERSION_STR "${DP4W_FILE_VERSION_STR}")
 set(DP4W_COMPANY_NAME "Andrew C. Dvorak")
 # FileDescription: Human-readable description of this specific file
 # (what users see in Properties).
-set(DP4W_FILE_DESCRIPTION "CLI to list connected monitors/TVs")
+set(DP4W_FILE_DESCRIPTION "CLI to list connected monitors/TVs.")
 # ProductName: Name of the overall product this file belongs to
 # (brand/app/suite name).
-set(DP4W_PRODUCT_NAME "${PROJECT_NAME}")
+set(DP4W_PRODUCT_NAME "DisplayProber CLI for Windows (DP4Win)")
 # InternalName: Internal/module identifier for the file, typically the base
 # binary name (often without .exe/.dll).
-set(DP4W_INTERNAL_NAME "${PROJECT_NAME}")
-set(DP4W_ORIGINAL_FILENAME "${PROJECT_NAME}.exe")
+set(DP4W_INTERNAL_NAME "${PROJECT_NAME}-${DP4W_ARCH_NAME}")
+set(DP4W_ORIGINAL_FILENAME "${PROJECT_NAME}-${DP4W_ARCH_NAME}.exe")
 
 string(TIMESTAMP DP4W_COPYRIGHT_YEAR "%Y")
-set(DP4W_LEGAL_COPYRIGHT "© ${DP4W_COPYRIGHT_YEAR} Andrew C. Dvorak")
+set(DP4W_LEGAL_COPYRIGHT "(C) ${DP4W_COPYRIGHT_YEAR} Andrew C. Dvorak")
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/DisplayProberVersion.rc.in"
@@ -153,17 +159,17 @@ option(STATIC_CRT "Static runtime" ON)
 
 add_executable(${PROJECT_NAME}
   CLI.cpp
-  GdiMonitorEnum.cpp
+  CcdDisplayConfig.cpp
   DisplayProberInternal.cpp
   DisplayProberLib.cpp
   DxgiOutput.cpp
-  CcdDisplayConfig.cpp
+  GdiMonitorEnum.cpp
   JsonUtils.cpp
   SetupApiDevice.cpp
   StringUtils.cpp
   SysUtils.cpp
-  WmiMonitorInternal.cpp
   WmiMonitor.cpp
+  WmiMonitorInternal.cpp
 )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${PROJECT_NAME} PRIVATE

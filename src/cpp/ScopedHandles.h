@@ -18,6 +18,12 @@ class ScopedDevInfoSet {
 
   HDEVINFO get() const { return handle_; }
 
+  HDEVINFO release() {
+    HDEVINFO handle = handle_;
+    handle_ = INVALID_HANDLE_VALUE;
+    return handle;
+  }
+
  private:
   HDEVINFO handle_ = INVALID_HANDLE_VALUE;
 };
