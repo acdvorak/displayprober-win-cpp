@@ -70,7 +70,7 @@ std::vector<std::string> ParseMultiSz(std::vector<BYTE>& buffer) {
 struct DeviceInfoHandle {
   HDEVINFO dev_info_set;
   SP_DEVINFO_DATA dev_info_data;
-  DevicePath device_path_lowercase;
+  DevicePath device_path_mixed_case;
   std::optional<InstanceId> instance_id;
 };
 
@@ -123,12 +123,21 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
         continue;
       }
 
-      DevicePath device_path_lowercase = WideToUtf8(detail_data->DevicePath);
+      // According to Microsoft, there is no official API contract that
+      // `SP_DEVICE_INTERFACE_DETAIL_DATA_W.DevicePath` will always be
+      // lowercase.
+      //
+      // In fact, Microsoft explicitly warns that `DevicePath` should be treated
+      // as "opaque" and only used for case-insensitive string comparisons,
+      // never parsed.
+      //
+      // However, I have observed that the value *is* lowercase in practice.
+      DevicePath device_path_mixed_case = WideToUtf8(detail_data->DevicePath);
       DeviceInfoHandle dev_info{};
 
       dev_info.dev_info_set = dev_info_set;
       dev_info.dev_info_data = dev_info_data;
-      dev_info.device_path_lowercase = device_path_lowercase;
+      dev_info.device_path_mixed_case = device_path_mixed_case;
       dev_info.instance_id = std::nullopt;
 
       // https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinstanceidw#return-value
@@ -306,7 +315,7 @@ std::optional<std::string> TryGetInstanceIdFromDevicePath(
       GetDeviceInfoHandlesForClass(class_guid);
 
   for (const DeviceInfoHandle& dev_info : dev_infos) {
-    if (EqualsIgnoreCase(dev_info.device_path_lowercase, target_device_path)) {
+    if (EqualsIgnoreCase(dev_info.device_path_mixed_case, target_device_path)) {
       return dev_info.instance_id;
     }
   }
@@ -328,7 +337,8 @@ std::optional<Bytes> GetEdidBytesFromMonitorDevicePath(
       GetDeviceInfoHandlesForClass(&GUID_DEVINTERFACE_MONITOR);
 
   for (const DeviceInfoHandle& dev_info : dev_infos) {
-    if (EqualsIgnoreCase(dev_info.device_path_lowercase, monitor_device_path)) {
+    if (EqualsIgnoreCase(dev_info.device_path_mixed_case,
+                         monitor_device_path)) {
       return ReadEdidBytes(dev_info.dev_info_set, dev_info.dev_info_data);
     }
   }
@@ -480,7 +490,7 @@ json::WinSetupApiDeviceCatalog GetAllSetupApiDatas() {
   for (DeviceInfoHandle& handle : raw_adapter_handles) {
     json::WinSetupApiDevice json =
         GetDeviceProperties(handle.dev_info_set, &handle.dev_info_data);
-    json.device_path_lowercase = handle.device_path_lowercase;
+    json.device_path_mixed_case = handle.device_path_mixed_case;
     json.instance_id = handle.instance_id;
     datas.adapters.push_back(json);
   }
@@ -488,7 +498,7 @@ json::WinSetupApiDeviceCatalog GetAllSetupApiDatas() {
   for (DeviceInfoHandle& handle : raw_monitor_handles) {
     json::WinSetupApiDevice json =
         GetDeviceProperties(handle.dev_info_set, &handle.dev_info_data);
-    json.device_path_lowercase = handle.device_path_lowercase;
+    json.device_path_mixed_case = handle.device_path_mixed_case;
     json.instance_id = handle.instance_id;
     datas.monitors.push_back(json);
   }

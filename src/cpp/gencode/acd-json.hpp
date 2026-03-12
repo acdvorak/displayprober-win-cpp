@@ -179,7 +179,7 @@ namespace json {
          * - ❌ Do NOT parse the value.
          *
          * According to Microsoft, there is no API contract that the string will _always_ be
-         * lowercase:
+         * lowercase, though that is what I have observed in practice across Windows XP through
          *
          * [Device identification
          * strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):
@@ -215,7 +215,7 @@ namespace json {
          * `"\\\\?\\pci#ven_10de&dev_2584&subsys_184610de&rev_a1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
          * - `"\\\\?\\root#basicdisplay#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
          */
-        std::string device_path_lowercase;
+        std::string device_path_mixed_case;
         /**
          * Examples:
          *
@@ -1010,7 +1010,7 @@ namespace json {
         x.config_flags = get_stack_optional<uint32_t>(j, "config_flags");
         x.dev_type = get_stack_optional<uint32_t>(j, "dev_type");
         x.device_desc = get_stack_optional<std::string>(j, "device_desc");
-        x.device_path_lowercase = j.at("device_path_lowercase").get<std::string>();
+        x.device_path_mixed_case = j.at("device_path_mixed_case").get<std::string>();
         x.driver = get_stack_optional<std::string>(j, "driver");
         x.enumerator_name = get_stack_optional<std::string>(j, "enumerator_name");
         x.friendly_name = get_stack_optional<std::string>(j, "friendly_name");
@@ -1064,7 +1064,7 @@ namespace json {
         if (x.device_desc) {
             j["device_desc"] = x.device_desc;
         }
-        j["device_path_lowercase"] = x.device_path_lowercase;
+        j["device_path_mixed_case"] = x.device_path_mixed_case;
         if (x.driver) {
             j["driver"] = x.driver;
         }

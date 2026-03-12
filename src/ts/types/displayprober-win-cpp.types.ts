@@ -548,7 +548,8 @@ export interface WinSetupApiDevice {
    * - ❌ Do NOT parse the value.
    *
    * According to Microsoft, there is no API contract that the string will
-   * _always_ be lowercase:
+   * _always_ be lowercase, though that is what I have observed in practice
+   * across Windows XP through Windows 11.
    *
    * [Device identification strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):
    *
@@ -585,7 +586,7 @@ export interface WinSetupApiDevice {
    * - `"\\\\?\\root#basicdisplay#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
    *
    */
-  device_path_lowercase: string;
+  device_path_mixed_case: string;
 
   /**
    * Data source: `SetupDiGetDeviceInstanceIdW()`

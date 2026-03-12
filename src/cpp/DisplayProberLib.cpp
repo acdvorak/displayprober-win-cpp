@@ -137,7 +137,7 @@ json::WinDisplay MergeDisplayDataToJson(
 
     for (const auto& adapter : all_setup_api_devices.adapters) {
       if ((HasValue(ccd.adapter_device_path) &&
-           EqualsIgnoreCase(adapter.device_path_lowercase,
+           EqualsIgnoreCase(adapter.device_path_mixed_case,
                             *ccd.adapter_device_path)) ||
           (HasValue(ccd.adapter_instance_id) && adapter.instance_id &&
            EqualsIgnoreCase(*adapter.instance_id, *ccd.adapter_instance_id))) {
@@ -147,7 +147,7 @@ json::WinDisplay MergeDisplayDataToJson(
 
     for (const auto& monitor : all_setup_api_devices.monitors) {
       if ((!ccd.monitor_device_path.empty() &&
-           EqualsIgnoreCase(monitor.device_path_lowercase,
+           EqualsIgnoreCase(monitor.device_path_mixed_case,
                             ccd.monitor_device_path)) ||
           (HasValue(ccd.monitor_instance_id) && monitor.instance_id &&
            EqualsIgnoreCase(*monitor.instance_id, *ccd.monitor_instance_id))) {
