@@ -374,6 +374,8 @@ Primary API surface:
 
 TODO(acdvorak)
 
+[Microsoft Learn: Device identification strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings)
+
 [Chromium `win/screen_win.cc`](https://chromium.googlesource.com/chromium/src/+/5331222/ui/display/win/screen_win.cc#557):
 
 > Gauge IDs derived from `DISPLAY_DEVICE`'s `DeviceID` and `DeviceKey`.
@@ -570,3 +572,8 @@ required by the C runtime itself.
 [YY-Thunks](https://github.com/Chuyu-Team/YY-Thunks) provides compatibility
 stubs for those gaps, which lets a single binary run in XP (x86/x64) all the way
 up through modern Windows 11 and newer without downgrading the build toolchain.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 (GPLv3). See
+the [LICENSE.txt](./LICENSE.txt) file for details.
