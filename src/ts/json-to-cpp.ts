@@ -1,6 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import * as ts from 'typescript';
-import * as tsj from 'ts-json-schema-generator';
 import {
   quicktype,
   InputData,

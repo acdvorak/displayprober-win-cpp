@@ -913,7 +913,7 @@ export type PnpHardwareId = PnpPciId | `ROOT\\${string}` | `MONITOR\\${string}`;
  * - `"ROOT\\BASICDISPLAY\\0000"`
  */
 export type PnpInstanceId =
-  | `DISPLAY\\${string}\\${number}&${string}&${number}&UID${number}}`
+  | `DISPLAY\\${string}\\${number}&${string}&${number}&UID${number}`
   | `PCI\\VEN_${string}&DEV_${string}&SUBSYS_${string}&REV_${string}\\${number}&${string}&${number}&${string}`
   | `ROOT\\${string}\\${string}`;
 

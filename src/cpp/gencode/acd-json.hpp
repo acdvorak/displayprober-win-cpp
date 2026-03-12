@@ -180,6 +180,7 @@ namespace json {
          *
          * According to Microsoft, there is no API contract that the string will _always_ be
          * lowercase, though that is what I have observed in practice across Windows XP through
+         * Windows 11.
          *
          * [Device identification
          * strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):

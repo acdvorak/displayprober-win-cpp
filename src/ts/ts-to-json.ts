@@ -26,19 +26,20 @@ function setIntegerBoundaries(node: Def): void {
 
   const type = node.type;
 
-  let bounds:
-    | { minimum: number | bigint; maximum: number | bigint }
-    | undefined = undefined;
+  let bounds: { minimum: number; maximum: number } | undefined = undefined;
   if (fullDescription.includes('@uint64')) {
     bounds = { minimum: 0, maximum: Number.MAX_SAFE_INTEGER };
   } else if (fullDescription.includes('@uint32')) {
-    bounds = { minimum: 0, maximum: 0xffffffff };
+    bounds = { minimum: 0, maximum: 4_294_967_295 };
   } else if (fullDescription.includes('@uint16')) {
-    bounds = { minimum: 0, maximum: 0xffff };
+    bounds = { minimum: 0, maximum: 65_535 };
   } else if (fullDescription.includes('@uint8')) {
-    bounds = { minimum: 0, maximum: 0xff };
+    bounds = { minimum: 0, maximum: 255 };
   } else if (fullDescription.includes('@int64')) {
-    bounds = { minimum: -4_294_967_295, maximum: 4_294_967_294 };
+    bounds = {
+      minimum: Number.MIN_SAFE_INTEGER,
+      maximum: Number.MAX_SAFE_INTEGER,
+    };
   } else if (fullDescription.includes('@int32')) {
     bounds = { minimum: -2_147_483_648, maximum: 2_147_483_647 };
   } else if (fullDescription.includes('@int16')) {
