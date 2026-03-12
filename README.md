@@ -4,6 +4,7 @@ CLI that outputs a list of all connected displays (monitors and TV screens) as
 [JSON](./src/ts/schemas/displayprober-win-cpp.schema.json).
 
 - Supports Windows XP and newer, both 32-bit and 64-bit.
+- Tested on real physical hardware with multiple monitors
 - Tested in:
   - Windows XP x86 SP3
   - Windows XP x64 SP2

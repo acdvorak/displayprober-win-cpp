@@ -85,11 +85,8 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       return dev_infos;
     }
 
-    std::shared_ptr<void> shared_dev_info_set(raw_dev_info_set, [](void* p) {
-      if (p != INVALID_HANDLE_VALUE) {
-        SetupDiDestroyDeviceInfoList(p);
-      }
-    });
+    std::shared_ptr<void> shared_dev_info_set(raw_dev_info_set,
+                                              DevInfoSetDeleter{});
 
     for (DWORD interface_index = 0;; ++interface_index) {
       SP_DEVICE_INTERFACE_DATA interface_data = {};
@@ -287,12 +284,12 @@ std::optional<Bytes> ReadEdidBytes(HDEVINFO dev_info_set,
     return std::nullopt;
   }
 
-  ScopedRegKey scoped_key(registry_key);
+  UniqueRegKey unique_key(registry_key);
 
   DWORD type = 0;
   DWORD size = 0;
   const LONG query_size_result = RegQueryValueExW(
-      scoped_key.get(), L"EDID", nullptr, &type, nullptr, &size);
+      unique_key.get(), L"EDID", nullptr, &type, nullptr, &size);
   if (query_size_result != ERROR_SUCCESS || type != REG_BINARY || size == 0) {
     return std::nullopt;
   }
@@ -301,7 +298,7 @@ std::optional<Bytes> ReadEdidBytes(HDEVINFO dev_info_set,
   DWORD read_size = size;
   type = 0;
   const LONG read_result =
-      RegQueryValueExW(scoped_key.get(), L"EDID", nullptr, &type,
+      RegQueryValueExW(unique_key.get(), L"EDID", nullptr, &type,
                        reinterpret_cast<LPBYTE>(bytes.data()), &read_size);
   if (read_result != ERROR_SUCCESS || type != REG_BINARY || read_size == 0) {
     return std::nullopt;
@@ -374,7 +371,7 @@ std::optional<std::string> TryGetMonitorDriverKeyFromDeviceInstanceId(
     return std::nullopt;
   }
 
-  ScopedDevInfoSet dev_info(raw_dev_info_handle);
+  UniqueDevInfoSet dev_info(raw_dev_info_handle);
 
   SP_DEVINFO_DATA dev_info_data = {};
   dev_info_data.cbSize = sizeof(SP_DEVINFO_DATA);
@@ -409,6 +406,8 @@ std::optional<std::string> TryGetMonitorDriverKeyFromDeviceInstanceId(
     return std::nullopt;
   }
 
+  buffer.push_back(0);
+  buffer.push_back(0);
   const WCHAR* driver_property = reinterpret_cast<const WCHAR*>(buffer.data());
   return WideToUtf8(driver_property);
 }

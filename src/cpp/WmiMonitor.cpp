@@ -58,65 +58,36 @@ std::basic_string<MI_Char> ToMiString(const std::string& value) {
   return out;
 }
 
-class ScopedMiApplication {
- public:
-  ~ScopedMiApplication() { Close(); }
-
-  MI_Result Initialize() {
-    return MI_Application_Initialize(0, nullptr, nullptr, &application_);
-  }
-
-  MI_Application* get() { return &application_; }
-
- private:
-  void Close() {
-    if (application_.ft != nullptr) {
-      MI_Application_Close(&application_);
-      application_ = {};
+struct MiApplicationDeleter {
+  void operator()(MI_Application* app) const {
+    if (app && app->ft != nullptr) {
+      MI_Application_Close(app);
+      delete app;
     }
   }
-
-  MI_Application application_ = {};
 };
+using UniqueMiApplication =
+    std::unique_ptr<MI_Application, MiApplicationDeleter>;
 
-class ScopedMiSession {
- public:
-  ~ScopedMiSession() { Close(); }
-
-  MI_Result Open(MI_Application* application) {
-    return MI_Application_NewSession(application, nullptr, nullptr, nullptr,
-                                     nullptr, nullptr, &session_);
-  }
-
-  MI_Session* get() { return &session_; }
-
- private:
-  void Close() {
-    if (session_.ft != nullptr) {
-      MI_Session_Close(&session_, nullptr, nullptr);
-      session_ = {};
+struct MiSessionDeleter {
+  void operator()(MI_Session* session) const {
+    if (session && session->ft != nullptr) {
+      MI_Session_Close(session, nullptr, nullptr);
+      delete session;
     }
   }
-
-  MI_Session session_ = {};
 };
+using UniqueMiSession = std::unique_ptr<MI_Session, MiSessionDeleter>;
 
-class ScopedMiOperation {
- public:
-  ~ScopedMiOperation() { Close(); }
-
-  MI_Operation* get() { return &operation_; }
-
- private:
-  void Close() {
-    if (operation_.ft != nullptr) {
-      MI_Operation_Close(&operation_);
-      operation_ = {};
+struct MiOperationDeleter {
+  void operator()(MI_Operation* op) const {
+    if (op && op->ft != nullptr) {
+      MI_Operation_Close(op);
+      delete op;
     }
   }
-
-  MI_Operation operation_ = {};
 };
+using UniqueMiOperation = std::unique_ptr<MI_Operation, MiOperationDeleter>;
 
 bool TryGetElement(const MI_Instance* inst, const char* propName,
                    MI_Value* value, MI_Type* type) {
@@ -244,7 +215,7 @@ void QueryClassForBestMatchingInstance(MI_Session* session,
   const std::string query = "SELECT * FROM " + std::string(class_name);
   const auto miQuery = ToMiString(query);
 
-  ScopedMiOperation operation;
+  UniqueMiOperation operation(new MI_Operation{});
   MI_Session_QueryInstances(session, 0, nullptr, MI_T(R"(root\wmi)"),
                             MI_T("WQL"), miQuery.c_str(), nullptr,
                             operation.get());
@@ -362,13 +333,16 @@ std::optional<json::WinEdidInfo> GetWinEdidInfoFromDevicePath(
     return std::nullopt;
   }
 
-  ScopedMiApplication application;
-  if (application.Initialize() != MI_RESULT_OK) {
+  UniqueMiApplication application(new MI_Application{});
+  if (MI_Application_Initialize(0, nullptr, nullptr, application.get()) !=
+      MI_RESULT_OK) {
     return std::nullopt;
   }
 
-  ScopedMiSession session;
-  if (session.Open(application.get()) != MI_RESULT_OK) {
+  UniqueMiSession session(new MI_Session{});
+  if (MI_Application_NewSession(application.get(), nullptr, nullptr, nullptr,
+                                nullptr, nullptr,
+                                session.get()) != MI_RESULT_OK) {
     return std::nullopt;
   }
 

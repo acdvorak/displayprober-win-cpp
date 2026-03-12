@@ -1,45 +1,33 @@
 #pragma once
 
+#include <memory>
+#include <type_traits>
+
 // This header needs to be imported first.
 #include <Windows.h>
 
 // Keep other .h headers separate from Windows.h to prevent auto-sorting.
 #include <SetupAPI.h>
 
-class ScopedDevInfoSet {
- public:
-  explicit ScopedDevInfoSet(HDEVINFO handle) : handle_(handle) {}
-
-  ~ScopedDevInfoSet() {
-    if (handle_ != INVALID_HANDLE_VALUE) {
-      SetupDiDestroyDeviceInfoList(handle_);
+struct DevInfoSetDeleter {
+  using pointer = HDEVINFO;
+  void operator()(pointer handle) const {
+    if (handle != nullptr && handle != INVALID_HANDLE_VALUE) {
+      SetupDiDestroyDeviceInfoList(handle);
     }
   }
-
-  HDEVINFO get() const { return handle_; }
-
-  HDEVINFO release() {
-    HDEVINFO handle = handle_;
-    handle_ = INVALID_HANDLE_VALUE;
-    return handle;
-  }
-
- private:
-  HDEVINFO handle_ = INVALID_HANDLE_VALUE;
 };
 
-class ScopedRegKey {
- public:
-  explicit ScopedRegKey(HKEY key) : key_(key) {}
+using UniqueDevInfoSet = std::unique_ptr<void, DevInfoSetDeleter>;
 
-  ~ScopedRegKey() {
-    if (key_ != nullptr && key_ != INVALID_HANDLE_VALUE) {
-      RegCloseKey(key_);
+struct RegKeyDeleter {
+  using pointer = HKEY;
+  void operator()(pointer key) const {
+    if (key != nullptr && key != INVALID_HANDLE_VALUE) {
+      RegCloseKey(key);
     }
   }
-
-  HKEY get() const { return key_; }
-
- private:
-  HKEY key_ = nullptr;
 };
+
+using UniqueRegKey =
+    std::unique_ptr<std::remove_pointer_t<HKEY>, RegKeyDeleter>;
