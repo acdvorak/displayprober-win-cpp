@@ -6,7 +6,9 @@
 #include <string_view>
 
 #include "DisplayProberLib.h"
+#include "GdiMonitorEnum.h"
 #include "StringUtils.h"
+#include "SysUtils.h"
 
 #ifndef DP4W_VERSION_TAG
 #define DP4W_VERSION_TAG "v0.0.0"
@@ -20,23 +22,6 @@
 #define DP4W_BUILD_TIMESTAMP "unknown"
 #endif
 
-static std::wstring Utf8ToWide(std::string_view value) {
-  if (value.empty()) {
-    return {};
-  }
-
-  const int required = MultiByteToWideChar(
-      CP_UTF8, 0, value.data(), static_cast<int>(value.size()), nullptr, 0);
-  if (required <= 0) {
-    return {};
-  }
-
-  std::wstring wide(static_cast<size_t>(required), L'\0');
-  MultiByteToWideChar(CP_UTF8, 0, value.data(), static_cast<int>(value.size()),
-                      wide.data(), required);
-  return wide;
-}
-
 static bool IsHelpArg(std::wstring_view arg) {
   if (arg == L"-h" || arg == L"--help") {
     return true;
@@ -44,48 +29,70 @@ static bool IsHelpArg(std::wstring_view arg) {
   return EqualsIgnoreCase(arg, L"/h") || EqualsIgnoreCase(arg, L"/help");
 }
 
+static std::string GetEnv() {
+  if (sys::IsVirtualMachine()) {
+    return "VM";
+  }
+  if (sys::IsRdpSession()) {
+    return "RDP";
+  }
+  if (!sys::HasInteractiveDesktop()) {
+    return "HEADLESS";
+  }
+  return "PC";
+}
+
 static void PrintUsage() {
-  std::wcout
-      << L"DisplayProber: CLI enumerate connected/enabled displays.\n"
-      << L"\n"
-      << L"Usage: DisplayProber [-h|--help|/h|/Help]\n"
-      << L"\n"
-      << L"Options:\n"
-      << L"  -h | --help    Show this help message\n"
-      << L"  /h | /Help\n"
-      << L"\n"
-      << L"Windows version support:\n"
-      << L"  - Windows 7+:       Display names, resolution, refresh rate, "
-         L"connector type\n"
-      << L"  - Windows 8.1+:     Per-monitor DPI scaling\n"
-      << L"  - Windows 10 1607+: HDR/advanced color support + per-thread DPI "
-         L"awareness\n"
-      << L"  - Windows 11 24H2+: wide color support state + active color mode\n"
-      << L"\n"
-      << L"Detected features:\n"
-      << L"  - Display/monitor names, resolution, refresh rate\n"
-      << L"  - Connector type (VGA/DVI/HDMI/DisplayPort/internal)\n"
-      << L"  - DPI scaling percentage\n"
-      << L"  - Color encoding/bit depth, HDR, advanced color, DXGI color "
-         L"space\n"
-      << L"\n"
-      << L"Build metadata:\n"
-      << L"  Version: " << Utf8ToWide(DP4W_VERSION_TAG) << L"\n"
-      << L"  Commit:  " << Utf8ToWide(DP4W_GIT_COMMIT) << L"\n"
-      << L"  Built:   " << Utf8ToWide(DP4W_BUILD_TIMESTAMP) << L"\n"
-      << L"\n"
-      << L"https://github.com/acdvorak/displayprober-win-cpp" << "\n"
-      << L"";
+  std::cout << "DisplayProber: CLI enumerate connected/enabled displays.\n"
+            << "\n"
+            << "Usage: DisplayProber\n"
+            << "       DisplayProber [--version] [--commit] [--build]\n"
+            << "       DisplayProber [-h|--help|/h|/Help]\n"
+            << "\n"
+            << "Options:\n"
+            << "  -h | --help    Show this help message\n"
+            << "  /h | /Help\n"
+            << "  --version      Print version tag\n"
+            << "  --commit       Print git commit hash\n"
+            << "  --build        Print build timestamp\n"
+            << "  --env          Print \"VM\", \"RDP\", \"HEADLESS\", \"PC\"\n"
+            << "  --count        Print the number of active monitors\n"
+            << "\n"
+            << "Build metadata:\n"
+            << "  Version: " << DP4W_VERSION_TAG << "\n"
+            << "  Commit:  " << DP4W_GIT_COMMIT << "\n"
+            << "  Built:   " << DP4W_BUILD_TIMESTAMP << "\n"
+            << "\n"
+            << "https://github.com/acdvorak/displayprober-win-cpp" << "\n"
+            << "";
 }
 
 int wmain(int argc, wchar_t* argv[]) {
+  // Set console output code page to UTF-8
+  SetConsoleOutputCP(CP_UTF8);
+
   for (int i = 1; i < argc; ++i) {
     std::wstring_view arg = argv[i];
     if (IsHelpArg(arg)) {
       PrintUsage();
       return 0;
+    } else if (arg == L"--version") {
+      std::cout << DP4W_VERSION_TAG << "\n";
+      return 0;
+    } else if (arg == L"--commit") {
+      std::cout << DP4W_GIT_COMMIT << "\n";
+      return 0;
+    } else if (arg == L"--build") {
+      std::cout << DP4W_BUILD_TIMESTAMP << "\n";
+      return 0;
+    } else if (arg == L"--env") {
+      std::cout << GetEnv() << "\n";
+      return 0;
+    } else if (arg == L"--count") {
+      std::cout << gdi::GetGdiMonitorInfos().size() << "\n";
+      return 0;
     } else {
-      std::wcerr << L"Unknown option: " << arg << L"\n\n";
+      std::cerr << "Unknown option: " << WideToUtf8(arg) << "\n\n";
       PrintUsage();
       return 1;
     }

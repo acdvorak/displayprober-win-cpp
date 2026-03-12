@@ -21,30 +21,32 @@ function Resolve-ScriptPath {
   return (Join-Path -Path $DumpScriptRoot -ChildPath $Path)
 }
 
+$dp4w = (Resolve-ScriptPath -Path bin/DisplayProber-x86.exe)
+
 function Get-DumpDir {
-  $OsObject = if ($HasGetCimInstance) {
-    Get-CimInstance Win32_OperatingSystem
-  }
-  else {
-    Get-WmiObject Win32_OperatingSystem
-  }
+  $OsFullName = Get-OsNameAndVersion
 
-  $OsBaseName = $OsObject.Caption.Trim() -replace '^Microsoft ', ''
-  $ServicePack = if ($OsObject.ServicePackMajorVersion -gt 0) {
-    ' SP{0}' -f $OsObject.ServicePackMajorVersion
-  }
-  else {
-    ''
-  }
+  $dp4w_ver = (& $dp4w --version).Trim()
 
-  $OsFullName = '{0}{1} (build {2})' -f $OsBaseName, $ServicePack, $OsObject.BuildNumber
+  # "2026-03-12T10:08:45-0500" -> "20260312T100845"
+  $dp4w_time = (& $dp4w --build).Trim() -replace '[+-]\d{4}$', '' -replace '[-:]', ''
 
-  return "$DumpScriptRoot/dumps/$OsFullName"
+  $dp4w_count = (& $dp4w --count).Trim()
+
+  # "VM" | "RDP" | "HEADLESS" | "PC"
+  $dp4w_env = (& $dp4w --env).Trim()
+
+  $nt_cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+
+  # 5.1
+  $nt_ver = $nt_cv.CurrentVersion
+
+  return "$DumpScriptRoot/dumps/$dp4w_ver/$dp4w_time/$nt_ver/$OsFullName/${dp4w_env}_${dp4w_count}"
 }
 
 $DumpDir = Get-DumpDir
 
-& (Resolve-ScriptPath -Path bin/DisplayProber-x86.exe) |
+& $dp4w |
   Write-Utf8File -Path $DumpDir/DisplayProber-x86-dev.json
 
 # No output over RDP or SSH. Requires a physical in-person session.

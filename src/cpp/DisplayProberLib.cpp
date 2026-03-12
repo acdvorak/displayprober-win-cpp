@@ -393,7 +393,7 @@ static void EnrichWithSetupApiData(ccd::CcdDisplayConfig& display) {
       *display.monitor_driver_key;
 }
 
-std::string GetDisplayProberJson() {
+json::WinDisplayProberJson GetDisplayProberObjects() {
   // ═══════════════════════════════════════════════════════════
   // Tier 0 — Windows XP+ baseline
   // ═══════════════════════════════════════════════════════════
@@ -470,5 +470,9 @@ std::string GetDisplayProberJson() {
         json_payload.all_setup_api_devices, ccd_display_config, dxgi));
   }
 
-  return json::json(json_payload).dump(2);
+  return json_payload;
+}
+
+std::string GetDisplayProberJson() {
+  return json::json(GetDisplayProberObjects()).dump(2);
 }

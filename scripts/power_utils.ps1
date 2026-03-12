@@ -184,10 +184,11 @@ function Test-HasGetCimInstance {
 
 # Example values:
 #
-# - Windows 7 Pro SP1 (build 7601)
-# - Windows Server 2012 R2 Standard Evaluation (build 9600)
-# - Windows 10 Pro 22H2 (build 19045)
-# - Windows 11 Pro 25H2 (build 26200)
+# - Windows XP Pro x86 SP3 (build 2600)
+# - Windows 7 Pro x64 SP1 (build 7601)
+# - Windows Server 2012 R2 Standard Evaluation x64 (build 9600)
+# - Windows 10 Pro x64 22H2 (build 19045)
+# - Windows 11 Pro x64 25H2 (build 26200)
 function Get-OsNameAndVersion {
   if ($PSVersionTable.Platform -eq 'Windows') {
     return (($PSVersionTable.OS.Split(' ') | Select-Object -First 2) -join ' ')
@@ -200,9 +201,14 @@ function Get-OsNameAndVersion {
     Get-CimInstance Win32_OperatingSystem
   }
   else {
-    # PowerShell v2.0, Windows 7
+    # PowerShell v2.0, Windows XP-7
     Get-WmiObject Win32_OperatingSystem
   }
+
+  $nt_cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+
+  # 5.1
+  $nt_ver = $nt_cv.CurrentVersion
 
   # Example values (before replacements):
   #
@@ -214,13 +220,17 @@ function Get-OsNameAndVersion {
   $os_name = $os_obj.Caption.Trim()
   $os_name = $os_name.Replace('Microsoft(R) ', '')
   $os_name = $os_name.Replace('Microsoft ', '')
-  $os_name = $os_name.Replace('Windows(R) ', 'Windows ')
-  $os_name = $os_name.Replace(' Professional', ' Pro')
+  $os_name = $os_name.Replace('Windows(R)', 'Windows')
+  # $os_name = $os_name.Replace('Windows', "Windows $nt_ver")
+  $os_name = $os_name.Replace('Professional', 'Pro')
 
   # Service Pack. Windows 7 only.
-  $sp = if ($os_obj.ServicePackMajorVersion) { 'SP{0}' -f $os_obj.ServicePackMajorVersion } else { '' }
-
-  $nt_cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+  $sp = if ($os_obj.ServicePackMajorVersion) {
+    'SP{0}' -f $os_obj.ServicePackMajorVersion
+  }
+  else {
+    ''
+  }
 
   # Modern, human-friendly "feature update version" for Windows 10+,
   # starting in the year 2020.
@@ -241,7 +251,21 @@ function Get-OsNameAndVersion {
   # All versions of windows have an incrementing build number.
   $build = '(build {0})' -f $os_obj.BuildNumber
 
-  return (($os_name, $sp, $feature, $release, $build) |
+  $envArch = if ($env:PROCESSOR_ARCHITEW6432) {
+    $env:PROCESSOR_ARCHITEW6432
+  }
+  else {
+    $env:PROCESSOR_ARCHITECTURE
+  }
+
+  $arch = switch ($envArch) {
+    'AMD64' { 'x64' }
+    'IA64' { 'ia64' }
+    'ARM64' { 'arm64' }
+    default { 'x86' }
+  }
+
+  return (($os_name, $arch, $sp, $feature, $release, $build) |
       Where-Object { $_ } ) -join ' '
 }
 
