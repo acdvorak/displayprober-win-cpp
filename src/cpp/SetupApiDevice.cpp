@@ -85,13 +85,11 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       return dev_infos;
     }
 
-    ScopedDevInfoSet dev_info_set(raw_dev_info_set);
-
     for (DWORD interface_index = 0;; ++interface_index) {
       SP_DEVICE_INTERFACE_DATA interface_data = {};
       interface_data.cbSize = sizeof(interface_data);
 
-      if (!SetupDiEnumDeviceInterfaces(dev_info_set.get(), nullptr, class_guid,
+      if (!SetupDiEnumDeviceInterfaces(raw_dev_info_set, nullptr, class_guid,
                                        interface_index, &interface_data)) {
         if (GetLastError() == ERROR_NO_MORE_ITEMS) {
           break;
@@ -100,7 +98,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       }
 
       DWORD required_size = 0;
-      if (SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
+      if (SetupDiGetDeviceInterfaceDetailW(raw_dev_info_set, &interface_data,
                                            nullptr, 0, &required_size,
                                            nullptr) != FALSE) {
         continue;
@@ -119,7 +117,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       SP_DEVINFO_DATA dev_info_data = {};
       dev_info_data.cbSize = sizeof(dev_info_data);
 
-      if (!SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
+      if (!SetupDiGetDeviceInterfaceDetailW(raw_dev_info_set, &interface_data,
                                             detail_data, required_size, nullptr,
                                             &dev_info_data)) {
         continue;
@@ -137,7 +135,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       DevicePath device_path_mixed_case = WideToUtf8(detail_data->DevicePath);
       DeviceInfoHandle dev_info{};
 
-      dev_info.dev_info_set = dev_info_set.get();
+      dev_info.dev_info_set = raw_dev_info_set;
       dev_info.dev_info_data = dev_info_data;
       dev_info.device_path_mixed_case = device_path_mixed_case;
       dev_info.instance_id = std::nullopt;
@@ -149,7 +147,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
 
       DWORD instance_id_length = 0;
       const bool is_len_success = SetupDiGetDeviceInstanceIdW(
-          dev_info_set.get(), &dev_info_data, nullptr, 0, &instance_id_length);
+          raw_dev_info_set, &dev_info_data, nullptr, 0, &instance_id_length);
       if (!is_len_success) {
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER ||
             instance_id_length == 0) {
@@ -161,7 +159,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
         std::wstring instance_id(instance_id_length, L'\0');
 
         const bool is_data_success = SetupDiGetDeviceInstanceIdW(
-            dev_info_set.get(), &dev_info_data, instance_id.data(),
+            raw_dev_info_set, &dev_info_data, instance_id.data(),
             instance_id_length, nullptr);
 
         if (is_data_success) {
@@ -173,10 +171,6 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       }
 
       dev_infos.push_back(dev_info);
-    }
-
-    if (!dev_infos.empty()) {
-      dev_info_set.release();
     }
 
     return dev_infos;
