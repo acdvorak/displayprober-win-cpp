@@ -478,7 +478,7 @@ json::WinSetupApiDeviceCatalog GetAllSetupApiDatas() {
   json::WinSetupApiDeviceCatalog datas;
 
   for (DeviceInfoHandle& handle : raw_adapter_handles) {
-    json::WinSetupApiDevice& json =
+    json::WinSetupApiDevice json =
         GetDeviceProperties(handle.dev_info_set, &handle.dev_info_data);
     json.device_path_lowercase = handle.device_path_lowercase;
     json.instance_id = handle.instance_id;
@@ -486,7 +486,7 @@ json::WinSetupApiDeviceCatalog GetAllSetupApiDatas() {
   }
 
   for (DeviceInfoHandle& handle : raw_monitor_handles) {
-    json::WinSetupApiDevice& json =
+    json::WinSetupApiDevice json =
         GetDeviceProperties(handle.dev_info_set, &handle.dev_info_data);
     json.device_path_lowercase = handle.device_path_lowercase;
     json.instance_id = handle.instance_id;
