@@ -1,4 +1,4 @@
-import * as tsj from 'ts-json-schema-generator';
+import type * as tsj from 'ts-json-schema-generator';
 
 interface DescProps {
   description?: string;
