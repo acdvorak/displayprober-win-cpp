@@ -1,6 +1,8 @@
 export interface WinDisplayProberJson {
   displays: WinDisplay[];
 
+  all_setup_api_devices: WinSetupApiDeviceCatalog;
+
   /**
    * This is a *session-level* value, not specific to an individual display.
    *
@@ -500,6 +502,8 @@ export interface WinDisplay {
   advanced_color_info?: WinAdvancedColorInfo | null;
 
   edid_info?: WinEdidInfo | null;
+
+  setup_api_devices: WinSetupApiDeviceCatalog[];
 }
 
 /**
@@ -523,6 +527,451 @@ export interface WinScreenRectangle {
   /** @int32 */
   bottom: number;
 }
+
+export interface WinSetupApiDeviceCatalog {
+  adapters: WinSetupApiDevice[];
+  monitors: WinSetupApiDevice[];
+}
+
+export interface WinSetupApiDevice {
+  /**
+   * ⚠️ Opaque device path. Use for case-insensitive string comparisons with
+   * other APIs.
+   *
+   * Data source: `SP_DEVICE_INTERFACE_DETAIL_DATA_W.DevicePath`
+   *
+   * Usage:
+   *
+   * - ✅ Use it as a join key to correlate data from different APIs.
+   * - ✅ ALWAYS use case-insensitive string comparisons.
+   * - ❌ Do NOT assume it is always lowercase.
+   * - ❌ Do NOT parse the value.
+   *
+   * According to Microsoft, there is no API contract that the string will
+   * _always_ be lowercase:
+   *
+   * [Device identification strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):
+   *
+   * > Device identification strings **should not be parsed**. They are meant
+   * > only for string comparisons and should be treated as **opaque strings**.
+   *
+   * [`SetupDiGetDeviceInterfaceDetailW() docs`](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetailw#remarks):
+   *
+   * > **Do not attempt to parse the device path symbolic name.**
+   * >
+   * > The device path can be reused across system starts.
+   *
+   * [`IoGetDeviceInterfaces()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-iogetdeviceinterfaces#remarks):
+   *
+   * > **The format of a symbolic link name is opaque; the caller should not
+   * > attempt to parse a symbolic link name.**
+   * >
+   * > Symbolic links for device interface instances can be used across system
+   * > boots.
+   *
+   * [`IoRegisterDeviceInterface()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface#parameters):
+   *
+   * > `SymbolicLinkName`: **kernel-mode path to the symbolic link** for an
+   * > instance of the specified device interface class.
+   * >
+   * > **The caller must treat `SymbolicLinkName` as opaque** and **must not**
+   * > disassemble it.
+   *
+   * Examples:
+   *
+   * - `"\\\\?\\display#sam73a5#5&757fe5e&7&uid20737#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+   * - `"\\\\?\\display#viz1009#5&757fe5e&7&uid20739#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+   * - `"\\\\?\\pci#ven_10de&dev_2584&subsys_184610de&rev_a1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
+   * - `"\\\\?\\root#basicdisplay#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
+   *
+   */
+  device_path_lowercase: string;
+
+  /**
+   * Data source: `SetupDiGetDeviceInstanceIdW()`
+   *
+   * Examples:
+   *
+   * - `"DISPLAY\\SAM73A5\\5&757FE5E&7&UID20737"`
+   * - `"DISPLAY\\VIZ1009\\5&757FE5E&7&UID20739"`
+   * - `"PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\4&2B1C6285&0&0010"`
+   * - `"ROOT\\BASICDISPLAY\\0000"`
+   */
+  instance_id?: PnpInstanceId | null;
+
+  /**
+   * Examples:
+   *
+   * - `"Generic PnP Monitor"`
+   * - `"Microsoft Basic Display Driver"`
+   * - `"NVIDIA GeForce RTX 3050"`
+   */
+  device_desc?: string | null;
+
+  /**
+   * Examples:
+   *
+   * ```jsonc
+   * [
+   *   "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1",
+   *   "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE",
+   *   "PCI\\VEN_10DE&DEV_2584&CC_030000",
+   *   "PCI\\VEN_10DE&DEV_2584&CC_0300"
+   * ]
+   * ```
+   *
+   * ```jsonc
+   * [
+   *   "ROOT\\BasicDisplay"
+   * ]
+   * ```
+   *
+   * ```jsonc
+   * [
+   *   "MONITOR\\SAM73A5"
+   * ]
+   * ```
+   *
+   * ```jsonc
+   * [
+   *   "MONITOR\\VIZ1009"
+   * ]
+   * ```
+   */
+  hardware_id?: PnpHardwareId[] | null;
+
+  /**
+   * Examples:
+   *
+   * ```jsonc
+   * [
+   *   "PCI\\VEN_10DE&DEV_2584&REV_A1",
+   *   "PCI\\VEN_10DE&DEV_2584",
+   *   "PCI\\VEN_10DE&CC_030000",
+   *   "PCI\\VEN_10DE&CC_0300",
+   *   "PCI\\VEN_10DE",
+   *   "PCI\\CC_030000",
+   *   "PCI\\CC_0300",
+   * ]
+   * ```
+   *
+   * ```jsonc
+   * [
+   *   "*PNP09FF"
+   * ]
+   * ```
+   */
+  compatible_ids?: PnpCompatibleId[] | null;
+
+  /**
+   * Examples:
+   *
+   * - `"nvlddmkm"`
+   * - `"BasicDisplay"`
+   * - `"monitor"`
+   *
+   * @string
+   */
+  service?: PnpServiceName | (string & {}) | null;
+
+  /**
+   * Examples:
+   *
+   * - `"Display"`
+   * - `"Monitor"`
+   * - `"System"`
+   *
+   * @string
+   */
+  class_name?: PnpClassName | (string & {}) | null;
+
+  /**
+   * Examples:
+   *
+   * - `"{4D36E968-E325-11CE-BFC1-08002BE10318}"` (Display)
+   * - `"{4D36E96E-E325-11CE-BFC1-08002BE10318}"` (Monitor)
+   * - `"{4D36E97D-E325-11CE-BFC1-08002BE10318}"` (System)
+   *
+   * @string
+   */
+  class_guid?: PnpClassGuid | (string & {}) | null;
+
+  /**
+   * Examples:
+   *
+   * - `"{4d36e968-e325-11ce-bfc1-08002be10318}\\0000"`
+   * - `"{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004"`
+   * - `"{4d36e96e-e325-11ce-bfc1-08002be10318}\\0005"`
+   * - `"{4d36e97d-e325-11ce-bfc1-08002be10318}\\0051"`
+   */
+  driver?: PnpDriverGuidWithId | null;
+
+  /**
+   * Examples:
+   *
+   * - `0`
+   *
+   * @uint32
+   */
+  config_flags?: number | null;
+
+  /**
+   * Examples:
+   *
+   * - `"(Standard display types)"`
+   * - `"(Standard monitor types)"`
+   * - `"NVIDIA"`
+   *
+   * @string
+   */
+  mfg?: PnpMfgName | null;
+
+  /**
+   * Examples:
+   *
+   * - `"Generic Monitor (E390-B0)"`
+   * - `"Generic Monitor (QCQ95S)"`
+   */
+  friendly_name?: PnpFriendlyName | null;
+
+  /**
+   * Examples:
+   *
+   * - `"PCI bus 5, device 0, function 0"`
+   */
+  location_information?: PnpLocationInformation | null;
+
+  /**
+   * Examples:
+   *
+   * - `"\\Device\\00000003"`
+   * - `"\\Device\\0000006d"`
+   * - `"\\Device\\0000006e"`
+   * - `"\\Device\\NTPNP_PCI0024"`
+   */
+  physical_device_object_name?: PnpPhysicalDeviceObjectName | null;
+
+  /**
+   * Examples:
+   *
+   * - `0`
+   * - `228`
+   *
+   * @uint32
+   */
+  capabilities?: number | null;
+
+  /**
+   * Example:
+   *
+   * - `2`
+   *
+   * @uint32
+   */
+  ui_number?: number | null;
+
+  /**
+   * Example:
+   *
+   * - `"{C6CA0D74-E43B-4ABD-A63A-4BD2AD319D60}"`
+   * - `"{C8EBDFB0-B510-11D0-80E5-00A0C92542E3}"`
+   */
+  bus_type_guid?: PnpGuidFormat | null;
+
+  /**
+   * Example:
+   *
+   * - `5`
+   * - `15`
+   *
+   * @uint32
+   */
+  legacy_bus_type?: number | null;
+
+  /**
+   * Example:
+   *
+   * - `0`
+   * - `5`
+   *
+   * @uint32
+   */
+  bus_number?: number | null;
+
+  /**
+   * Example:
+   *
+   * - `"DISPLAY"`
+   * - `"PCI"`
+   * - `"ROOT"`
+   *
+   * @string
+   */
+  enumerator_name?: PnpEnumeratorName | (string & {}) | null;
+
+  /**
+   * @uint32
+   */
+  dev_type?: number | null;
+
+  /**
+   * @uint32
+   */
+  characteristics?: number | null;
+
+  /**
+   * Example:
+   *
+   * - `0`
+   * - `273`
+   * - `275`
+   *
+   * @uint32
+   */
+  address?: number | null;
+
+  ui_number_desc_format?: string | null;
+
+  /**
+   * Examples:
+   *
+   * ```jsonc
+   * [
+   *   "PCIROOT(0)#PCI(0200)#PCI(0000)",
+   *   "ACPI(_SB_)#ACPI(PCI0)#ACPI(NPE2)#ACPI(SLT2)",
+   * ]
+   * ```
+   */
+  location_paths?: PnpLocationPath[] | null;
+
+  /**
+   * Examples:
+   *
+   * - `"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}"`
+   * - `"{840576F3-7055-5A87-9859-A63E0FA9F3DA}"`
+   * - `"{DA0631A1-C6DF-5655-BEA1-9110DBA37845}"`
+   */
+  base_container_id?: PnpGuidFormat | null;
+}
+
+/**
+ * Examples:
+ *
+ * ```jsonc
+ * [
+ *   "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1",
+ *   "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE",
+ *   "PCI\\VEN_10DE&DEV_2584&CC_030000",
+ *   "PCI\\VEN_10DE&DEV_2584&CC_0300"
+ * ]
+ * ```
+ */
+export type PnpPciId =
+  | `PCI\\VEN_${string}&DEV_${string}&SUBSYS_${string}&REV_${string}`
+  | `PCI\\VEN_${string}&DEV_${string}&SUBSYS_${string}`
+  | `PCI\\VEN_${string}&DEV_${string}&CC_${string}`;
+
+/**
+ * Examples:
+ *
+ * ```jsonc
+ * [
+ *   "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1",
+ *   "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE",
+ *   "PCI\\VEN_10DE&DEV_2584&CC_030000",
+ *   "PCI\\VEN_10DE&DEV_2584&CC_0300"
+ * ]
+ * ```
+ *
+ * ```jsonc
+ * [
+ *   "ROOT\\BasicDisplay"
+ * ]
+ * ```
+ *
+ * ```jsonc
+ * [
+ *   "MONITOR\\SAM73A5"
+ * ]
+ * ```
+ *
+ * ```jsonc
+ * [
+ *   "MONITOR\\VIZ1009"
+ * ]
+ * ```
+ */
+export type PnpHardwareId = PnpPciId | `ROOT\\${string}` | `MONITOR\\${string}`;
+
+/**
+ * Examples:
+ *
+ * - `"DISPLAY\\SAM73A5\\5&757FE5E&7&UID20737"`
+ * - `"DISPLAY\\VIZ1009\\5&757FE5E&7&UID20739"`
+ * - `"PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\4&2B1C6285&0&0010"`
+ * - `"ROOT\\BASICDISPLAY\\0000"`
+ */
+export type PnpInstanceId =
+  | `DISPLAY\\${string}\\${number}&${string}&${number}&UID${number}}`
+  | `PCI\\VEN_${string}&DEV_${string}&SUBSYS_${string}&REV_${string}\\${number}&${string}&${number}&${string}`
+  | `ROOT\\${string}\\${string}`;
+
+/**
+ * Examples:
+ *
+ * ```jsonc
+ * [
+ *   "PCI\\VEN_10DE&DEV_2584&REV_A1",
+ *   "PCI\\VEN_10DE&DEV_2584",
+ *   "PCI\\VEN_10DE&CC_030000",
+ *   "PCI\\VEN_10DE&CC_0300",
+ *   "PCI\\VEN_10DE",
+ *   "PCI\\CC_030000",
+ *   "PCI\\CC_0300",
+ * ]
+ * ```
+ *
+ * ```jsonc
+ * [
+ *   "*PNP09FF"
+ * ]
+ * ```
+ */
+export type PnpCompatibleId = PnpPciId | `PCI\\CC_${string}` | `*PNP${string}`;
+
+export type PnpClassName = 'Display' | 'Monitor' | 'System';
+
+export type PnpGuidFormat =
+  `{${string}-${string}-${string}-${string}-${string}}`;
+
+export type PnpDisplayGuid = '{4D36E968-E325-11CE-BFC1-08002BE10318}';
+export type PnpMonitorGuid = '{4D36E96E-E325-11CE-BFC1-08002BE10318}';
+export type PnpSystemGuid = '{4D36E97D-E325-11CE-BFC1-08002BE10318}';
+
+export type PnpClassGuid = PnpDisplayGuid | PnpMonitorGuid | PnpSystemGuid;
+
+export type PnpDriverGuidWithId = `${Lowercase<PnpClassGuid>}\\${string}`;
+
+export type PnpServiceName = 'BasicDisplay' | 'monitor';
+
+export type PnpMfgName =
+  | '(Standard display types)'
+  | '(Standard monitor types)'
+  | 'NVIDIA'
+  | (string & {});
+
+export type PnpFriendlyName = `Generic Monitor (${string})`;
+
+export type PnpLocationInformation =
+  `PCI bus ${number}, device ${number}, function ${number}`;
+
+export type PnpPhysicalDeviceObjectName = `\\Device\\${string}`;
+
+export type PnpEnumeratorName = 'DISPLAY' | 'PCI' | 'ROOT';
+
+export type PnpLocationPath =
+  | `PCIROOT(${string})#PCI(${string})#PCI(${string})`
+  | `ACPI(_SB_)#ACPI(PCI${number})#ACPI(NPE${number})#ACPI(SLT${number})`;
 
 export interface WinStandardColorInfo {
   is_hdr_supported: boolean;

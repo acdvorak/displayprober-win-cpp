@@ -111,6 +111,7 @@ json::WinDisplay MergeDisplayDataToJson(
     const size_t index, const size_t count,
     const ShortLivedIdentifier& short_lived_identifier,
     const gdi::GdiMonitorInfo& gdi_monitor_info,
+    const json::WinSetupApiDeviceCatalog& all_setup_api_devices,
     const std::optional<ccd::CcdDisplayConfig>& ccd_display_config,
     const std::optional<dxgi::DxgiOutputInfo>& dxgi_output_info) {
   // Initialize all primitive fields to their default values.
@@ -128,9 +129,39 @@ json::WinDisplay MergeDisplayDataToJson(
   json_obj.bounds = gdi_monitor_info.bounds;
   json_obj.working_area = gdi_monitor_info.working_area;
 
-  if (const auto pct = gdi_monitor_info.dpi_scale_percent.value_or(0);
-      pct > 0) {
-    json_obj.dpi_scaling_percent = u32(pct);
+  // Filter and correlate SetupAPI devices with this display using CCD
+  // identifiers (adapter/monitor device paths and instance IDs).
+  if (ccd_display_config) {
+    const auto& ccd = *ccd_display_config;
+    json::WinSetupApiDeviceCatalog matched{};
+
+    for (const auto& adapter : all_setup_api_devices.adapters) {
+      if ((HasValue(ccd.adapter_device_path) &&
+           EqualsIgnoreCase(adapter.device_path_lowercase,
+                            *ccd.adapter_device_path)) ||
+          (HasValue(ccd.adapter_instance_id) && adapter.instance_id &&
+           EqualsIgnoreCase(*adapter.instance_id, *ccd.adapter_instance_id))) {
+        matched.adapters.push_back(adapter);
+      }
+    }
+
+    for (const auto& monitor : all_setup_api_devices.monitors) {
+      if ((!ccd.monitor_device_path.empty() &&
+           EqualsIgnoreCase(monitor.device_path_lowercase,
+                            ccd.monitor_device_path)) ||
+          (HasValue(ccd.monitor_instance_id) && monitor.instance_id &&
+           EqualsIgnoreCase(*monitor.instance_id, *ccd.monitor_instance_id))) {
+        matched.monitors.push_back(monitor);
+      }
+    }
+
+    if (!matched.adapters.empty() || !matched.monitors.empty()) {
+      json_obj.setup_api_devices = {matched};
+    }
+  }
+
+  if (const auto pct = u32(gdi_monitor_info.dpi_scale_percent); pct > 0) {
+    json_obj.dpi_scaling_percent = pct;
   }
 
   // Initialize all primitive fields to their default values.
@@ -415,6 +446,7 @@ std::string GetDisplayProberJson() {
   json_payload.has_interactive_desktop = sys::HasInteractiveDesktop();
   json_payload.is_remote_desktop = sys::IsRdpSession();
   json_payload.is_virtual_machine = sys::IsVirtualMachine();
+  json_payload.all_setup_api_devices = setupapi::GetAllSetupApiDatas();
 
   size_t i = 0;
   for (const auto& [id, gdi] : gdi_monitor_infos) {
@@ -433,7 +465,8 @@ std::string GetDisplayProberJson() {
     }
 
     json_payload.displays.push_back(MergeDisplayDataToJson(
-        i++, gdi_monitor_infos.size(), id, gdi, ccd_display_config, dxgi));
+        i++, gdi_monitor_infos.size(), id, gdi,
+        json_payload.all_setup_api_devices, ccd_display_config, dxgi));
   }
 
   return json::json(json_payload).dump(2);

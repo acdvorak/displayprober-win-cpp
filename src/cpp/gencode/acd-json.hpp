@@ -86,6 +86,244 @@ namespace json {
     }
     #endif
 
+    struct WinSetupApiDevice {
+        /**
+         * Example:
+         *
+         * - `0`
+         * - `273`
+         * - `275`
+         */
+        std::optional<uint32_t> address;
+        /**
+         * Examples:
+         *
+         * - `"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}"`
+         * - `"{840576F3-7055-5A87-9859-A63E0FA9F3DA}"`
+         * - `"{DA0631A1-C6DF-5655-BEA1-9110DBA37845}"`
+         */
+        std::optional<std::string> base_container_id;
+        /**
+         * Example:
+         *
+         * - `0`
+         * - `5`
+         */
+        std::optional<uint32_t> bus_number;
+        /**
+         * Example:
+         *
+         * - `"{C6CA0D74-E43B-4ABD-A63A-4BD2AD319D60}"`
+         * - `"{C8EBDFB0-B510-11D0-80E5-00A0C92542E3}"`
+         */
+        std::optional<std::string> bus_type_guid;
+        /**
+         * Examples:
+         *
+         * - `0`
+         * - `228`
+         */
+        std::optional<uint32_t> capabilities;
+        std::optional<uint32_t> characteristics;
+        /**
+         * Examples:
+         *
+         * - `"{4D36E968-E325-11CE-BFC1-08002BE10318}"` (Display)
+         * - `"{4D36E96E-E325-11CE-BFC1-08002BE10318}"` (Monitor)
+         * - `"{4D36E97D-E325-11CE-BFC1-08002BE10318}"` (System)
+         */
+        std::optional<std::string> class_guid;
+        /**
+         * Examples:
+         *
+         * - `"Display"`
+         * - `"Monitor"`
+         * - `"System"`
+         */
+        std::optional<std::string> class_name;
+        /**
+         * Examples:
+         *
+         * ```jsonc [   "PCI\\VEN_10DE&DEV_2584&REV_A1",   "PCI\\VEN_10DE&DEV_2584",
+         * "PCI\\VEN_10DE&CC_030000",   "PCI\\VEN_10DE&CC_0300",   "PCI\\VEN_10DE",
+         * "PCI\\CC_030000",   "PCI\\CC_0300", ] ```
+         *
+         * ```jsonc [   "*PNP09FF" ] ```
+         */
+        std::optional<std::vector<std::string>> compatible_ids;
+        /**
+         * Examples:
+         *
+         * - `0`
+         */
+        std::optional<uint32_t> config_flags;
+        std::optional<uint32_t> dev_type;
+        /**
+         * Examples:
+         *
+         * - `"Generic PnP Monitor"`
+         * - `"Microsoft Basic Display Driver"`
+         * - `"NVIDIA GeForce RTX 3050"`
+         */
+        std::optional<std::string> device_desc;
+        /**
+         * ⚠️ Opaque device path. Use for case-insensitive string comparisons with other APIs.
+         *
+         * Data source: `SP_DEVICE_INTERFACE_DETAIL_DATA_W.DevicePath`
+         *
+         * Usage:
+         *
+         * - ✅ Use it as a join key to correlate data from different APIs.
+         * - ✅ ALWAYS use case-insensitive string comparisons.
+         * - ❌ Do NOT assume it is always lowercase.
+         * - ❌ Do NOT parse the value.
+         *
+         * According to Microsoft, there is no API contract that the string will _always_ be
+         * lowercase:
+         *
+         * [Device identification
+         * strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):
+         *
+         * > Device identification strings **should not be parsed**. They are meant > only for
+         * string comparisons and should be treated as **opaque strings**.
+         *
+         * [`SetupDiGetDeviceInterfaceDetailW()
+         * docs`](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetailw#remarks):
+         *
+         * > **Do not attempt to parse the device path symbolic name.** > > The device path can be
+         * reused across system starts.
+         *
+         * [`IoGetDeviceInterfaces()`
+         * docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-iogetdeviceinterfaces#remarks):
+         *
+         * > **The format of a symbolic link name is opaque; the caller should not > attempt to
+         * parse a symbolic link name.** > > Symbolic links for device interface instances can be
+         * used across system > boots.
+         *
+         * [`IoRegisterDeviceInterface()`
+         * docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface#parameters):
+         *
+         * > `SymbolicLinkName`: **kernel-mode path to the symbolic link** for an > instance of the
+         * specified device interface class. > > **The caller must treat `SymbolicLinkName` as
+         * opaque** and **must not** > disassemble it.
+         *
+         * Examples:
+         *
+         * - `"\\\\?\\display#sam73a5#5&757fe5e&7&uid20737#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+         * - `"\\\\?\\display#viz1009#5&757fe5e&7&uid20739#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
+         * -
+         * `"\\\\?\\pci#ven_10de&dev_2584&subsys_184610de&rev_a1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
+         * - `"\\\\?\\root#basicdisplay#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}"`
+         */
+        std::string device_path_lowercase;
+        /**
+         * Examples:
+         *
+         * - `"{4d36e968-e325-11ce-bfc1-08002be10318}\\0000"`
+         * - `"{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004"`
+         * - `"{4d36e96e-e325-11ce-bfc1-08002be10318}\\0005"`
+         * - `"{4d36e97d-e325-11ce-bfc1-08002be10318}\\0051"`
+         */
+        std::optional<std::string> driver;
+        /**
+         * Example:
+         *
+         * - `"DISPLAY"`
+         * - `"PCI"`
+         * - `"ROOT"`
+         */
+        std::optional<std::string> enumerator_name;
+        /**
+         * Examples:
+         *
+         * - `"Generic Monitor (E390-B0)"`
+         * - `"Generic Monitor (QCQ95S)"`
+         */
+        std::optional<std::string> friendly_name;
+        /**
+         * Examples:
+         *
+         * ```jsonc [   "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1",
+         * "PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE",   "PCI\\VEN_10DE&DEV_2584&CC_030000",
+         * "PCI\\VEN_10DE&DEV_2584&CC_0300" ] ```
+         *
+         * ```jsonc [   "ROOT\\BasicDisplay" ] ```
+         *
+         * ```jsonc [   "MONITOR\\SAM73A5" ] ```
+         *
+         * ```jsonc [   "MONITOR\\VIZ1009" ] ```
+         */
+        std::optional<std::vector<std::string>> hardware_id;
+        /**
+         * Data source: `SetupDiGetDeviceInstanceIdW()`
+         *
+         * Examples:
+         *
+         * - `"DISPLAY\\SAM73A5\\5&757FE5E&7&UID20737"`
+         * - `"DISPLAY\\VIZ1009\\5&757FE5E&7&UID20739"`
+         * - `"PCI\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\4&2B1C6285&0&0010"`
+         * - `"ROOT\\BASICDISPLAY\\0000"`
+         */
+        std::optional<std::string> instance_id;
+        /**
+         * Example:
+         *
+         * - `5`
+         * - `15`
+         */
+        std::optional<uint32_t> legacy_bus_type;
+        /**
+         * Examples:
+         *
+         * - `"PCI bus 5, device 0, function 0"`
+         */
+        std::optional<std::string> location_information;
+        /**
+         * Examples:
+         *
+         * ```jsonc [   "PCIROOT(0)#PCI(0200)#PCI(0000)",
+         * "ACPI(_SB_)#ACPI(PCI0)#ACPI(NPE2)#ACPI(SLT2)", ] ```
+         */
+        std::optional<std::vector<std::string>> location_paths;
+        /**
+         * Examples:
+         *
+         * - `"(Standard display types)"`
+         * - `"(Standard monitor types)"`
+         * - `"NVIDIA"`
+         */
+        std::optional<std::string> mfg;
+        /**
+         * Examples:
+         *
+         * - `"\\Device\\00000003"`
+         * - `"\\Device\\0000006d"`
+         * - `"\\Device\\0000006e"`
+         * - `"\\Device\\NTPNP_PCI0024"`
+         */
+        std::optional<std::string> physical_device_object_name;
+        /**
+         * Examples:
+         *
+         * - `"nvlddmkm"`
+         * - `"BasicDisplay"`
+         * - `"monitor"`
+         */
+        std::optional<std::string> service;
+        /**
+         * Example:
+         *
+         * - `2`
+         */
+        std::optional<uint32_t> ui_number;
+        std::optional<std::string> ui_number_desc_format;
+    };
+
+    struct WinSetupApiDeviceCatalog {
+        std::vector<WinSetupApiDevice> adapters;
+        std::vector<WinSetupApiDevice> monitors;
+    };
+
     enum class WinDisplayRotationDegrees : uint16_t {
         VALUE_0 = 0,
         VALUE_90 = 90,
@@ -634,6 +872,7 @@ namespace json {
          * Progressive or interlaced.
          */
         std::optional<WinScanLineOrder> scan_line_ordering;
+        std::vector<WinSetupApiDeviceCatalog> setup_api_devices;
         /**
          * Windows "monitor device name".
          *
@@ -685,6 +924,7 @@ namespace json {
     };
 
     struct WinDisplayProberJson {
+        WinSetupApiDeviceCatalog all_setup_api_devices;
         std::vector<WinDisplay> displays;
         /**
          * This is a *session-level* value, not specific to an individual display.
@@ -715,6 +955,12 @@ namespace json {
 }
 
 namespace json {
+    void from_json(const json & j, WinSetupApiDevice & x);
+    void to_json(json & j, const WinSetupApiDevice & x);
+
+    void from_json(const json & j, WinSetupApiDeviceCatalog & x);
+    void to_json(json & j, const WinSetupApiDeviceCatalog & x);
+
     void from_json(const json & j, WinAdvancedColorInfo & x);
     void to_json(json & j, const WinAdvancedColorInfo & x);
 
@@ -750,6 +996,126 @@ namespace json {
 
     void from_json(const json & j, WinDxgiColorSpace & x);
     void to_json(json & j, const WinDxgiColorSpace & x);
+
+    inline void from_json(const json & j, WinSetupApiDevice& x) {
+        x.address = get_stack_optional<uint32_t>(j, "address");
+        x.base_container_id = get_stack_optional<std::string>(j, "base_container_id");
+        x.bus_number = get_stack_optional<uint32_t>(j, "bus_number");
+        x.bus_type_guid = get_stack_optional<std::string>(j, "bus_type_guid");
+        x.capabilities = get_stack_optional<uint32_t>(j, "capabilities");
+        x.characteristics = get_stack_optional<uint32_t>(j, "characteristics");
+        x.class_guid = get_stack_optional<std::string>(j, "class_guid");
+        x.class_name = get_stack_optional<std::string>(j, "class_name");
+        x.compatible_ids = get_stack_optional<std::vector<std::string>>(j, "compatible_ids");
+        x.config_flags = get_stack_optional<uint32_t>(j, "config_flags");
+        x.dev_type = get_stack_optional<uint32_t>(j, "dev_type");
+        x.device_desc = get_stack_optional<std::string>(j, "device_desc");
+        x.device_path_lowercase = j.at("device_path_lowercase").get<std::string>();
+        x.driver = get_stack_optional<std::string>(j, "driver");
+        x.enumerator_name = get_stack_optional<std::string>(j, "enumerator_name");
+        x.friendly_name = get_stack_optional<std::string>(j, "friendly_name");
+        x.hardware_id = get_stack_optional<std::vector<std::string>>(j, "hardware_id");
+        x.instance_id = get_stack_optional<std::string>(j, "instance_id");
+        x.legacy_bus_type = get_stack_optional<uint32_t>(j, "legacy_bus_type");
+        x.location_information = get_stack_optional<std::string>(j, "location_information");
+        x.location_paths = get_stack_optional<std::vector<std::string>>(j, "location_paths");
+        x.mfg = get_stack_optional<std::string>(j, "mfg");
+        x.physical_device_object_name = get_stack_optional<std::string>(j, "physical_device_object_name");
+        x.service = get_stack_optional<std::string>(j, "service");
+        x.ui_number = get_stack_optional<uint32_t>(j, "ui_number");
+        x.ui_number_desc_format = get_stack_optional<std::string>(j, "ui_number_desc_format");
+    }
+
+    inline void to_json(json & j, const WinSetupApiDevice & x) {
+        j = json::object();
+        if (x.address) {
+            j["address"] = x.address;
+        }
+        if (x.base_container_id) {
+            j["base_container_id"] = x.base_container_id;
+        }
+        if (x.bus_number) {
+            j["bus_number"] = x.bus_number;
+        }
+        if (x.bus_type_guid) {
+            j["bus_type_guid"] = x.bus_type_guid;
+        }
+        if (x.capabilities) {
+            j["capabilities"] = x.capabilities;
+        }
+        if (x.characteristics) {
+            j["characteristics"] = x.characteristics;
+        }
+        if (x.class_guid) {
+            j["class_guid"] = x.class_guid;
+        }
+        if (x.class_name) {
+            j["class_name"] = x.class_name;
+        }
+        if (x.compatible_ids) {
+            j["compatible_ids"] = x.compatible_ids;
+        }
+        if (x.config_flags) {
+            j["config_flags"] = x.config_flags;
+        }
+        if (x.dev_type) {
+            j["dev_type"] = x.dev_type;
+        }
+        if (x.device_desc) {
+            j["device_desc"] = x.device_desc;
+        }
+        j["device_path_lowercase"] = x.device_path_lowercase;
+        if (x.driver) {
+            j["driver"] = x.driver;
+        }
+        if (x.enumerator_name) {
+            j["enumerator_name"] = x.enumerator_name;
+        }
+        if (x.friendly_name) {
+            j["friendly_name"] = x.friendly_name;
+        }
+        if (x.hardware_id) {
+            j["hardware_id"] = x.hardware_id;
+        }
+        if (x.instance_id) {
+            j["instance_id"] = x.instance_id;
+        }
+        if (x.legacy_bus_type) {
+            j["legacy_bus_type"] = x.legacy_bus_type;
+        }
+        if (x.location_information) {
+            j["location_information"] = x.location_information;
+        }
+        if (x.location_paths) {
+            j["location_paths"] = x.location_paths;
+        }
+        if (x.mfg) {
+            j["mfg"] = x.mfg;
+        }
+        if (x.physical_device_object_name) {
+            j["physical_device_object_name"] = x.physical_device_object_name;
+        }
+        if (x.service) {
+            j["service"] = x.service;
+        }
+        if (x.ui_number) {
+            j["ui_number"] = x.ui_number;
+        }
+        if (x.ui_number_desc_format) {
+            j["ui_number_desc_format"] = x.ui_number_desc_format;
+        }
+    }
+
+    inline void from_json(const json & j, WinSetupApiDeviceCatalog& x) {
+        x.adapters = j.at("adapters").get<std::vector<WinSetupApiDevice>>();
+        x.monitors = j.at("monitors").get<std::vector<WinSetupApiDevice>>();
+    }
+
+    inline void to_json(json & j, const WinSetupApiDeviceCatalog & x) {
+        j = json::object();
+        j["adapters"] = x.adapters;
+        j["monitors"] = x.monitors;
+    }
 
     void from_json(const json & j, WinDisplayRotationDegrees & x);
     void to_json(json & j, const WinDisplayRotationDegrees & x);
@@ -932,6 +1298,7 @@ namespace json {
         x.refresh_rate_numerator = get_stack_optional<uint32_t>(j, "refresh_rate_numerator");
         x.rotation_deg = get_stack_optional<WinDisplayRotationDegrees>(j, "rotation_deg");
         x.scan_line_ordering = get_stack_optional<WinScanLineOrder>(j, "scan_line_ordering");
+        x.setup_api_devices = j.at("setup_api_devices").get<std::vector<WinSetupApiDeviceCatalog>>();
         x.short_lived_identifier = j.at("short_lived_identifier").get<std::string>();
         x.stable_id = get_stack_optional<std::string>(j, "stable_id");
         x.stable_id_candidates = get_stack_optional<std::vector<std::string>>(j, "stable_id_candidates");
@@ -1020,6 +1387,7 @@ namespace json {
         if (x.scan_line_ordering) {
             j["scan_line_ordering"] = x.scan_line_ordering;
         }
+        j["setup_api_devices"] = x.setup_api_devices;
         j["short_lived_identifier"] = x.short_lived_identifier;
         if (x.stable_id) {
             j["stable_id"] = x.stable_id;
@@ -1038,6 +1406,7 @@ namespace json {
     }
 
     inline void from_json(const json & j, WinDisplayProberJson& x) {
+        x.all_setup_api_devices = j.at("all_setup_api_devices").get<WinSetupApiDeviceCatalog>();
         x.displays = j.at("displays").get<std::vector<WinDisplay>>();
         x.has_interactive_desktop = j.at("has_interactive_desktop").get<bool>();
         x.is_remote_desktop = j.at("is_remote_desktop").get<bool>();
@@ -1046,6 +1415,7 @@ namespace json {
 
     inline void to_json(json & j, const WinDisplayProberJson & x) {
         j = json::object();
+        j["all_setup_api_devices"] = x.all_setup_api_devices;
         j["displays"] = x.displays;
         j["has_interactive_desktop"] = x.has_interactive_desktop;
         j["is_remote_desktop"] = x.is_remote_desktop;

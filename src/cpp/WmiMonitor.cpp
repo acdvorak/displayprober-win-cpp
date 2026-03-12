@@ -7,7 +7,7 @@
 #include "WmiMonitor.h"
 
 // This header needs to be imported first.
-#include <windows.h>
+#include <Windows.h>
 
 // Keep other .h headers separate from Windows.h to prevent auto-sorting.
 #include <d3dkmthk.h>

@@ -12,6 +12,9 @@
             "$ref": "#/definitions/WinDisplay"
           }
         },
+        "all_setup_api_devices": {
+          "$ref": "#/definitions/WinSetupApiDeviceCatalog"
+        },
         "has_interactive_desktop": {
           "type": "boolean",
           "description": "This is a *session-level* value, not specific to an individual display.\n\nIt will be `false` in all non-interactive sessions, such as:\n\n- SSH\n- Remote console\n- Headless server\n\nTODO(acdvorak): Clarify the difference between  {@link  has_interactive_desktop }  and  {@link  is_attached_to_desktop  } .",
@@ -33,6 +36,7 @@
       },
       "required": [
         "displays",
+        "all_setup_api_devices",
         "has_interactive_desktop",
         "is_remote_desktop",
         "is_virtual_machine"
@@ -357,6 +361,12 @@
               "type": "null"
             }
           ]
+        },
+        "setup_api_devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WinSetupApiDeviceCatalog"
+          }
         }
       },
       "required": [
@@ -364,7 +374,8 @@
         "is_primary",
         "bounds",
         "working_area",
-        "standard_color_info"
+        "standard_color_info",
+        "setup_api_devices"
       ],
       "additionalProperties": false,
       "description": "An individual monitor or virtual display attached to a Windows PC.",
@@ -840,6 +851,483 @@
       "description": "Type of physical connector a video output device (on the display adapter) uses to connect to an external display device.\n\nKnown values for  {@link  WmiMonitorConnectionParams.VideoOutputTechnology  } .",
       "markdownDescription": "Type of physical connector a video output device (on the display adapter)\nuses to connect to an external display device.\n\nKnown values for  {@link  WmiMonitorConnectionParams.VideoOutputTechnology  } .",
       "fullDescription": "Type of physical connector a video output device (on the display adapter)\nuses to connect to an external display device.\n\nKnown values for {@link WmiMonitorConnectionParams.VideoOutputTechnology}.\n\n@see https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/d3dkmdt/ne-d3dkmdt-_d3dkmdt_video_output_technology"
+    },
+    "WinSetupApiDeviceCatalog": {
+      "type": "object",
+      "properties": {
+        "adapters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WinSetupApiDevice"
+          }
+        },
+        "monitors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WinSetupApiDevice"
+          }
+        }
+      },
+      "required": [
+        "adapters",
+        "monitors"
+      ],
+      "additionalProperties": false
+    },
+    "WinSetupApiDevice": {
+      "type": "object",
+      "properties": {
+        "device_path_lowercase": {
+          "type": "string",
+          "description": "⚠️ Opaque device path. Use for case-insensitive string comparisons with other APIs.\n\nData source: `SP_DEVICE_INTERFACE_DETAIL_DATA_W.DevicePath`\n\nUsage:\n\n- ✅ Use it as a join key to correlate data from different APIs.\n- ✅ ALWAYS use case-insensitive string comparisons.\n- ❌ Do NOT assume it is always lowercase.\n- ❌ Do NOT parse the value.\n\nAccording to Microsoft, there is no API contract that the string will _always_ be lowercase:\n\n[Device identification strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):\n\n> Device identification strings **should not be parsed**. They are meant > only for string comparisons and should be treated as **opaque strings**.\n\n[`SetupDiGetDeviceInterfaceDetailW() docs`](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetailw#remarks):\n\n> **Do not attempt to parse the device path symbolic name.** > > The device path can be reused across system starts.\n\n[`IoGetDeviceInterfaces()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-iogetdeviceinterfaces#remarks):\n\n> **The format of a symbolic link name is opaque; the caller should not > attempt to parse a symbolic link name.** > > Symbolic links for device interface instances can be used across system > boots.\n\n[`IoRegisterDeviceInterface()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface#parameters):\n\n> `SymbolicLinkName`: **kernel-mode path to the symbolic link** for an > instance of the specified device interface class. > > **The caller must treat `SymbolicLinkName` as opaque** and **must not** > disassemble it.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\display#sam73a5#5&757fe5e&7&uid20737#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\display#viz1009#5&757fe5e&7&uid20739#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\pci#ven_10de&dev_2584&subsys_184610de&rev_a1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`\n- `\"\\\\\\\\?\\\\root#basicdisplay#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`",
+          "markdownDescription": "⚠️ Opaque device path. Use for case-insensitive string comparisons with\nother APIs.\n\nData source: `SP_DEVICE_INTERFACE_DETAIL_DATA_W.DevicePath`\n\nUsage:\n\n- ✅ Use it as a join key to correlate data from different APIs.\n- ✅ ALWAYS use case-insensitive string comparisons.\n- ❌ Do NOT assume it is always lowercase.\n- ❌ Do NOT parse the value.\n\nAccording to Microsoft, there is no API contract that the string will\n_always_ be lowercase:\n\n[Device identification strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):\n\n> Device identification strings **should not be parsed**. They are meant\n> only for string comparisons and should be treated as **opaque strings**.\n\n[`SetupDiGetDeviceInterfaceDetailW() docs`](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetailw#remarks):\n\n> **Do not attempt to parse the device path symbolic name.**\n>\n> The device path can be reused across system starts.\n\n[`IoGetDeviceInterfaces()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-iogetdeviceinterfaces#remarks):\n\n> **The format of a symbolic link name is opaque; the caller should not\n> attempt to parse a symbolic link name.**\n>\n> Symbolic links for device interface instances can be used across system\n> boots.\n\n[`IoRegisterDeviceInterface()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface#parameters):\n\n> `SymbolicLinkName`: **kernel-mode path to the symbolic link** for an\n> instance of the specified device interface class.\n>\n> **The caller must treat `SymbolicLinkName` as opaque** and **must not**\n> disassemble it.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\display#sam73a5#5&757fe5e&7&uid20737#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\display#viz1009#5&757fe5e&7&uid20739#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\pci#ven_10de&dev_2584&subsys_184610de&rev_a1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`\n- `\"\\\\\\\\?\\\\root#basicdisplay#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`",
+          "fullDescription": "⚠️ Opaque device path. Use for case-insensitive string comparisons with\nother APIs.\n\nData source: `SP_DEVICE_INTERFACE_DETAIL_DATA_W.DevicePath`\n\nUsage:\n\n- ✅ Use it as a join key to correlate data from different APIs.\n- ✅ ALWAYS use case-insensitive string comparisons.\n- ❌ Do NOT assume it is always lowercase.\n- ❌ Do NOT parse the value.\n\nAccording to Microsoft, there is no API contract that the string will\n_always_ be lowercase:\n\n[Device identification strings](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-identification-strings):\n\n> Device identification strings **should not be parsed**. They are meant\n> only for string comparisons and should be treated as **opaque strings**.\n\n[`SetupDiGetDeviceInterfaceDetailW() docs`](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetailw#remarks):\n\n> **Do not attempt to parse the device path symbolic name.**\n>\n> The device path can be reused across system starts.\n\n[`IoGetDeviceInterfaces()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-iogetdeviceinterfaces#remarks):\n\n> **The format of a symbolic link name is opaque; the caller should not\n> attempt to parse a symbolic link name.**\n>\n> Symbolic links for device interface instances can be used across system\n> boots.\n\n[`IoRegisterDeviceInterface()` docs](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface#parameters):\n\n> `SymbolicLinkName`: **kernel-mode path to the symbolic link** for an\n> instance of the specified device interface class.\n>\n> **The caller must treat `SymbolicLinkName` as opaque** and **must not**\n> disassemble it.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\display#sam73a5#5&757fe5e&7&uid20737#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\display#viz1009#5&757fe5e&7&uid20739#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\pci#ven_10de&dev_2584&subsys_184610de&rev_a1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`\n- `\"\\\\\\\\?\\\\root#basicdisplay#0000#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`"
+        },
+        "instance_id": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpInstanceId"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Data source: `SetupDiGetDeviceInstanceIdW()`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`",
+          "markdownDescription": "Data source: `SetupDiGetDeviceInstanceIdW()`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`",
+          "fullDescription": "Data source: `SetupDiGetDeviceInstanceIdW()`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`"
+        },
+        "device_desc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Microsoft Basic Display Driver\"`\n- `\"NVIDIA GeForce RTX 3050\"`",
+          "markdownDescription": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Microsoft Basic Display Driver\"`\n- `\"NVIDIA GeForce RTX 3050\"`",
+          "fullDescription": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Microsoft Basic Display Driver\"`\n- `\"NVIDIA GeForce RTX 3050\"`"
+        },
+        "hardware_id": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PnpHardwareId"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n```jsonc [   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\" ] ```\n\n```jsonc [   \"ROOT\\\\BasicDisplay\" ] ```\n\n```jsonc [   \"MONITOR\\\\SAM73A5\" ] ```\n\n```jsonc [   \"MONITOR\\\\VIZ1009\" ] ```",
+          "markdownDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```\n\n```jsonc\n[\n  \"ROOT\\\\BasicDisplay\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\SAM73A5\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\VIZ1009\"\n]\n```",
+          "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```\n\n```jsonc\n[\n  \"ROOT\\\\BasicDisplay\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\SAM73A5\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\VIZ1009\"\n]\n```"
+        },
+        "compatible_ids": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PnpCompatibleId"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n```jsonc [   \"PCI\\\\VEN_10DE&DEV_2584&REV_A1\",   \"PCI\\\\VEN_10DE&DEV_2584\",   \"PCI\\\\VEN_10DE&CC_030000\",   \"PCI\\\\VEN_10DE&CC_0300\",   \"PCI\\\\VEN_10DE\",   \"PCI\\\\CC_030000\",   \"PCI\\\\CC_0300\", ] ```\n\n```jsonc [   \"*PNP09FF\" ] ```",
+          "markdownDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584\",\n  \"PCI\\\\VEN_10DE&CC_030000\",\n  \"PCI\\\\VEN_10DE&CC_0300\",\n  \"PCI\\\\VEN_10DE\",\n  \"PCI\\\\CC_030000\",\n  \"PCI\\\\CC_0300\",\n]\n```\n\n```jsonc\n[\n  \"*PNP09FF\"\n]\n```",
+          "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584\",\n  \"PCI\\\\VEN_10DE&CC_030000\",\n  \"PCI\\\\VEN_10DE&CC_0300\",\n  \"PCI\\\\VEN_10DE\",\n  \"PCI\\\\CC_030000\",\n  \"PCI\\\\CC_0300\",\n]\n```\n\n```jsonc\n[\n  \"*PNP09FF\"\n]\n```"
+        },
+        "service": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpServiceName"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"nvlddmkm\"`\n- `\"BasicDisplay\"`\n- `\"monitor\"`",
+          "markdownDescription": "Examples:\n\n- `\"nvlddmkm\"`\n- `\"BasicDisplay\"`\n- `\"monitor\"`",
+          "fullDescription": "Examples:\n\n- `\"nvlddmkm\"`\n- `\"BasicDisplay\"`\n- `\"monitor\"`\n\n@string"
+        },
+        "class_name": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpClassName"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"Display\"`\n- `\"Monitor\"`\n- `\"System\"`",
+          "markdownDescription": "Examples:\n\n- `\"Display\"`\n- `\"Monitor\"`\n- `\"System\"`",
+          "fullDescription": "Examples:\n\n- `\"Display\"`\n- `\"Monitor\"`\n- `\"System\"`\n\n@string"
+        },
+        "class_guid": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpClassGuid"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"{4D36E968-E325-11CE-BFC1-08002BE10318}\"` (Display)\n- `\"{4D36E96E-E325-11CE-BFC1-08002BE10318}\"` (Monitor)\n- `\"{4D36E97D-E325-11CE-BFC1-08002BE10318}\"` (System)",
+          "markdownDescription": "Examples:\n\n- `\"{4D36E968-E325-11CE-BFC1-08002BE10318}\"` (Display)\n- `\"{4D36E96E-E325-11CE-BFC1-08002BE10318}\"` (Monitor)\n- `\"{4D36E97D-E325-11CE-BFC1-08002BE10318}\"` (System)",
+          "fullDescription": "Examples:\n\n- `\"{4D36E968-E325-11CE-BFC1-08002BE10318}\"` (Display)\n- `\"{4D36E96E-E325-11CE-BFC1-08002BE10318}\"` (Monitor)\n- `\"{4D36E97D-E325-11CE-BFC1-08002BE10318}\"` (System)\n\n@string"
+        },
+        "driver": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpDriverGuidWithId"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"{4d36e968-e325-11ce-bfc1-08002be10318}\\\\0000\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n- `\"{4d36e97d-e325-11ce-bfc1-08002be10318}\\\\0051\"`",
+          "markdownDescription": "Examples:\n\n- `\"{4d36e968-e325-11ce-bfc1-08002be10318}\\\\0000\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n- `\"{4d36e97d-e325-11ce-bfc1-08002be10318}\\\\0051\"`",
+          "fullDescription": "Examples:\n\n- `\"{4d36e968-e325-11ce-bfc1-08002be10318}\\\\0000\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n- `\"{4d36e97d-e325-11ce-bfc1-08002be10318}\\\\0051\"`"
+        },
+        "config_flags": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Examples:\n\n- `0`",
+          "markdownDescription": "Examples:\n\n- `0`",
+          "fullDescription": "Examples:\n\n- `0`\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "mfg": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpMfgName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"(Standard display types)\"`\n- `\"(Standard monitor types)\"`\n- `\"NVIDIA\"`",
+          "markdownDescription": "Examples:\n\n- `\"(Standard display types)\"`\n- `\"(Standard monitor types)\"`\n- `\"NVIDIA\"`",
+          "fullDescription": "Examples:\n\n- `\"(Standard display types)\"`\n- `\"(Standard monitor types)\"`\n- `\"NVIDIA\"`\n\n@string"
+        },
+        "friendly_name": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpFriendlyName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"Generic Monitor (E390-B0)\"`\n- `\"Generic Monitor (QCQ95S)\"`",
+          "markdownDescription": "Examples:\n\n- `\"Generic Monitor (E390-B0)\"`\n- `\"Generic Monitor (QCQ95S)\"`",
+          "fullDescription": "Examples:\n\n- `\"Generic Monitor (E390-B0)\"`\n- `\"Generic Monitor (QCQ95S)\"`"
+        },
+        "location_information": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpLocationInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"PCI bus 5, device 0, function 0\"`",
+          "markdownDescription": "Examples:\n\n- `\"PCI bus 5, device 0, function 0\"`",
+          "fullDescription": "Examples:\n\n- `\"PCI bus 5, device 0, function 0\"`"
+        },
+        "physical_device_object_name": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpPhysicalDeviceObjectName"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"\\\\Device\\\\00000003\"`\n- `\"\\\\Device\\\\0000006d\"`\n- `\"\\\\Device\\\\0000006e\"`\n- `\"\\\\Device\\\\NTPNP_PCI0024\"`",
+          "markdownDescription": "Examples:\n\n- `\"\\\\Device\\\\00000003\"`\n- `\"\\\\Device\\\\0000006d\"`\n- `\"\\\\Device\\\\0000006e\"`\n- `\"\\\\Device\\\\NTPNP_PCI0024\"`",
+          "fullDescription": "Examples:\n\n- `\"\\\\Device\\\\00000003\"`\n- `\"\\\\Device\\\\0000006d\"`\n- `\"\\\\Device\\\\0000006e\"`\n- `\"\\\\Device\\\\NTPNP_PCI0024\"`"
+        },
+        "capabilities": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Examples:\n\n- `0`\n- `228`",
+          "markdownDescription": "Examples:\n\n- `0`\n- `228`",
+          "fullDescription": "Examples:\n\n- `0`\n- `228`\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "ui_number": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Example:\n\n- `2`",
+          "markdownDescription": "Example:\n\n- `2`",
+          "fullDescription": "Example:\n\n- `2`\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "bus_type_guid": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpGuidFormat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Example:\n\n- `\"{C6CA0D74-E43B-4ABD-A63A-4BD2AD319D60}\"`\n- `\"{C8EBDFB0-B510-11D0-80E5-00A0C92542E3}\"`",
+          "markdownDescription": "Example:\n\n- `\"{C6CA0D74-E43B-4ABD-A63A-4BD2AD319D60}\"`\n- `\"{C8EBDFB0-B510-11D0-80E5-00A0C92542E3}\"`",
+          "fullDescription": "Example:\n\n- `\"{C6CA0D74-E43B-4ABD-A63A-4BD2AD319D60}\"`\n- `\"{C8EBDFB0-B510-11D0-80E5-00A0C92542E3}\"`"
+        },
+        "legacy_bus_type": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Example:\n\n- `5`\n- `15`",
+          "markdownDescription": "Example:\n\n- `5`\n- `15`",
+          "fullDescription": "Example:\n\n- `5`\n- `15`\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "bus_number": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Example:\n\n- `0`\n- `5`",
+          "markdownDescription": "Example:\n\n- `0`\n- `5`",
+          "fullDescription": "Example:\n\n- `0`\n- `5`\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "enumerator_name": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpEnumeratorName"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Example:\n\n- `\"DISPLAY\"`\n- `\"PCI\"`\n- `\"ROOT\"`",
+          "markdownDescription": "Example:\n\n- `\"DISPLAY\"`\n- `\"PCI\"`\n- `\"ROOT\"`",
+          "fullDescription": "Example:\n\n- `\"DISPLAY\"`\n- `\"PCI\"`\n- `\"ROOT\"`\n\n@string"
+        },
+        "dev_type": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "characteristics": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "fullDescription": "@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "address": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Example:\n\n- `0`\n- `273`\n- `275`",
+          "markdownDescription": "Example:\n\n- `0`\n- `273`\n- `275`",
+          "fullDescription": "Example:\n\n- `0`\n- `273`\n- `275`\n\n@uint32",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "ui_number_desc_format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location_paths": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PnpLocationPath"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n```jsonc [   \"PCIROOT(0)#PCI(0200)#PCI(0000)\",   \"ACPI(_SB_)#ACPI(PCI0)#ACPI(NPE2)#ACPI(SLT2)\", ] ```",
+          "markdownDescription": "Examples:\n\n```jsonc\n[\n  \"PCIROOT(0)#PCI(0200)#PCI(0000)\",\n  \"ACPI(_SB_)#ACPI(PCI0)#ACPI(NPE2)#ACPI(SLT2)\",\n]\n```",
+          "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCIROOT(0)#PCI(0200)#PCI(0000)\",\n  \"ACPI(_SB_)#ACPI(PCI0)#ACPI(NPE2)#ACPI(SLT2)\",\n]\n```"
+        },
+        "base_container_id": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PnpGuidFormat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Examples:\n\n- `\"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\"`\n- `\"{840576F3-7055-5A87-9859-A63E0FA9F3DA}\"`\n- `\"{DA0631A1-C6DF-5655-BEA1-9110DBA37845}\"`",
+          "markdownDescription": "Examples:\n\n- `\"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\"`\n- `\"{840576F3-7055-5A87-9859-A63E0FA9F3DA}\"`\n- `\"{DA0631A1-C6DF-5655-BEA1-9110DBA37845}\"`",
+          "fullDescription": "Examples:\n\n- `\"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\"`\n- `\"{840576F3-7055-5A87-9859-A63E0FA9F3DA}\"`\n- `\"{DA0631A1-C6DF-5655-BEA1-9110DBA37845}\"`"
+        }
+      },
+      "required": [
+        "device_path_lowercase"
+      ],
+      "additionalProperties": false
+    },
+    "PnpInstanceId": {
+      "type": [
+        "string"
+      ],
+      "description": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`",
+      "markdownDescription": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`",
+      "fullDescription": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`"
+    },
+    "PnpHardwareId": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PnpPciId"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Examples:\n\n```jsonc [   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\" ] ```\n\n```jsonc [   \"ROOT\\\\BasicDisplay\" ] ```\n\n```jsonc [   \"MONITOR\\\\SAM73A5\" ] ```\n\n```jsonc [   \"MONITOR\\\\VIZ1009\" ] ```",
+      "markdownDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```\n\n```jsonc\n[\n  \"ROOT\\\\BasicDisplay\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\SAM73A5\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\VIZ1009\"\n]\n```",
+      "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```\n\n```jsonc\n[\n  \"ROOT\\\\BasicDisplay\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\SAM73A5\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\VIZ1009\"\n]\n```"
+    },
+    "PnpPciId": {
+      "type": [
+        "string"
+      ],
+      "description": "Examples:\n\n```jsonc [   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\" ] ```",
+      "markdownDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```",
+      "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```"
+    },
+    "PnpCompatibleId": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PnpPciId"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Examples:\n\n```jsonc [   \"PCI\\\\VEN_10DE&DEV_2584&REV_A1\",   \"PCI\\\\VEN_10DE&DEV_2584\",   \"PCI\\\\VEN_10DE&CC_030000\",   \"PCI\\\\VEN_10DE&CC_0300\",   \"PCI\\\\VEN_10DE\",   \"PCI\\\\CC_030000\",   \"PCI\\\\CC_0300\", ] ```\n\n```jsonc [   \"*PNP09FF\" ] ```",
+      "markdownDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584\",\n  \"PCI\\\\VEN_10DE&CC_030000\",\n  \"PCI\\\\VEN_10DE&CC_0300\",\n  \"PCI\\\\VEN_10DE\",\n  \"PCI\\\\CC_030000\",\n  \"PCI\\\\CC_0300\",\n]\n```\n\n```jsonc\n[\n  \"*PNP09FF\"\n]\n```",
+      "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584\",\n  \"PCI\\\\VEN_10DE&CC_030000\",\n  \"PCI\\\\VEN_10DE&CC_0300\",\n  \"PCI\\\\VEN_10DE\",\n  \"PCI\\\\CC_030000\",\n  \"PCI\\\\CC_0300\",\n]\n```\n\n```jsonc\n[\n  \"*PNP09FF\"\n]\n```"
+    },
+    "PnpServiceName": {
+      "type": "string",
+      "enum": [
+        "BasicDisplay",
+        "monitor"
+      ]
+    },
+    "PnpClassName": {
+      "type": "string",
+      "enum": [
+        "Display",
+        "Monitor",
+        "System"
+      ]
+    },
+    "PnpClassGuid": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PnpDisplayGuid"
+        },
+        {
+          "$ref": "#/definitions/PnpMonitorGuid"
+        },
+        {
+          "$ref": "#/definitions/PnpSystemGuid"
+        }
+      ]
+    },
+    "PnpDisplayGuid": {
+      "type": "string",
+      "const": "{4D36E968-E325-11CE-BFC1-08002BE10318}"
+    },
+    "PnpMonitorGuid": {
+      "type": "string",
+      "const": "{4D36E96E-E325-11CE-BFC1-08002BE10318}"
+    },
+    "PnpSystemGuid": {
+      "type": "string",
+      "const": "{4D36E97D-E325-11CE-BFC1-08002BE10318}"
+    },
+    "PnpDriverGuidWithId": {
+      "type": "string"
+    },
+    "PnpMfgName": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "(Standard display types)",
+            "(Standard monitor types)",
+            "NVIDIA"
+          ]
+        }
+      ]
+    },
+    "PnpFriendlyName": {
+      "type": "string"
+    },
+    "PnpLocationInformation": {
+      "type": "string"
+    },
+    "PnpPhysicalDeviceObjectName": {
+      "type": "string"
+    },
+    "PnpGuidFormat": {
+      "type": "string"
+    },
+    "PnpEnumeratorName": {
+      "type": "string",
+      "enum": [
+        "DISPLAY",
+        "PCI",
+        "ROOT"
+      ]
+    },
+    "PnpLocationPath": {
+      "type": [
+        "string"
+      ]
     }
   }
 }

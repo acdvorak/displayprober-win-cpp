@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import * as ts from 'typescript';
+import * as tsj from 'ts-json-schema-generator';
 import {
   quicktype,
   InputData,
@@ -16,6 +17,8 @@ import {
 } from 'quicktype-core/dist/language/CPlusPlus/language';
 import { CPlusPlusRenderer } from 'quicktype-core/dist/language/CPlusPlus/CPlusPlusRenderer';
 import { minMaxValueForType } from 'quicktype-core/dist/attributes/Constraints';
+
+import type { Def } from './json-schema-types';
 
 type NumericEnumDefinition = {
   name: string;
@@ -263,7 +266,7 @@ function findReferencedDefinitionName(node: unknown): string | undefined {
 }
 
 function collectNumericEnumDefinitions(
-  schema: Record<string, unknown>,
+  schema: Def,
   tsEnumCaseNames: Map<string, Map<number, string>>,
 ): NumericEnumDefinition[] {
   const definitions = schema.definitions;
@@ -322,7 +325,7 @@ function collectNumericEnumDefinitions(
 }
 
 function collectNumericEnumFieldReferences(
-  schema: Record<string, unknown>,
+  schema: Def,
   numericEnumsByName: Map<string, NumericEnumDefinition>,
 ): NumericEnumFieldReference[] {
   const definitions = schema.definitions;
@@ -605,6 +608,32 @@ async function quicktypeJSONSchema(
   });
 }
 
+function forceStringTypes(node: Def | null | undefined): void {
+  if (!node || typeof node !== 'object') {
+    return;
+  }
+
+  if (Array.isArray(node)) {
+    for (let i = 0; i < node.length; i++) {
+      forceStringTypes(node[i] as Def);
+    }
+    return;
+  }
+
+  const fullDescription = node.fullDescription;
+
+  if (typeof fullDescription === 'string') {
+    if (fullDescription.includes('@string')) {
+      delete node.anyOf;
+      node.type = 'string';
+    }
+  }
+
+  for (const key in node) {
+    forceStringTypes((node as Record<string, Def>)[key]);
+  }
+}
+
 async function main() {
   const typesSource = await readFile(
     'types/displayprober-win-cpp.types.ts',
@@ -612,11 +641,12 @@ async function main() {
   );
   const tsEnumCaseNames = collectTsEnumValueNames(typesSource);
 
-  const schemaString = await readFile(
-    'schemas/displayprober-win-cpp.schema.json',
-    'utf8',
-  );
-  const schema = JSON.parse(schemaString) as Record<string, unknown>;
+  const schema = JSON.parse(
+    await readFile('schemas/displayprober-win-cpp.schema.json', 'utf8'),
+  ) as Def;
+
+  forceStringTypes(schema);
+
   const numericEnumDefinitions = collectNumericEnumDefinitions(
     schema,
     tsEnumCaseNames,
@@ -632,7 +662,7 @@ async function main() {
   const { lines } = await quicktypeJSONSchema(
     new FixedWidthIntegerCPlusPlusTargetLanguage(),
     'WinDisplayProberJson',
-    schemaString,
+    JSON.stringify(schema, null, 2),
   );
   const cpp = lines.join('\n');
   const cppWithNumericEnums = patchCppWithNumericEnums(

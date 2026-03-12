@@ -54,4 +54,26 @@
     "**/out": true,
     "**/third_party": true,
   },
+
+  // TODO(acdvorak): Get this working
+  "terminal.integrated.profiles.windows": {
+    "MSVC Dev PowerShell": {
+      "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "& { Import-Module 'C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll'; Enter-VsDevShell -VsInstallPath 'C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools' -DevCmdArguments '-arch=x64 -host_arch=x64' }",
+      ],
+    },
+  },
+
+  // TODO(acdvorak): Get this working
+  "chat.tools.terminal.terminalProfile.windows": {
+    "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+    "args": [
+      "-NoExit",
+      "-Command",
+      "& { Import-Module 'C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll'; Enter-VsDevShell -VsInstallPath 'C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools' -DevCmdArguments '-arch=x64 -host_arch=x64' }",
+    ],
+  },
 }

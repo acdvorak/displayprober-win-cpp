@@ -54,6 +54,8 @@ using WmiJoinKey = std::string;
 // `"\\\\?\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}"`
 using DevicePath = std::string;
 
+using InstanceId = std::string;
+
 constexpr std::uint8_t u8(std::optional<unsigned long long> v) {
   return static_cast<std::uint8_t>(v.value_or(0));
 }

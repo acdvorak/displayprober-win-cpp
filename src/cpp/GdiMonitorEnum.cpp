@@ -5,7 +5,7 @@
 
 #include "GdiMonitorEnum.h"
 
-#include <windows.h>
+#include <Windows.h>
 
 // Keep this separate from Windows.h, which needs to be included first.
 #include <ShellScalingApi.h>
