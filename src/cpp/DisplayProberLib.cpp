@@ -160,8 +160,9 @@ json::WinDisplay MergeDisplayDataToJson(
     }
   }
 
-  if (const auto pct = u32(gdi_monitor_info.dpi_scale_percent); pct > 0) {
-    json_obj.dpi_scaling_percent = pct;
+  if (const std::optional<long> dpi_pct = gdi_monitor_info.dpi_scale_percent;
+      dpi_pct > 0) {
+    json_obj.dpi_scaling_percent = u32(dpi_pct);
   }
 
   // Initialize all primitive fields to their default values.
