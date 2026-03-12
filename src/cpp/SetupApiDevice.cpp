@@ -14,7 +14,7 @@
 
 #include <cstdint>
 #include <cstring>
-#include <map>
+#include <memory>
 #include <vector>
 
 #include "CommonTypes.h"
@@ -68,7 +68,7 @@ std::vector<std::string> ParseMultiSz(std::vector<BYTE>& buffer) {
 }
 
 struct DeviceInfoHandle {
-  HDEVINFO dev_info_set;
+  std::shared_ptr<void> dev_info_set;
   SP_DEVINFO_DATA dev_info_data;
   DevicePath device_path_mixed_case;
   std::optional<InstanceId> instance_id;
@@ -84,6 +84,12 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
     if (raw_dev_info_set == INVALID_HANDLE_VALUE) {
       return dev_infos;
     }
+
+    std::shared_ptr<void> shared_dev_info_set(raw_dev_info_set, [](void* p) {
+      if (p != INVALID_HANDLE_VALUE) {
+        SetupDiDestroyDeviceInfoList(p);
+      }
+    });
 
     for (DWORD interface_index = 0;; ++interface_index) {
       SP_DEVICE_INTERFACE_DATA interface_data = {};
@@ -135,7 +141,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       DevicePath device_path_mixed_case = WideToUtf8(detail_data->DevicePath);
       DeviceInfoHandle dev_info{};
 
-      dev_info.dev_info_set = raw_dev_info_set;
+      dev_info.dev_info_set = shared_dev_info_set;
       dev_info.dev_info_data = dev_info_data;
       dev_info.device_path_mixed_case = device_path_mixed_case;
       dev_info.instance_id = std::nullopt;
@@ -305,35 +311,6 @@ std::optional<Bytes> ReadEdidBytes(HDEVINFO dev_info_set,
   return bytes;
 }
 
-class ScopeDevInfoHandles {
- public:
-  explicit ScopeDevInfoHandles(std::vector<DeviceInfoHandle>& handles)
-      : handles_(handles) {}
-
-  ~ScopeDevInfoHandles() {
-    std::vector<HDEVINFO> destroyed;
-    for (const DeviceInfoHandle& handle : handles_) {
-      if (handle.dev_info_set == INVALID_HANDLE_VALUE) {
-        continue;
-      }
-      bool already_destroyed = false;
-      for (HDEVINFO d : destroyed) {
-        if (d == handle.dev_info_set) {
-          already_destroyed = true;
-          break;
-        }
-      }
-      if (!already_destroyed) {
-        SetupDiDestroyDeviceInfoList(handle.dev_info_set);
-        destroyed.push_back(handle.dev_info_set);
-      }
-    }
-  }
-
- private:
-  std::vector<DeviceInfoHandle>& handles_;
-};
-
 std::optional<std::string> TryGetInstanceIdFromDevicePath(
     const std::string& target_device_path, const GUID* class_guid) {
   if (target_device_path.empty()) {
@@ -342,7 +319,6 @@ std::optional<std::string> TryGetInstanceIdFromDevicePath(
 
   std::vector<DeviceInfoHandle> dev_infos =
       GetDeviceInfoHandlesForClass(class_guid);
-  ScopeDevInfoHandles scoped_handles(dev_infos);
 
   for (const DeviceInfoHandle& dev_info : dev_infos) {
     if (EqualsIgnoreCase(dev_info.device_path_mixed_case, target_device_path)) {
@@ -365,12 +341,11 @@ std::optional<Bytes> GetEdidBytesFromMonitorDevicePath(
 
   std::vector<DeviceInfoHandle> dev_infos =
       GetDeviceInfoHandlesForClass(&GUID_DEVINTERFACE_MONITOR);
-  ScopeDevInfoHandles scoped_handles(dev_infos);
 
   for (const DeviceInfoHandle& dev_info : dev_infos) {
     if (EqualsIgnoreCase(dev_info.device_path_mixed_case,
                          monitor_device_path)) {
-      return ReadEdidBytes(dev_info.dev_info_set, dev_info.dev_info_data);
+      return ReadEdidBytes(dev_info.dev_info_set.get(), dev_info.dev_info_data);
     }
   }
 
@@ -513,17 +488,15 @@ json::WinSetupApiDevice GetDeviceProperties(HDEVINFO dev_info_set,
 json::WinSetupApiDeviceCatalog GetAllSetupApiDevices() {
   auto raw_adapter_handles =
       GetDeviceInfoHandlesForClass(&GUID_DEVINTERFACE_DISPLAY_ADAPTER);
-  ScopeDevInfoHandles scoped_adapters(raw_adapter_handles);
 
   auto raw_monitor_handles =
       GetDeviceInfoHandlesForClass(&GUID_DEVINTERFACE_MONITOR);
-  ScopeDevInfoHandles scoped_monitors(raw_monitor_handles);
 
   json::WinSetupApiDeviceCatalog datas;
 
   for (DeviceInfoHandle& handle : raw_adapter_handles) {
     json::WinSetupApiDevice json =
-        GetDeviceProperties(handle.dev_info_set, &handle.dev_info_data);
+        GetDeviceProperties(handle.dev_info_set.get(), &handle.dev_info_data);
     json.device_path_mixed_case = handle.device_path_mixed_case;
     json.instance_id = handle.instance_id;
     datas.adapters.push_back(json);
@@ -531,7 +504,7 @@ json::WinSetupApiDeviceCatalog GetAllSetupApiDevices() {
 
   for (DeviceInfoHandle& handle : raw_monitor_handles) {
     json::WinSetupApiDevice json =
-        GetDeviceProperties(handle.dev_info_set, &handle.dev_info_data);
+        GetDeviceProperties(handle.dev_info_set.get(), &handle.dev_info_data);
     json.device_path_mixed_case = handle.device_path_mixed_case;
     json.instance_id = handle.instance_id;
     datas.monitors.push_back(json);
