@@ -17,7 +17,7 @@
 
 namespace setupapi {
 
-json::WinSetupApiDeviceCatalog GetAllSetupApiDatas();
+json::WinSetupApiDeviceCatalog GetAllSetupApiDevices();
 
 std::optional<Bytes> GetEdidBytesFromMonitorDevicePath(
     std::string_view monitor_device_path);

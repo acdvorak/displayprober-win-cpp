@@ -79,17 +79,19 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
   std::vector<DeviceInfoHandle> dev_infos;
 
   try {
-    const HDEVINFO dev_info_set = SetupDiGetClassDevsW(
+    const HDEVINFO raw_dev_info_set = SetupDiGetClassDevsW(
         class_guid, nullptr, nullptr, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-    if (dev_info_set == INVALID_HANDLE_VALUE) {
+    if (raw_dev_info_set == INVALID_HANDLE_VALUE) {
       return dev_infos;
     }
+
+    ScopedDevInfoSet dev_info_set(raw_dev_info_set);
 
     for (DWORD interface_index = 0;; ++interface_index) {
       SP_DEVICE_INTERFACE_DATA interface_data = {};
       interface_data.cbSize = sizeof(interface_data);
 
-      if (!SetupDiEnumDeviceInterfaces(dev_info_set, nullptr, class_guid,
+      if (!SetupDiEnumDeviceInterfaces(dev_info_set.get(), nullptr, class_guid,
                                        interface_index, &interface_data)) {
         if (GetLastError() == ERROR_NO_MORE_ITEMS) {
           break;
@@ -98,7 +100,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       }
 
       DWORD required_size = 0;
-      if (SetupDiGetDeviceInterfaceDetailW(dev_info_set, &interface_data,
+      if (SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
                                            nullptr, 0, &required_size,
                                            nullptr) != FALSE) {
         continue;
@@ -117,7 +119,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       SP_DEVINFO_DATA dev_info_data = {};
       dev_info_data.cbSize = sizeof(dev_info_data);
 
-      if (!SetupDiGetDeviceInterfaceDetailW(dev_info_set, &interface_data,
+      if (!SetupDiGetDeviceInterfaceDetailW(dev_info_set.get(), &interface_data,
                                             detail_data, required_size, nullptr,
                                             &dev_info_data)) {
         continue;
@@ -135,7 +137,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       DevicePath device_path_mixed_case = WideToUtf8(detail_data->DevicePath);
       DeviceInfoHandle dev_info{};
 
-      dev_info.dev_info_set = dev_info_set;
+      dev_info.dev_info_set = dev_info_set.get();
       dev_info.dev_info_data = dev_info_data;
       dev_info.device_path_mixed_case = device_path_mixed_case;
       dev_info.instance_id = std::nullopt;
@@ -147,7 +149,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
 
       DWORD instance_id_length = 0;
       const bool is_len_success = SetupDiGetDeviceInstanceIdW(
-          dev_info_set, &dev_info_data, nullptr, 0, &instance_id_length);
+          dev_info_set.get(), &dev_info_data, nullptr, 0, &instance_id_length);
       if (!is_len_success) {
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER ||
             instance_id_length == 0) {
@@ -159,7 +161,7 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
         std::wstring instance_id(instance_id_length, L'\0');
 
         const bool is_data_success = SetupDiGetDeviceInstanceIdW(
-            dev_info_set, &dev_info_data, instance_id.data(),
+            dev_info_set.get(), &dev_info_data, instance_id.data(),
             instance_id_length, nullptr);
 
         if (is_data_success) {
@@ -171,6 +173,10 @@ std::vector<DeviceInfoHandle> GetDeviceInfoHandlesForClass(
       }
 
       dev_infos.push_back(dev_info);
+    }
+
+    if (!dev_infos.empty()) {
+      dev_info_set.release();
     }
 
     return dev_infos;
@@ -305,6 +311,35 @@ std::optional<Bytes> ReadEdidBytes(HDEVINFO dev_info_set,
   return bytes;
 }
 
+class ScopeDevInfoHandles {
+ public:
+  explicit ScopeDevInfoHandles(std::vector<DeviceInfoHandle>& handles)
+      : handles_(handles) {}
+
+  ~ScopeDevInfoHandles() {
+    std::vector<HDEVINFO> destroyed;
+    for (const DeviceInfoHandle& handle : handles_) {
+      if (handle.dev_info_set == INVALID_HANDLE_VALUE) {
+        continue;
+      }
+      bool already_destroyed = false;
+      for (HDEVINFO d : destroyed) {
+        if (d == handle.dev_info_set) {
+          already_destroyed = true;
+          break;
+        }
+      }
+      if (!already_destroyed) {
+        SetupDiDestroyDeviceInfoList(handle.dev_info_set);
+        destroyed.push_back(handle.dev_info_set);
+      }
+    }
+  }
+
+ private:
+  std::vector<DeviceInfoHandle>& handles_;
+};
+
 std::optional<std::string> TryGetInstanceIdFromDevicePath(
     const std::string& target_device_path, const GUID* class_guid) {
   if (target_device_path.empty()) {
@@ -313,6 +348,7 @@ std::optional<std::string> TryGetInstanceIdFromDevicePath(
 
   std::vector<DeviceInfoHandle> dev_infos =
       GetDeviceInfoHandlesForClass(class_guid);
+  ScopeDevInfoHandles scoped_handles(dev_infos);
 
   for (const DeviceInfoHandle& dev_info : dev_infos) {
     if (EqualsIgnoreCase(dev_info.device_path_mixed_case, target_device_path)) {
@@ -335,6 +371,7 @@ std::optional<Bytes> GetEdidBytesFromMonitorDevicePath(
 
   std::vector<DeviceInfoHandle> dev_infos =
       GetDeviceInfoHandlesForClass(&GUID_DEVINTERFACE_MONITOR);
+  ScopeDevInfoHandles scoped_handles(dev_infos);
 
   for (const DeviceInfoHandle& dev_info : dev_infos) {
     if (EqualsIgnoreCase(dev_info.device_path_mixed_case,
@@ -479,11 +516,14 @@ json::WinSetupApiDevice GetDeviceProperties(HDEVINFO dev_info_set,
   return props;
 }
 
-json::WinSetupApiDeviceCatalog GetAllSetupApiDatas() {
-  auto& raw_adapter_handles =
+json::WinSetupApiDeviceCatalog GetAllSetupApiDevices() {
+  auto raw_adapter_handles =
       GetDeviceInfoHandlesForClass(&GUID_DEVINTERFACE_DISPLAY_ADAPTER);
-  auto& raw_monitor_handles =
+  ScopeDevInfoHandles scoped_adapters(raw_adapter_handles);
+
+  auto raw_monitor_handles =
       GetDeviceInfoHandlesForClass(&GUID_DEVINTERFACE_MONITOR);
+  ScopeDevInfoHandles scoped_monitors(raw_monitor_handles);
 
   json::WinSetupApiDeviceCatalog datas;
 

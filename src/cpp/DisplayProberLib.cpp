@@ -447,7 +447,7 @@ std::string GetDisplayProberJson() {
   json_payload.has_interactive_desktop = sys::HasInteractiveDesktop();
   json_payload.is_remote_desktop = sys::IsRdpSession();
   json_payload.is_virtual_machine = sys::IsVirtualMachine();
-  json_payload.all_setup_api_devices = setupapi::GetAllSetupApiDatas();
+  json_payload.all_setup_api_devices = setupapi::GetAllSetupApiDevices();
 
   size_t i = 0;
   for (const auto& [id, gdi] : gdi_monitor_infos) {
