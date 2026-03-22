@@ -47,10 +47,7 @@
       "type": "object",
       "properties": {
         "friendly_name": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Human-friendly name of the display.\n\nExamples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`      // Samsung S95C TV\n- `\"SAMSUNG\"`     // Some devices don't give us an actual model number\n- `\"SAM73A5\"`     // Samsung S95C TV\n- `\"DELF023\"`     // Dell ST2320L monitor\n- `\"DISPLAY1\"`    // Primary monitor\n- `\"DISPLAY2\"`    // Secondary monitor\n- `\"DISPLAY129\"`  // RDP monitor\n- `\"DISPLAY\"`     // Single monitor\n- `\"WinDisc\"`     // Non-interactive remote SSH console session\n\nValue comes from one of the following sources, in descending order of quality (i.e., the \"best\" available value is returned):\n\n1. EDID \"monitor descriptor\" name (e.g., `\"DELL ST2320L\"`) 2. `\"Remote Desktop\"` or `\"Remote Desktop #N\"` if RDP 3. `\"Virtual Machine\"` or `\"Virtual Machine #N\"` if a VM 4. 7-digit Windows EDID identifier (e.g., `\"SAM73A5\"` or `\"DELF023\"`) 5. Short-lived Windows display number (e.g., `\"DISPLAY1\"`)",
           "markdownDescription": "Human-friendly name of the display.\n\nExamples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`      // Samsung S95C TV\n- `\"SAMSUNG\"`     // Some devices don't give us an actual model number\n- `\"SAM73A5\"`     // Samsung S95C TV\n- `\"DELF023\"`     // Dell ST2320L monitor\n- `\"DISPLAY1\"`    // Primary monitor\n- `\"DISPLAY2\"`    // Secondary monitor\n- `\"DISPLAY129\"`  // RDP monitor\n- `\"DISPLAY\"`     // Single monitor\n- `\"WinDisc\"`     // Non-interactive remote SSH console session\n\nValue comes from one of the following sources, in descending order of\nquality (i.e., the \"best\" available value is returned):\n\n1. EDID \"monitor descriptor\" name (e.g., `\"DELL ST2320L\"`)\n2. `\"Remote Desktop\"` or `\"Remote Desktop #N\"` if RDP\n3. `\"Virtual Machine\"` or `\"Virtual Machine #N\"` if a VM\n4. 7-digit Windows EDID identifier (e.g., `\"SAM73A5\"` or `\"DELF023\"`)\n5. Short-lived Windows display number (e.g., `\"DISPLAY1\"`)",
           "fullDescription": "Human-friendly name of the display.\n\nExamples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`      // Samsung S95C TV\n- `\"SAMSUNG\"`     // Some devices don't give us an actual model number\n- `\"SAM73A5\"`     // Samsung S95C TV\n- `\"DELF023\"`     // Dell ST2320L monitor\n- `\"DISPLAY1\"`    // Primary monitor\n- `\"DISPLAY2\"`    // Secondary monitor\n- `\"DISPLAY129\"`  // RDP monitor\n- `\"DISPLAY\"`     // Single monitor\n- `\"WinDisc\"`     // Non-interactive remote SSH console session\n\nValue comes from one of the following sources, in descending order of\nquality (i.e., the \"best\" available value is returned):\n\n1. EDID \"monitor descriptor\" name (e.g., `\"DELL ST2320L\"`)\n2. `\"Remote Desktop\"` or `\"Remote Desktop #N\"` if RDP\n3. `\"Virtual Machine\"` or `\"Virtual Machine #N\"` if a VM\n4. 7-digit Windows EDID identifier (e.g., `\"SAM73A5\"` or `\"DELF023\"`)\n5. Short-lived Windows display number (e.g., `\"DISPLAY1\"`)"
@@ -62,55 +59,37 @@
           "fullDescription": "Windows \"monitor device name\".\n\nSource: `MONITORINFOEXW.szDevice` via `GetMonitorInfoW()` in `WinUser.h`.\n\nCharacteristics:\n\n- ⚠️ NOT stable across device disconnects/reconnects.\n\nExamples:\n\n- `\"\\\\\\\\.\\\\DISPLAY1\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY2\"`   (multi-monitor)\n- `\"\\\\\\\\.\\\\DISPLAY129\"` (Remote Desktop)\n- `\"DISPLAY\"`           (single-monitor)\n- `\"WinDisc\"`           (SSH console)"
         },
         "adapter_friendly_name": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Human-friendly name of the adapter (typically the GPU).\n\nSource: `DISPLAY_DEVICEW.DeviceString` in `wingdi.h`.\n\nExample:\n\n- `\"NVIDIA GeForce RTX 3050\"`",
           "markdownDescription": "Human-friendly name of the adapter (typically the GPU).\n\nSource: `DISPLAY_DEVICEW.DeviceString` in `wingdi.h`.\n\nExample:\n\n- `\"NVIDIA GeForce RTX 3050\"`",
           "fullDescription": "Human-friendly name of the adapter (typically the GPU).\n\nSource: `DISPLAY_DEVICEW.DeviceString` in `wingdi.h`.\n\nExample:\n\n- `\"NVIDIA GeForce RTX 3050\"`"
         },
         "adapter_hardware_id": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Hardware identifier of the adapter (typically the GPU).\n\nSource: `DISPLAY_DEVICEW.DeviceID` in `wingdi.h`.\n\nExample:\n\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\"`\n\nCharacteristics:\n\n- ✅ Static physical hardware identifier.\n- ✅ Stable and persistent across reboots and driver upgrades.\n- ⚠️ Shared by all PORTS on a physical discrete GPU.\n- ⚠️ Shared if you have multiple identical GPUs.\n\nFor physical discrete GPUs, this value is the PCI ID. See:\n\n- https://learn.microsoft.com/en-us/windows-hardware/drivers/install/identifiers-for-pci-devices\n- https://pci-ids.ucw.cz/\n\nFormat:\n\n``` PCI \\ VEN_10DE & DEV_2584 & SUBSYS_184610DE & REV_A1       ┗━━━┳━━┛   ┗━━━┳━━┛   ┗━━━━━━┳━━━━━━┛   ┗━━┳━┛        Vendor     Device       Subsystem     Revision ```\n\nThe above example is an NVIDIA GeForce RTX 3050 6GB PCIe graphics card:\n\nhttps://pcilookup.com/?ven=10DE&dev=2584&action=submit",
           "markdownDescription": "Hardware identifier of the adapter (typically the GPU).\n\nSource: `DISPLAY_DEVICEW.DeviceID` in `wingdi.h`.\n\nExample:\n\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\"`\n\nCharacteristics:\n\n- ✅ Static physical hardware identifier.\n- ✅ Stable and persistent across reboots and driver upgrades.\n- ⚠️ Shared by all PORTS on a physical discrete GPU.\n- ⚠️ Shared if you have multiple identical GPUs.\n\nFor physical discrete GPUs, this value is the PCI ID. See:\n\n- https://learn.microsoft.com/en-us/windows-hardware/drivers/install/identifiers-for-pci-devices\n- https://pci-ids.ucw.cz/\n\nFormat:\n\n```\nPCI \\ VEN_10DE & DEV_2584 & SUBSYS_184610DE & REV_A1\n      ┗━━━┳━━┛   ┗━━━┳━━┛   ┗━━━━━━┳━━━━━━┛   ┗━━┳━┛\n       Vendor     Device       Subsystem     Revision\n```\n\nThe above example is an NVIDIA GeForce RTX 3050 6GB PCIe graphics card:\n\nhttps://pcilookup.com/?ven=10DE&dev=2584&action=submit",
           "fullDescription": "Hardware identifier of the adapter (typically the GPU).\n\nSource: `DISPLAY_DEVICEW.DeviceID` in `wingdi.h`.\n\nExample:\n\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\"`\n\nCharacteristics:\n\n- ✅ Static physical hardware identifier.\n- ✅ Stable and persistent across reboots and driver upgrades.\n- ⚠️ Shared by all PORTS on a physical discrete GPU.\n- ⚠️ Shared if you have multiple identical GPUs.\n\nFor physical discrete GPUs, this value is the PCI ID. See:\n\n- https://learn.microsoft.com/en-us/windows-hardware/drivers/install/identifiers-for-pci-devices\n- https://pci-ids.ucw.cz/\n\nFormat:\n\n```\nPCI \\ VEN_10DE & DEV_2584 & SUBSYS_184610DE & REV_A1\n      ┗━━━┳━━┛   ┗━━━┳━━┛   ┗━━━━━━┳━━━━━━┛   ┗━━┳━┛\n       Vendor     Device       Subsystem     Revision\n```\n\nThe above example is an NVIDIA GeForce RTX 3050 6GB PCIe graphics card:\n\nhttps://pcilookup.com/?ven=10DE&dev=2584&action=submit"
         },
         "adapter_instance_id": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Unique Plug-n-Play instance ID of the *individual GPU*, equal to  {@link  adapter_hardware_id }  + serial/location (PCI slot number).\n\nSource: `SetupDiGetDeviceInstanceIdW()` in `SetupAPI.h`.\n\nExample:\n\n- `\"PCI\\\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n\nCharacteristics:\n\n- ✅ Static physical hardware ID + serial + location (PCI slot number).\n- ✅ Stable and persistent across reboots and driver upgrades.\n- ⚠️ Shared by all PORTS on a physical discrete GPU.\n- ✅ Unique per physical GPU instance.\n\nIf your PC has two identical GPUs, each one will have its own unique `adapter_instance_id` value.\n\nFor a single GPU with multiple ports (e.g., one DisplayPort and one DVI), all connected displays will have the same `adapter_instance_id` value.\n\n### References\n\nFrom [Windows Drivers > Device Instance ID](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-instance-ids):\n\n> A device instance ID is a system-supplied device identification string > that uniquely identifies a device in the system. The Plug and Play (PnP) > manager assigns a device instance ID to each device node (devnode) in a > system's device tree. > > The creation of the device instance ID for a device uses the bus driver > reported device ID value, instance ID value, and the UniqueID member of > the DEVICE_CAPABILITIES structure as input in order to create the unique > device instance ID for this device on the system. > > ``` > PCI\\VEN_1000&DEV_0001&SUBSYS_00000000&REV_02\\1&08 > ```",
           "markdownDescription": "Unique Plug-n-Play instance ID of the *individual GPU*, equal to\n {@link  adapter_hardware_id }  + serial/location (PCI slot number).\n\nSource: `SetupDiGetDeviceInstanceIdW()` in `SetupAPI.h`.\n\nExample:\n\n- `\"PCI\\\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n\nCharacteristics:\n\n- ✅ Static physical hardware ID + serial + location (PCI slot number).\n- ✅ Stable and persistent across reboots and driver upgrades.\n- ⚠️ Shared by all PORTS on a physical discrete GPU.\n- ✅ Unique per physical GPU instance.\n\nIf your PC has two identical GPUs, each one will have its own unique\n`adapter_instance_id` value.\n\nFor a single GPU with multiple ports (e.g., one DisplayPort and one DVI),\nall connected displays will have the same `adapter_instance_id` value.\n\n### References\n\nFrom\n[Windows Drivers > Device Instance ID](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-instance-ids):\n\n> A device instance ID is a system-supplied device identification string\n> that uniquely identifies a device in the system. The Plug and Play (PnP)\n> manager assigns a device instance ID to each device node (devnode) in a\n> system's device tree.\n>\n> The creation of the device instance ID for a device uses the bus driver\n> reported device ID value, instance ID value, and the UniqueID member of\n> the DEVICE_CAPABILITIES structure as input in order to create the unique\n> device instance ID for this device on the system.\n>\n> ```\n> PCI\\VEN_1000&DEV_0001&SUBSYS_00000000&REV_02\\1&08\n> ```",
           "fullDescription": "Unique Plug-n-Play instance ID of the *individual GPU*, equal to\n{@link adapter_hardware_id} + serial/location (PCI slot number).\n\nSource: `SetupDiGetDeviceInstanceIdW()` in `SetupAPI.h`.\n\nExample:\n\n- `\"PCI\\\\VEN_10DE&DEV_0DF8&SUBSYS_083510DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n\nCharacteristics:\n\n- ✅ Static physical hardware ID + serial + location (PCI slot number).\n- ✅ Stable and persistent across reboots and driver upgrades.\n- ⚠️ Shared by all PORTS on a physical discrete GPU.\n- ✅ Unique per physical GPU instance.\n\nIf your PC has two identical GPUs, each one will have its own unique\n`adapter_instance_id` value.\n\nFor a single GPU with multiple ports (e.g., one DisplayPort and one DVI),\nall connected displays will have the same `adapter_instance_id` value.\n\n### References\n\nFrom\n[Windows Drivers > Device Instance ID](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/device-instance-ids):\n\n> A device instance ID is a system-supplied device identification string\n> that uniquely identifies a device in the system. The Plug and Play (PnP)\n> manager assigns a device instance ID to each device node (devnode) in a\n> system's device tree.\n>\n> The creation of the device instance ID for a device uses the bus driver\n> reported device ID value, instance ID value, and the UniqueID member of\n> the DEVICE_CAPABILITIES structure as input in order to create the unique\n> device instance ID for this device on the system.\n>\n> ```\n> PCI\\VEN_1000&DEV_0001&SUBSYS_00000000&REV_02\\1&08\n> ```"
         },
         "adapter_device_path": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Effectively a reformatted version of  {@link  adapter_instance_id } , plus a static, hard-coded device interface class GUID for adapters (`GUID_DEVINTERFACE_DISPLAY_ADAPTER`).\n\nSource: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath` in `wingdi.h`.\n\nExample:\n\n- `\"\\\\\\\\?\\\\PCI#VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`\n\nCharacteristics:\n\n- ✅ Stable and persistent across reboots.\n- ❓ Unclear if persistent across driver upgrades.\n\nThe GUID at the end is a fixed, Microsoft-defined class GUID (declared in `Ntddvdeo.h`), and Windows appends it as part of the device-interface symbolic link format when the display stack registers that interface.\n\nSee:\n\n- [`GUID_DEVINTERFACE_DISPLAY_ADAPTER` constant (`Ntddvdeo.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/guid-devinterface-display-adapter)\n- [`DISPLAYCONFIG_ADAPTER_NAME` structure (`wingdi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-displayconfig_adapter_name)\n- [`SetupDiGetDeviceInterfaceDetailA()` function (`setupapi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetaila)\n- [`IoRegisterDeviceInterface()` function (`wdm.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface)",
           "markdownDescription": "Effectively a reformatted version of  {@link  adapter_instance_id } , plus a\nstatic, hard-coded device interface class GUID for adapters\n(`GUID_DEVINTERFACE_DISPLAY_ADAPTER`).\n\nSource: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath` in `wingdi.h`.\n\nExample:\n\n- `\"\\\\\\\\?\\\\PCI#VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`\n\nCharacteristics:\n\n- ✅ Stable and persistent across reboots.\n- ❓ Unclear if persistent across driver upgrades.\n\nThe GUID at the end is a fixed, Microsoft-defined class GUID (declared in\n`Ntddvdeo.h`), and Windows appends it as part of the device-interface\nsymbolic link format when the display stack registers that interface.\n\nSee:\n\n- [`GUID_DEVINTERFACE_DISPLAY_ADAPTER` constant (`Ntddvdeo.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/guid-devinterface-display-adapter)\n- [`DISPLAYCONFIG_ADAPTER_NAME` structure (`wingdi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-displayconfig_adapter_name)\n- [`SetupDiGetDeviceInterfaceDetailA()` function (`setupapi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetaila)\n- [`IoRegisterDeviceInterface()` function (`wdm.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface)",
           "fullDescription": "Effectively a reformatted version of {@link adapter_instance_id}, plus a\nstatic, hard-coded device interface class GUID for adapters\n(`GUID_DEVINTERFACE_DISPLAY_ADAPTER`).\n\nSource: `DISPLAYCONFIG_ADAPTER_NAME.adapterDevicePath` in `wingdi.h`.\n\nExample:\n\n- `\"\\\\\\\\?\\\\PCI#VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1#4&2b1c6285&0&0010#{5b45201d-f2f2-4f3b-85bb-30ff1f953599}\"`\n\nCharacteristics:\n\n- ✅ Stable and persistent across reboots.\n- ❓ Unclear if persistent across driver upgrades.\n\nThe GUID at the end is a fixed, Microsoft-defined class GUID (declared in\n`Ntddvdeo.h`), and Windows appends it as part of the device-interface\nsymbolic link format when the display stack registers that interface.\n\nSee:\n\n- [`GUID_DEVINTERFACE_DISPLAY_ADAPTER` constant (`Ntddvdeo.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/guid-devinterface-display-adapter)\n- [`DISPLAYCONFIG_ADAPTER_NAME` structure (`wingdi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-displayconfig_adapter_name)\n- [`SetupDiGetDeviceInterfaceDetailA()` function (`setupapi.h`)](https://learn.microsoft.com/en-us/windows/win32/api/setupapi/nf-setupapi-setupdigetdeviceinterfacedetaila)\n- [`IoRegisterDeviceInterface()` function (`wdm.h`)](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ioregisterdeviceinterface)"
         },
         "adapter_registry_key": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Per-GPU-port registry key.\n\nSource: `DISPLAY_DEVICEW.DeviceKey` in `wingdi.h`.\n\nExamples:\n\n- `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\\\0000\"`\n- `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\\\0001\"`\n\nCharacteristics:\n\n- ❓ TODO(acdvorak): Describe uniqueness, persistence, and stability across   reboots, device disconnects/reconnects, and port/dock changes.\n\nThe GUID is a local, OS-generated adapter/video-stack identifier, likely the adapter `VideoID` created by the video port / display driver machinery.\n\nThe numeric suffix is an auto-incrementing \"child adapter index\" for the physical port on the GPU (in the typical case).\n\n### References\n\nAccording to [WebRTC `win/screen_capture_utils.cc`](https://webrtc.googlesource.com/src/+/c0fd2e0/modules/desktop_capture/win/screen_capture_utils.cc?pli=1#184):\n\n> `DeviceKey` is documented as reserved, but it actually contains the > registry key for the device and is unique for each monitor, while > `DeviceID` is not.\n\nAccording to [ReactOS Display Driver Loading](https://reactos.org/wiki/Techwiki:Win32k/display_driver_loading), the format of this key is:\n\n> Device configuration key: > `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\<VideoId>\\\\0000\"` > where `<VideoId>` is a local UUID, created by `videoprt` the first time > the device is started. The `VideoId` string is stored in the registry > under the device's hardware key > (`HKLM\\System\\CurrentControlSet\\Enum\\...`).",
           "markdownDescription": "Per-GPU-port registry key.\n\nSource: `DISPLAY_DEVICEW.DeviceKey` in `wingdi.h`.\n\nExamples:\n\n- `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\\\0000\"`\n- `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\\\0001\"`\n\nCharacteristics:\n\n- ❓ TODO(acdvorak): Describe uniqueness, persistence, and stability across\n  reboots, device disconnects/reconnects, and port/dock changes.\n\nThe GUID is a local, OS-generated adapter/video-stack identifier, likely\nthe adapter `VideoID` created by the video port / display driver machinery.\n\nThe numeric suffix is an auto-incrementing \"child adapter index\" for the\nphysical port on the GPU (in the typical case).\n\n### References\n\nAccording to\n[WebRTC `win/screen_capture_utils.cc`](https://webrtc.googlesource.com/src/+/c0fd2e0/modules/desktop_capture/win/screen_capture_utils.cc?pli=1#184):\n\n> `DeviceKey` is documented as reserved, but it actually contains the\n> registry key for the device and is unique for each monitor, while\n> `DeviceID` is not.\n\nAccording to\n[ReactOS Display Driver Loading](https://reactos.org/wiki/Techwiki:Win32k/display_driver_loading),\nthe format of this key is:\n\n> Device configuration key:\n> `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\<VideoId>\\\\0000\"`\n> where `<VideoId>` is a local UUID, created by `videoprt` the first time\n> the device is started. The `VideoId` string is stored in the registry\n> under the device's hardware key\n> (`HKLM\\System\\CurrentControlSet\\Enum\\...`).",
           "fullDescription": "Per-GPU-port registry key.\n\nSource: `DISPLAY_DEVICEW.DeviceKey` in `wingdi.h`.\n\nExamples:\n\n- `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\\\0000\"`\n- `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\{46D2BE53-1822-11F1-85AE-806E6F6E6963}\\\\0001\"`\n\nCharacteristics:\n\n- ❓ TODO(acdvorak): Describe uniqueness, persistence, and stability across\n  reboots, device disconnects/reconnects, and port/dock changes.\n\nThe GUID is a local, OS-generated adapter/video-stack identifier, likely\nthe adapter `VideoID` created by the video port / display driver machinery.\n\nThe numeric suffix is an auto-incrementing \"child adapter index\" for the\nphysical port on the GPU (in the typical case).\n\n### References\n\nAccording to\n[WebRTC `win/screen_capture_utils.cc`](https://webrtc.googlesource.com/src/+/c0fd2e0/modules/desktop_capture/win/screen_capture_utils.cc?pli=1#184):\n\n> `DeviceKey` is documented as reserved, but it actually contains the\n> registry key for the device and is unique for each monitor, while\n> `DeviceID` is not.\n\nAccording to\n[ReactOS Display Driver Loading](https://reactos.org/wiki/Techwiki:Win32k/display_driver_loading),\nthe format of this key is:\n\n> Device configuration key:\n> `\"\\\\Registry\\\\Machine\\\\System\\\\CurrentControlSet\\\\Control\\\\Video\\\\<VideoId>\\\\0000\"`\n> where `<VideoId>` is a local UUID, created by `videoprt` the first time\n> the device is started. The `VideoId` string is stored in the registry\n> under the device's hardware key\n> (`HKLM\\System\\CurrentControlSet\\Enum\\...`)."
         },
         "target_path_id": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Per-adapter identifier of the target display endpoint used by `DisplayConfig` APIs to address/query a specific path target.\n\nSource: `DISPLAYCONFIG_PATH_INFO.targetInfo.id` in `wingdi.h`.",
           "markdownDescription": "Per-adapter identifier of the target display endpoint used by\n`DisplayConfig` APIs to address/query a specific path target.\n\nSource: `DISPLAYCONFIG_PATH_INFO.targetInfo.id` in `wingdi.h`.",
           "fullDescription": "Per-adapter identifier of the target display endpoint used by\n`DisplayConfig` APIs to address/query a specific path target.\n\nSource: `DISPLAYCONFIG_PATH_INFO.targetInfo.id` in `wingdi.h`.\n\n@uint32",
@@ -118,94 +97,84 @@
           "maximum": 4294967295
         },
         "primary_port_key": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "✅ PRIMARY STABLE ID (when available)\n\nValue:\n\n``` (adapter_instance_id ?? adapter_device_path) + target_path_id ```",
           "markdownDescription": "✅ PRIMARY STABLE ID (when available)\n\nValue:\n\n```\n(adapter_instance_id ?? adapter_device_path) + target_path_id\n```",
           "fullDescription": "✅ PRIMARY STABLE ID (when available)\n\nValue:\n\n```\n(adapter_instance_id ?? adapter_device_path) + target_path_id\n```"
         },
         "monitor_device_path": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Typically stable across reboots and uniquely identifies the monitor instance on that connection path. Useful for correlating to EDID retrieval.\n\nSource: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath` in `wingdi.h`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n\nCharacteristics:\n\n- ❓ TODO(acdvorak): Describe stability/uniqueness\n- ❓ TODO(acdvorak): What is the GUID?",
           "markdownDescription": "Typically stable across reboots and uniquely identifies the monitor\ninstance on that connection path. Useful for correlating to EDID retrieval.\n\nSource: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath` in `wingdi.h`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n\nCharacteristics:\n\n- ❓ TODO(acdvorak): Describe stability/uniqueness\n- ❓ TODO(acdvorak): What is the GUID?",
           "fullDescription": "Typically stable across reboots and uniquely identifies the monitor\ninstance on that connection path. Useful for correlating to EDID retrieval.\n\nSource: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath` in `wingdi.h`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n\nCharacteristics:\n\n- ❓ TODO(acdvorak): Describe stability/uniqueness\n- ❓ TODO(acdvorak): What is the GUID?"
         },
         "monitor_path_key": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "✅ SECONDARY STABLE ID (when available)\n\nDeterministic key derived from  {@link  monitor_device_path } .",
           "markdownDescription": "✅ SECONDARY STABLE ID (when available)\n\nDeterministic key derived from  {@link  monitor_device_path } .",
           "fullDescription": "✅ SECONDARY STABLE ID (when available)\n\nDeterministic key derived from {@link monitor_device_path}."
         },
         "monitor_instance_id": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&6&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&6&UID20739\"`",
           "markdownDescription": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&6&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&6&UID20739\"`",
           "fullDescription": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&6&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&6&UID20739\"`"
         },
         "monitor_driver_key": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Examples:\n\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n\nThe GUID `{4d36e96e-e325-11ce-bfc1-08002be10318}` is `GUID_DEVCLASS_MONITOR`, which is the system-defined setup class for monitors.\n\nThe last 4 numeric digits (like `0004` or `0005`) represent a zero-padded\n*instance identifier* (often called the *driver node index*) assigned sequentially by the Windows Plug and Play (PnP) manager.\n\nSpecifically, this 4-digit number acts as a pointer to the *Driver Key* (also known as the *Software Key*) in the Windows Registry where the operating system stores the driver and configuration parameters for that exact monitor.\n\nWhen a monitor is connected, Windows looks at the Device Setup Class GUID (the `{4d36e96e-e325-11ce-bfc1-08002be10318}` part, which dictates that the device is a \"Monitor\") and assigns it the next available 4-digit number starting from `0000`.\n\nThis means the `0004` in the first example above maps directly to this specific registry path, specified by  {@link  monitor_registry_key } :\n\n``` HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004 ```\n\nIf you navigate to that specific subkey in the Registry Editor, you will find software-level properties for that monitor instance.",
           "markdownDescription": "Examples:\n\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n\nThe GUID `{4d36e96e-e325-11ce-bfc1-08002be10318}` is\n`GUID_DEVCLASS_MONITOR`, which is the system-defined setup class for\nmonitors.\n\nThe last 4 numeric digits (like `0004` or `0005`) represent a zero-padded\n*instance identifier* (often called the *driver node index*) assigned\nsequentially by the Windows Plug and Play (PnP) manager.\n\nSpecifically, this 4-digit number acts as a pointer to the *Driver Key*\n(also known as the *Software Key*) in the Windows Registry where the\noperating system stores the driver and configuration parameters for that\nexact monitor.\n\nWhen a monitor is connected, Windows looks at the Device Setup Class GUID\n(the `{4d36e96e-e325-11ce-bfc1-08002be10318}` part, which dictates that\nthe device is a \"Monitor\") and assigns it the next available 4-digit number\nstarting from `0000`.\n\nThis means the `0004` in the first example above maps directly to this\nspecific registry path, specified by  {@link  monitor_registry_key } :\n\n```\nHKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004\n```\n\nIf you navigate to that specific subkey in the Registry Editor, you will\nfind software-level properties for that monitor instance.",
           "fullDescription": "Examples:\n\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n\nThe GUID `{4d36e96e-e325-11ce-bfc1-08002be10318}` is\n`GUID_DEVCLASS_MONITOR`, which is the system-defined setup class for\nmonitors.\n\nThe last 4 numeric digits (like `0004` or `0005`) represent a zero-padded\n*instance identifier* (often called the *driver node index*) assigned\nsequentially by the Windows Plug and Play (PnP) manager.\n\nSpecifically, this 4-digit number acts as a pointer to the *Driver Key*\n(also known as the *Software Key*) in the Windows Registry where the\noperating system stores the driver and configuration parameters for that\nexact monitor.\n\nWhen a monitor is connected, Windows looks at the Device Setup Class GUID\n(the `{4d36e96e-e325-11ce-bfc1-08002be10318}` part, which dictates that\nthe device is a \"Monitor\") and assigns it the next available 4-digit number\nstarting from `0000`.\n\nThis means the `0004` in the first example above maps directly to this\nspecific registry path, specified by {@link monitor_registry_key}:\n\n```\nHKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\0004\n```\n\nIf you navigate to that specific subkey in the Registry Editor, you will\nfind software-level properties for that monitor instance."
         },
         "monitor_registry_key": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Examples:\n\n- `\"HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Class\\\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Class\\\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n\nCommon values stored here include:\n\n- **DriverDesc**: The friendly, human-readable name of the monitor   (e.g., \"Generic PnP Monitor\", \"Generic Non-PnP Monitor\", or   \"Samsung SyncMaster\").\n\n- **MatchingDeviceId**: The PnP hardware ID used to match the driver to the   monitor (e.g., \"*PNP09FF\" or \"MONITOR\\Default_Monitor\").\n\n- **ProviderName**: The author of the driver (usually \"Microsoft\" for   standard Plug and Play monitors).\n\n- **EDID Overrides**: Any manual software overrides applied to the   monitor's Extended Display Identification Data (EDID).",
           "markdownDescription": "Examples:\n\n- `\"HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Class\\\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Class\\\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n\nCommon values stored here include:\n\n- **DriverDesc**: The friendly, human-readable name of the monitor\n  (e.g., \"Generic PnP Monitor\", \"Generic Non-PnP Monitor\", or\n  \"Samsung SyncMaster\").\n\n- **MatchingDeviceId**: The PnP hardware ID used to match the driver to the\n  monitor (e.g., \"*PNP09FF\" or \"MONITOR\\Default_Monitor\").\n\n- **ProviderName**: The author of the driver (usually \"Microsoft\" for\n  standard Plug and Play monitors).\n\n- **EDID Overrides**: Any manual software overrides applied to the\n  monitor's Extended Display Identification Data (EDID).",
           "fullDescription": "Examples:\n\n- `\"HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Class\\\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Class\\\\{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n\nCommon values stored here include:\n\n- **DriverDesc**: The friendly, human-readable name of the monitor\n  (e.g., \"Generic PnP Monitor\", \"Generic Non-PnP Monitor\", or\n  \"Samsung SyncMaster\").\n\n- **MatchingDeviceId**: The PnP hardware ID used to match the driver to the\n  monitor (e.g., \"*PNP09FF\" or \"MONITOR\\Default_Monitor\").\n\n- **ProviderName**: The author of the driver (usually \"Microsoft\" for\n  standard Plug and Play monitors).\n\n- **EDID Overrides**: Any manual software overrides applied to the\n  monitor's Extended Display Identification Data (EDID)."
         },
         "monitor_string": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Generic Non-PnP Monitor\"`\n\nTODO(acdvorak): Get this value from the registry (`DriverDesc`). See  {@link  monitor_registry_key } .",
           "markdownDescription": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Generic Non-PnP Monitor\"`\n\nTODO(acdvorak): Get this value from the registry (`DriverDesc`).\nSee  {@link  monitor_registry_key } .",
           "fullDescription": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Generic Non-PnP Monitor\"`\n\nTODO(acdvorak): Get this value from the registry (`DriverDesc`).\nSee {@link monitor_registry_key}."
         },
         "monitor_serial_string": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "description": "Maybe EDID-derived?\n\nExample:\n\n- `\"LAU8PSBP01000\"` (Vizio TV)\n\nTODO(acdvorak): Figure out which Windows API returns this value. NirSoft MultiMonitorTool knows how to get it.",
-          "markdownDescription": "Maybe EDID-derived?\n\nExample:\n\n- `\"LAU8PSBP01000\"` (Vizio TV)\n\nTODO(acdvorak): Figure out which Windows API returns this value.\nNirSoft MultiMonitorTool knows how to get it.",
-          "fullDescription": "Maybe EDID-derived?\n\nExample:\n\n- `\"LAU8PSBP01000\"` (Vizio TV)\n\nTODO(acdvorak): Figure out which Windows API returns this value.\nNirSoft MultiMonitorTool knows how to get it."
+          "type": ["string", "null"],
+          "description": "Maybe EDID-derived?\n\nExample:\n\n- `\"LAU8PSBP01000\"` (Vizio TV)",
+          "markdownDescription": "Maybe EDID-derived?\n\nExample:\n\n- `\"LAU8PSBP01000\"` (Vizio TV)",
+          "fullDescription": "Maybe EDID-derived?\n\nExample:\n\n- `\"LAU8PSBP01000\"` (Vizio TV)"
         },
-        "edid_key": {
-          "type": [
-            "string",
-            "null"
+        "edid_data_string": {
+          "type": ["string", "null"],
+          "description": "EDID data string (tag 0xFE).",
+          "markdownDescription": "EDID data string (tag 0xFE).",
+          "fullDescription": "EDID data string (tag 0xFE)."
+        },
+        "stable_ids": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/WinStableIds"
+            },
+            {
+              "type": "null"
+            }
           ],
+          "description": "Identifiers that are stable across device disconnects/reconnects, driver upgrades, and reboots.",
+          "markdownDescription": "Identifiers that are stable across device disconnects/reconnects, driver\nupgrades, and reboots.",
+          "fullDescription": "Identifiers that are stable across device disconnects/reconnects, driver\nupgrades, and reboots."
+        },
+        "edid_parsed_key": {
+          "type": ["string", "null"],
           "description": "✅ TERTIARY STABLE ID (when available)\n\nDeterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.\n\nTODO(acdvorak): Append a hash of the full EDID bytes.",
           "markdownDescription": "✅ TERTIARY STABLE ID (when available)\n\nDeterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.\n\nTODO(acdvorak): Append a hash of the full EDID bytes.",
           "fullDescription": "✅ TERTIARY STABLE ID (when available)\n\nDeterministic monitor identity key based on EDID.\n\nOnly emitted when manufacturer, product code, and serial are available.\n\nTODO(acdvorak): Append a hash of the full EDID bytes."
         },
         "stable_id": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Effective stable ID after applying candidate ordering.",
           "markdownDescription": "Effective stable ID after applying candidate ordering.",
-          "fullDescription": "Effective stable ID after applying candidate ordering."
+          "fullDescription": "Effective stable ID after applying candidate ordering.\n\n@deprecated See {@link stable_ids} instead.",
+          "deprecated": "See {@link stable_ids } instead."
         },
         "stable_id_candidates": {
           "anyOf": [
@@ -219,42 +188,36 @@
               "type": "null"
             }
           ],
-          "description": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key` 2. `monitor_path_key` 3. `edid_key`\n\nTODO(acdvorak): Refactor",
-          "markdownDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`\n\nTODO(acdvorak): Refactor",
-          "fullDescription": "Candidate stable keys ordered from strongest to weakest.\n\n1. `primary_port_key`\n2. `monitor_path_key`\n3. `edid_key`\n\nTODO(acdvorak): Refactor"
+          "description": "Candidate stable keys ordered from strongest to weakest.",
+          "markdownDescription": "Candidate stable keys ordered from strongest to weakest.",
+          "fullDescription": "Candidate stable keys ordered from strongest to weakest.\n\n@deprecated See {@link stable_ids} instead.",
+          "deprecated": "See {@link stable_ids } instead."
         },
         "stable_id_source": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/WinStableIdSource"
+            },
+            {
+              "type": "null"
+            }
           ],
-          "enum": [
-            "primary_port_key",
-            "monitor_path_key",
-            "edid_key",
-            null
-          ],
-          "description": "Indicates which candidate produced  {@link  stable_id } .\n\nTODO(acdvorak): Refactor",
-          "markdownDescription": "Indicates which candidate produced  {@link  stable_id } .\n\nTODO(acdvorak): Refactor",
-          "fullDescription": "Indicates which candidate produced {@link stable_id}.\n\nTODO(acdvorak): Refactor"
+          "description": "Indicates which candidate produced  {@link  stable_id } .",
+          "markdownDescription": "Indicates which candidate produced  {@link  stable_id } .",
+          "fullDescription": "Indicates which candidate produced {@link stable_id}.\n\n@deprecated See {@link stable_ids} instead.",
+          "deprecated": "See {@link stable_ids } instead."
         },
         "is_primary": {
           "type": "boolean"
         },
         "is_attached_to_desktop": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:   - Many drivers expose one IDXGIOutput per physical connector     (HDMI/DP/DVI), even if nothing is plugged in.   - Those \"ports\" can enumerate, but they are not part of the desktop, so     AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:   - Example: you have 2 monitors connected, but Windows is set to     \"Show only on 1\" (or you've \"Disconnect this display\" for the other).     That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Clarify the difference between  {@link  has_interactive_desktop  }  and  {@link  is_attached_to_desktop } .",
           "markdownDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Clarify the difference between\n {@link  has_interactive_desktop  }  and  {@link  is_attached_to_desktop } .",
           "fullDescription": "This value MIGHT be `false` under the following conditions:\n\n- Unused connectors on the GPU:\n  - Many drivers expose one IDXGIOutput per physical connector\n    (HDMI/DP/DVI), even if nothing is plugged in.\n  - Those \"ports\" can enumerate, but they are not part of the desktop, so\n    AttachedToDesktop is false.\n\n- A monitor is connected but disabled in Display Settings:\n  - Example: you have 2 monitors connected, but Windows is set to\n    \"Show only on 1\" (or you've \"Disconnect this display\" for the other).\n    That other output can still exist, but it is not attached, so false.\n\nTODO(acdvorak): Clarify the difference between\n{@link has_interactive_desktop} and {@link is_attached_to_desktop}."
         },
         "dpi_scaling_percent": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Typical values allowed by the Windows Display Settings UI are:\n\n`100 | 125 | 150 | 175 | 200 | 225 | 250 | 275 | 300 | ... | 500`\n\nTechnically, the user can set any arbitrary value they want via registry hacks.",
           "markdownDescription": "Typical values allowed by the Windows Display Settings UI are:\n\n`100 | 125 | 150 | 175 | 200 | 225 | 250 | 275 | 300 | ... | 500`\n\nTechnically, the user can set any arbitrary value they want via registry\nhacks.",
           "fullDescription": "Typical values allowed by the Windows Display Settings UI are:\n\n`100 | 125 | 150 | 175 | 200 | 225 | 250 | 275 | 300 | ... | 500`\n\nTechnically, the user can set any arbitrary value they want via registry\nhacks.\n\n@see https://superuser.com/questions/1328938/scale-100-on-windows-10/1328941#1328941\n@see https://learn.microsoft.com/en-us/windows/win32/learnwin32/dpi-and-device-independent-pixels\n\n@uint32",
@@ -287,28 +250,19 @@
           "fullDescription": "Progressive or interlaced."
         },
         "refresh_rate_hz": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "description": "{@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .\n\nExamples:\n\n- `60`\n- `120`\n- `144`",
           "markdownDescription": "{@link  refresh_rate_numerator }  /  {@link  refresh_rate_denominator } .\n\nExamples:\n\n- `60`\n- `120`\n- `144`",
           "fullDescription": "{@link refresh_rate_numerator} / {@link refresh_rate_denominator}.\n\nExamples:\n\n- `60`\n- `120`\n- `144`\n\n@double"
         },
         "refresh_rate_numerator": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
         },
         "refresh_rate_denominator": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
@@ -388,6 +342,48 @@
       "markdownDescription": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win\n\"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`,\nfilled by `GetMonitorInfo()`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\"\nand \"no multimon\" where it sets the device name to:\n\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n\n- Single-monitor path sets `\"DISPLAY\"`\n- Multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, this string may contain arbitrary non-printable\ncharacters, though I have never observed that in the wild.",
       "fullDescription": "On Windows, `System.Windows.Forms.Screen.DeviceName` is basically the Win\n\"monitor device name\" string (the `szDevice` field of `MONITORINFOEX`,\nfilled by `GetMonitorInfo()`).\n\nIn the common case, that comes out as the familiar GDI device path form:\n\n- `\\\\.\\DISPLAY1`\n- `\\\\.\\DISPLAY2`\n- ... (1-based index, can go higher than 2)\n\nWinForms historically also has a special-case fallback for \"single monitor\"\nand \"no multimon\" where it sets the device name to:\n\n- `DISPLAY` (no `\\\\.\\` prefix)\n\nYou can see both facts in the `WinForms` reference source:\n\n- Single-monitor path sets `\"DISPLAY\"`\n- Multi-monitor path uses `MONITORINFOEX.szDevice`\n\nNOTE: Technically, this string may contain arbitrary non-printable\ncharacters, though I have never observed that in the wild.\n\n@see https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.screen.devicename?view=windowsdesktop-10.0\n@see https://github.com/dotnet/dotnet/blob/3bc68b106/src/winforms/src/System.Windows.Forms/System/Windows/Forms/Screen.cs#L63\n@see https://github.com/dotnet/dotnet/blob/3bc68b106/src/winforms/src/System.Windows.Forms/System/Windows/Forms/Screen.cs#L78"
     },
+    "WinStableIds": {
+      "type": "object",
+      "properties": {
+        "port_independent": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WinStableIdEntry"
+          }
+        },
+        "port_specific": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WinStableIdEntry"
+          }
+        }
+      },
+      "required": ["port_independent", "port_specific"],
+      "additionalProperties": false
+    },
+    "WinStableIdEntry": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/WinStableIdSource"
+        }
+      },
+      "required": ["key", "source"],
+      "additionalProperties": false
+    },
+    "WinStableIdSource": {
+      "type": "string",
+      "enum": [
+        "primary_port_key",
+        "monitor_path_key",
+        "location_port_key",
+        "edid_parsed_key",
+        "edid_hash_key"
+      ]
+    },
     "WinScreenRectangle": {
       "type": "object",
       "properties": {
@@ -466,12 +462,7 @@
     },
     "WinDisplayRotationDegrees": {
       "type": "integer",
-      "enum": [
-        0,
-        90,
-        180,
-        270
-      ],
+      "enum": [0, 90, 180, 270],
       "description": "Rotation in degrees.",
       "markdownDescription": "Rotation in degrees.",
       "fullDescription": "Rotation in degrees."
@@ -549,48 +540,30 @@
           "maximum": 255
         },
         "min_luminance_nits": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "description": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
           "markdownDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
           "fullDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).\n\n@double"
         },
         "max_luminance_nits": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "description": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
           "markdownDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
           "fullDescription": "In `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).\n\n@double"
         },
         "max_full_frame_luminance_nits": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "description": "Full-screen sustained luminance.\n\nIn `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
           "markdownDescription": "Full-screen sustained luminance.\n\nIn `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).",
           "fullDescription": "Full-screen sustained luminance.\n\nIn `nits` - i.e., luminance in candelas per square meter (`cd/m^2`).\n\n@double"
         }
       },
-      "required": [
-        "is_hdr_supported",
-        "is_hdr_enabled"
-      ],
+      "required": ["is_hdr_supported", "is_hdr_enabled"],
       "additionalProperties": false
     },
     "WinColorEncoding": {
       "type": "string",
-      "enum": [
-        "unspecified",
-        "rgb",
-        "ycbcr444",
-        "ycbcr422",
-        "ycbcr420"
-      ]
+      "enum": ["unspecified", "rgb", "ycbcr444", "ycbcr422", "ycbcr420"]
     },
     "WinDxgiColorSpace": {
       "type": "string",
@@ -626,15 +599,7 @@
     },
     "WinBitsPerColorChannel": {
       "type": "integer",
-      "enum": [
-        0,
-        6,
-        8,
-        10,
-        12,
-        14,
-        16
-      ]
+      "enum": [0, 6, 8, 10, 12, 14, 16]
     },
     "WinAdvancedColorInfo": {
       "type": "object",
@@ -696,12 +661,7 @@
     },
     "WinActiveColorMode": {
       "type": "string",
-      "enum": [
-        "unspecified",
-        "sdr",
-        "wcg",
-        "hdr"
-      ],
+      "enum": ["unspecified", "sdr", "wcg", "hdr"],
       "fullDescription": "@see https://learn.microsoft.com/en-us/uwp/api/windows.graphics.display.advancedcolorkind?view=winrt-26100"
     },
     "WinEdidInfo": {
@@ -714,10 +674,7 @@
           "fullDescription": "Corresponds to: `DISPLAYCONFIG_TARGET_DEVICE_NAME.monitorDevicePath`.\n\nExamples:\n\n- `\"\\\\\\\\?\\\\DISPLAY#SAM7346#5&21e6c3e1&0&UID5243153#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`\n- `\"\\\\\\\\?\\\\DISPLAY#DELF023#5&21e6c3e1&0&UID5243152#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}\"`"
         },
         "wmi_instance_name": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Corresponds to the `InstanceName` field of these WMI object classes:\n\n- `WmiMonitorBasicDisplayParams`\n- `WmiMonitorConnectionParams`\n- `WmiMonitorDescriptorMethods`\n- `WmiMonitorID`\n- `WmiMonitorListedSupportedSourceModes`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"`",
           "markdownDescription": "Corresponds to the `InstanceName` field of these WMI object classes:\n\n- `WmiMonitorBasicDisplayParams`\n- `WmiMonitorConnectionParams`\n- `WmiMonitorDescriptorMethods`\n- `WmiMonitorID`\n- `WmiMonitorListedSupportedSourceModes`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"`",
           "fullDescription": "Corresponds to the `InstanceName` field of these WMI object classes:\n\n- `WmiMonitorBasicDisplayParams`\n- `WmiMonitorConnectionParams`\n- `WmiMonitorDescriptorMethods`\n- `WmiMonitorID`\n- `WmiMonitorListedSupportedSourceModes`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153_0\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152_0\"`"
@@ -729,17 +686,11 @@
           "fullDescription": "Normalized join key, with trailing `_0` removed from\n{@link wmi_instance_name}.\n\nE.g.:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&21e6c3e1&0&UID5243153\"`\n- `\"DISPLAY\\\\DELF023\\\\5&21e6c3e1&0&UID5243152\"`"
         },
         "max_horizontal_image_size_mm": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "fullDescription": "@double"
         },
         "max_vertical_image_size_mm": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "fullDescription": "@double"
         },
         "video_output_technology_type": {
@@ -756,96 +707,55 @@
           "fullDescription": "Raw numeric value that gets mapped to {@link WinDisplayConnectorType}."
         },
         "manufacturer_vid": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "3-letter Vendor ID (aka PnP ID).\n\nExamples:\n\n- `\"SAM\"` (Samsung)\n- `\"DEL\"` (Dell)",
           "markdownDescription": "3-letter Vendor ID (aka PnP ID).\n\nExamples:\n\n- `\"SAM\"` (Samsung)\n- `\"DEL\"` (Dell)",
           "fullDescription": "3-letter Vendor ID (aka PnP ID).\n\nExamples:\n\n- `\"SAM\"` (Samsung)\n- `\"DEL\"` (Dell)"
         },
         "product_code_id": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint16",
           "minimum": 0,
           "maximum": 65535
         },
         "serial_number_id": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
         },
         "user_friendly_name": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Examples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`  // Samsung S95C TV\n- `\"SAMSUNG\"` // Some devices don't give us an actual model number",
           "markdownDescription": "Examples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`  // Samsung S95C TV\n- `\"SAMSUNG\"` // Some devices don't give us an actual model number",
           "fullDescription": "Examples:\n\n- `\"DELL ST2320L\"`\n- `\"QCQ95S\"`  // Samsung S95C TV\n- `\"SAMSUNG\"` // Some devices don't give us an actual model number"
         },
         "week_of_manufacture": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint8",
           "minimum": 0,
           "maximum": 255
         },
         "year_of_manufacture": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint16",
           "minimum": 0,
           "maximum": 65535
         },
         "edid_bytes_base64": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Raw EDID bytes, Base64-encoded.",
           "markdownDescription": "Raw EDID bytes, Base64-encoded.",
           "fullDescription": "Raw EDID bytes, Base64-encoded."
         }
       },
-      "required": [
-        "monitor_device_path",
-        "wmi_join_key"
-      ],
+      "required": ["monitor_device_path", "wmi_join_key"],
       "additionalProperties": false
     },
     "WmiVideoOutputTechnology": {
       "type": "integer",
       "enum": [
-        -2,
-        -1,
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
+        -2, -1, 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16,
         2147483648
       ],
       "description": "Type of physical connector a video output device (on the display adapter) uses to connect to an external display device.\n\nKnown values for  {@link  WmiMonitorConnectionParams.VideoOutputTechnology  } .",
@@ -868,10 +778,7 @@
           }
         }
       },
-      "required": [
-        "adapters",
-        "monitors"
-      ],
+      "required": ["adapters", "monitors"],
       "additionalProperties": false
     },
     "WinSetupApiDevice": {
@@ -897,10 +804,7 @@
           "fullDescription": "Data source: `SetupDiGetDeviceInstanceIdW()`\n\nExamples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`"
         },
         "device_desc": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Microsoft Basic Display Driver\"`\n- `\"NVIDIA GeForce RTX 3050\"`",
           "markdownDescription": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Microsoft Basic Display Driver\"`\n- `\"NVIDIA GeForce RTX 3050\"`",
           "fullDescription": "Examples:\n\n- `\"Generic PnP Monitor\"`\n- `\"Microsoft Basic Display Driver\"`\n- `\"NVIDIA GeForce RTX 3050\"`"
@@ -999,10 +903,7 @@
           "fullDescription": "Examples:\n\n- `\"{4d36e968-e325-11ce-bfc1-08002be10318}\\\\0000\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0004\"`\n- `\"{4d36e96e-e325-11ce-bfc1-08002be10318}\\\\0005\"`\n- `\"{4d36e97d-e325-11ce-bfc1-08002be10318}\\\\0051\"`"
         },
         "config_flags": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Examples:\n\n- `0`",
           "markdownDescription": "Examples:\n\n- `0`",
           "fullDescription": "Examples:\n\n- `0`\n\n@uint32",
@@ -1062,10 +963,7 @@
           "fullDescription": "Examples:\n\n- `\"\\\\Device\\\\00000003\"`\n- `\"\\\\Device\\\\0000006d\"`\n- `\"\\\\Device\\\\0000006e\"`\n- `\"\\\\Device\\\\NTPNP_PCI0024\"`"
         },
         "capabilities": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Examples:\n\n- `0`\n- `228`",
           "markdownDescription": "Examples:\n\n- `0`\n- `228`",
           "fullDescription": "Examples:\n\n- `0`\n- `228`\n\n@uint32",
@@ -1073,10 +971,7 @@
           "maximum": 4294967295
         },
         "ui_number": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Example:\n\n- `2`",
           "markdownDescription": "Example:\n\n- `2`",
           "fullDescription": "Example:\n\n- `2`\n\n@uint32",
@@ -1097,10 +992,7 @@
           "fullDescription": "Example:\n\n- `\"{C6CA0D74-E43B-4ABD-A63A-4BD2AD319D60}\"`\n- `\"{C8EBDFB0-B510-11D0-80E5-00A0C92542E3}\"`"
         },
         "legacy_bus_type": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Example:\n\n- `5`\n- `15`",
           "markdownDescription": "Example:\n\n- `5`\n- `15`",
           "fullDescription": "Example:\n\n- `5`\n- `15`\n\n@uint32",
@@ -1108,10 +1000,7 @@
           "maximum": 4294967295
         },
         "bus_number": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Example:\n\n- `0`\n- `5`",
           "markdownDescription": "Example:\n\n- `0`\n- `5`",
           "fullDescription": "Example:\n\n- `0`\n- `5`\n\n@uint32",
@@ -1135,28 +1024,19 @@
           "fullDescription": "Example:\n\n- `\"DISPLAY\"`\n- `\"PCI\"`\n- `\"ROOT\"`\n\n@string"
         },
         "dev_type": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
         },
         "characteristics": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "fullDescription": "@uint32",
           "minimum": 0,
           "maximum": 4294967295
         },
         "address": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Example:\n\n- `0`\n- `273`\n- `275`",
           "markdownDescription": "Example:\n\n- `0`\n- `273`\n- `275`",
           "fullDescription": "Example:\n\n- `0`\n- `273`\n- `275`\n\n@uint32",
@@ -1164,10 +1044,7 @@
           "maximum": 4294967295
         },
         "ui_number_desc_format": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "location_paths": {
           "anyOf": [
@@ -1199,15 +1076,11 @@
           "fullDescription": "Examples:\n\n- `\"{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\"`\n- `\"{840576F3-7055-5A87-9859-A63E0FA9F3DA}\"`\n- `\"{DA0631A1-C6DF-5655-BEA1-9110DBA37845}\"`"
         }
       },
-      "required": [
-        "device_path_mixed_case"
-      ],
+      "required": ["device_path_mixed_case"],
       "additionalProperties": false
     },
     "PnpInstanceId": {
-      "type": [
-        "string"
-      ],
+      "type": ["string"],
       "description": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`",
       "markdownDescription": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`",
       "fullDescription": "Examples:\n\n- `\"DISPLAY\\\\SAM73A5\\\\5&757FE5E&7&UID20737\"`\n- `\"DISPLAY\\\\VIZ1009\\\\5&757FE5E&7&UID20739\"`\n- `\"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\\\\4&2B1C6285&0&0010\"`\n- `\"ROOT\\\\BASICDISPLAY\\\\0000\"`"
@@ -1226,9 +1099,7 @@
       "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```\n\n```jsonc\n[\n  \"ROOT\\\\BasicDisplay\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\SAM73A5\"\n]\n```\n\n```jsonc\n[\n  \"MONITOR\\\\VIZ1009\"\n]\n```"
     },
     "PnpPciId": {
-      "type": [
-        "string"
-      ],
+      "type": ["string"],
       "description": "Examples:\n\n```jsonc [   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",   \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",   \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\" ] ```",
       "markdownDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```",
       "fullDescription": "Examples:\n\n```jsonc\n[\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE&REV_A1\",\n  \"PCI\\\\VEN_10DE&DEV_2584&SUBSYS_184610DE\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_030000\",\n  \"PCI\\\\VEN_10DE&DEV_2584&CC_0300\"\n]\n```"
@@ -1248,18 +1119,11 @@
     },
     "PnpServiceName": {
       "type": "string",
-      "enum": [
-        "BasicDisplay",
-        "monitor"
-      ]
+      "enum": ["BasicDisplay", "monitor"]
     },
     "PnpClassName": {
       "type": "string",
-      "enum": [
-        "Display",
-        "Monitor",
-        "System"
-      ]
+      "enum": ["Display", "Monitor", "System"]
     },
     "PnpClassGuid": {
       "anyOf": [
@@ -1318,16 +1182,10 @@
     },
     "PnpEnumeratorName": {
       "type": "string",
-      "enum": [
-        "DISPLAY",
-        "PCI",
-        "ROOT"
-      ]
+      "enum": ["DISPLAY", "PCI", "ROOT"]
     },
     "PnpLocationPath": {
-      "type": [
-        "string"
-      ]
+      "type": ["string"]
     }
   }
 }
