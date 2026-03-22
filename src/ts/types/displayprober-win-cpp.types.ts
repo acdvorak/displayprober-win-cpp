@@ -374,11 +374,19 @@ export interface WinDisplay {
    * Example:
    *
    * - `"LAU8PSBP01000"` (Vizio TV)
-   *
-   * TODO(acdvorak): Figure out which Windows API returns this value.
-   * NirSoft MultiMonitorTool knows how to get it.
    */
   monitor_serial_string?: string | null;
+
+  /**
+   * EDID data string (tag 0xFE).
+   */
+  edid_data_string?: string | null;
+
+  /**
+   * Identifiers that are stable across device disconnects/reconnects, driver
+   * upgrades, and reboots.
+   */
+  stable_ids?: WinStableIds | null;
 
   /**
    * ✅ TERTIARY STABLE ID (when available)
@@ -389,34 +397,28 @@ export interface WinDisplay {
    *
    * TODO(acdvorak): Append a hash of the full EDID bytes.
    */
-  edid_key?: string | null;
+  edid_parsed_key?: string | null;
 
   /**
    * Effective stable ID after applying candidate ordering.
+   *
+   * @deprecated See {@link stable_ids} instead.
    */
   stable_id?: string | null;
 
   /**
    * Candidate stable keys ordered from strongest to weakest.
    *
-   * 1. `primary_port_key`
-   * 2. `monitor_path_key`
-   * 3. `edid_key`
-   *
-   * TODO(acdvorak): Refactor
+   * @deprecated See {@link stable_ids} instead.
    */
   stable_id_candidates?: string[] | null;
 
   /**
    * Indicates which candidate produced {@link stable_id}.
    *
-   * TODO(acdvorak): Refactor
+   * @deprecated See {@link stable_ids} instead.
    */
-  stable_id_source?:
-    | 'primary_port_key'
-    | 'monitor_path_key'
-    | 'edid_key'
-    | null;
+  stable_id_source?: WinStableIdSource | null;
 
   is_primary: boolean;
 
@@ -1407,3 +1409,20 @@ export type WinDxgiColorSpace =
   | 'ycbcr_studio_g24_topleft_p2020'
   | 'reserved'
   | 'custom';
+
+export interface WinStableIds {
+  port_independent: WinStableIdEntry[];
+  port_specific: WinStableIdEntry[];
+}
+
+export interface WinStableIdEntry {
+  key: string;
+  source: WinStableIdSource;
+}
+
+export type WinStableIdSource =
+  | 'primary_port_key'
+  | 'monitor_path_key'
+  | 'location_port_key'
+  | 'edid_parsed_key'
+  | 'edid_hash_key';

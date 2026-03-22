@@ -116,6 +116,7 @@ json::WinDisplay MergeDisplayDataToJson(
     const std::optional<dxgi::DxgiOutputInfo>& dxgi_output_info) {
   // Initialize all primitive fields to their default values.
   json::WinDisplay json_obj{};
+  std::optional<std::string> edid_hash_key;
 
   std::string friendly_name =
       GetFriendlyName(index, count, short_lived_identifier, gdi_monitor_info,
@@ -213,13 +214,15 @@ json::WinDisplay MergeDisplayDataToJson(
             setupapi::GetEdidBytesFromMonitorDevicePath(monitor_device_path);
         if (bytes.has_value() && !bytes->empty()) {
           json_obj.edid_info->edid_bytes_base64 = Base64Encode(*bytes);
+          dp::internal::ParseEdidStrings(*bytes, json_obj);
+          edid_hash_key = dp::internal::BuildEdidHashKey(*bytes);
         }
       }
 
-      if (const std::string edid_key =
-              dp::internal::BuildEdidKey(json_obj.edid_info);
-          !edid_key.empty()) {
-        json_obj.edid_key = edid_key;
+      if (const std::string edid_parsed_key = dp::internal::BuildEdidParsedKey(
+              json_obj.edid_info, json_obj.monitor_serial_string);
+          !edid_parsed_key.empty()) {
+        json_obj.edid_parsed_key = edid_parsed_key;
       }
     }
 
@@ -356,7 +359,10 @@ json::WinDisplay MergeDisplayDataToJson(
     }
   }
 
-  dp::internal::PopulateStableKeyFields(json_obj);
+  std::optional<std::string> location_port_key =
+      dp::internal::BuildLocationPortKey(json_obj);
+  dp::internal::PopulateStableKeyFields(json_obj, edid_hash_key,
+                                        location_port_key);
 
   return json_obj;
 }

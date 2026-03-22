@@ -34,39 +34,39 @@ TEST_CASE("BuildPrimaryPortKey builds deterministic key") {
 
   CHECK(dp::internal::BuildPrimaryPortKey(ccd) ==
         R"(acd_ppk:gpu_id=PCI\VEN_10DE&DEV_2684&SUBSYS_16E110DE&REV_A1\4&)"
-        "2A5F5B12&0&0008;tp_id=0x0000002A");
+        "2A5F5B12&0&0008;tpid=0x0000002A");
 
   ccd.adapter_instance_id.reset();
   ccd.adapter_device_path = R"(\\?\pci#ven_10de#device-path)";
   CHECK(dp::internal::BuildPrimaryPortKey(ccd) ==
-        R"(acd_ppk:gpu_id=\\?\pci#ven_10de#device-path;tp_id=0x0000002A)");
+        R"(acd_ppk:gpu_id=\\?\pci#ven_10de#device-path;tpid=0x0000002A)");
 }
 
-TEST_CASE("BuildEdidKey requires all parts and normalizes VID") {
+TEST_CASE("BuildEdidParsedKey requires all parts and normalizes VID") {
   json::WinEdidInfo edid{};
   edid.manufacturer_vid = "sam";
   edid.product_code_id = 0x23;
   edid.serial_number_id = 1;
 
-  CHECK(dp::internal::BuildEdidKey(edid) ==
+  CHECK(dp::internal::BuildEdidParsedKey(edid, std::nullopt) ==
         "acd_edid:vid=SAM;pid=0x0023;sn=0x00000001");
 
   edid.serial_number_id = std::nullopt;
-  CHECK(dp::internal::BuildEdidKey(edid).empty());
+  CHECK(dp::internal::BuildEdidParsedKey(edid, std::nullopt).empty());
 }
 
 TEST_CASE("PopulateStableKeyFields applies priority and dedupes") {
   json::WinDisplay display{};
   display.primary_port_key = "ppk";
   display.monitor_path_key = "mpk";
-  display.edid_key = "edk";
+  display.edid_parsed_key = "edk";
 
-  dp::internal::PopulateStableKeyFields(display);
+  dp::internal::PopulateStableKeyFields(display, std::nullopt, std::nullopt);
 
   REQUIRE(display.stable_id.has_value());
   CHECK(*display.stable_id == "ppk");
   REQUIRE(display.stable_id_source.has_value());
-  CHECK(*display.stable_id_source == json::StableIdSource::PRIMARY_PORT_KEY);
+  CHECK(*display.stable_id_source == json::WinStableIdSource::PRIMARY_PORT_KEY);
   REQUIRE(display.stable_id_candidates.has_value());
   REQUIRE(display.stable_id_candidates->size() == 3);
   CHECK((*display.stable_id_candidates)[0] == "ppk");
@@ -76,9 +76,9 @@ TEST_CASE("PopulateStableKeyFields applies priority and dedupes") {
   json::WinDisplay deduped{};
   deduped.primary_port_key = "same";
   deduped.monitor_path_key = "same";
-  deduped.edid_key = "other";
+  deduped.edid_parsed_key = "other";
 
-  dp::internal::PopulateStableKeyFields(deduped);
+  dp::internal::PopulateStableKeyFields(deduped, std::nullopt, std::nullopt);
 
   REQUIRE(deduped.stable_id_candidates.has_value());
   REQUIRE(deduped.stable_id_candidates->size() == 2);

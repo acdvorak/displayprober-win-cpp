@@ -23,7 +23,7 @@
 #endif
 
 static bool IsHelpArg(std::wstring_view arg) {
-  if (arg == L"-h" || arg == L"--help") {
+  if (arg == L"/?" || arg == L"-h" || arg == L"--help") {
     return true;
   }
   return EqualsIgnoreCase(arg, L"/h") || EqualsIgnoreCase(arg, L"/help");
@@ -47,11 +47,11 @@ static void PrintUsage() {
             << "\n"
             << "Usage: DisplayProber\n"
             << "       DisplayProber [--version] [--commit] [--build]\n"
-            << "       DisplayProber [-h|--help|/h|/Help]\n"
+            << "       DisplayProber [-h|--help|/h|/Help|/?]\n"
             << "\n"
             << "Options:\n"
             << "  -h | --help    Show this help message\n"
-            << "  /h | /Help\n"
+            << "  /h | /Help | /?\n"
             << "  --version      Print version tag\n"
             << "  --commit       Print git commit hash\n"
             << "  --build        Print build timestamp\n"
